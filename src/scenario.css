@@ -1,0 +1,719 @@
+/* New Scenario CSS for Monster, Lanes, and Mobile Controls */
+
+/* Monster Container */
+.monster-container {
+  position: absolute;
+  right: 5%;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 20;
+}
+
+.monster-img {
+  width: 180px;
+  height: auto;
+  animation: float 4s infinite ease-in-out;
+  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.3));
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: bottom center;
+}
+
+.monster-speech-bubble {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 15px 25px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+  margin-bottom: 20px;
+  position: relative;
+  max-width: 300px;
+  text-align: center;
+}
+
+.monster-speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 15px 15px 0;
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.95) transparent transparent transparent;
+  display: block;
+  width: 0;
+}
+
+.monster-speech-bubble .sky-question-text {
+  font-size: 18px;
+  font-weight: bold;
+  color: #1e293b;
+  margin: 0;
+}
+
+/* Lanes & Targets */
+.lanes-container {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none;
+}
+
+.lane-target-btn {
+  pointer-events: auto;
+  background: rgba(15, 23, 42, 0.7);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 12px 25px;
+  border-radius: 30px;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+  min-width: 250px;
+  justify-content: flex-start;
+}
+
+.lane-target-btn.selected-lane {
+  border-color: #00e5ff;
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.5);
+  transform: scale(1.05);
+}
+
+.lane-target-btn.correct {
+  background: var(--success);
+  border-color: #80ed99;
+  box-shadow: 0 0 20px rgba(46, 196, 182, 0.6);
+  transform: scale(1.1);
+}
+
+.lane-target-btn.incorrect {
+  background: var(--danger);
+  border-color: #ff85a1;
+  box-shadow: 0 0 20px rgba(231, 29, 54, 0.6);
+  opacity: 0.5;
+}
+
+.lane-target-btn.faded {
+  opacity: 0.3;
+}
+
+/* Hearts / Lives HUD */
+.hud-lives {
+  display: flex;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 8px 16px;
+  border-radius: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.heart-icon {
+  font-size: 22px;
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.heart-icon.lost {
+  filter: grayscale(100%) opacity(0.3);
+  transform: scale(0.8);
+}
+
+/* Victory Flyover Animation */
+.plane-flyover {
+  left: 150% !important;
+  bottom: 60% !important;
+  transform: scale(1.5) rotate(15deg) !important;
+  transition: left 2.5s cubic-bezier(0.5, 0, 0.2, 1), bottom 2.5s ease-in-out, transform 2.5s ease !important;
+  z-index: 50 !important;
+}
+
+.shake-drop {
+  animation: shake-anim 0.6s ease forwards;
+}
+
+@keyframes shake-anim {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  20%, 60% { transform: translate(-5px, 0) rotate(-2deg); }
+  40%, 80% { transform: translate(5px, 0) rotate(2deg); }
+}
+
+/* Redesigned Mobile Controls Overlay */
+.mobile-controls-overlay {
+  display: none; /* hidden on desktop */
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  z-index: 50;
+  justify-content: space-between;
+  align-items: flex-end;
+  pointer-events: none; /* allow clicking through empty space */
+}
+
+.d-pad-vertical, .action-fire-btn {
+  pointer-events: auto; /* re-enable clicking on buttons */
+}
+
+/* D-PAD Styling */
+.d-pad-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.4);
+  padding: 10px;
+  border-radius: 40px;
+  box-shadow: inset 0 0 10px rgba(255,255,255,0.1), 0 10px 20px rgba(0,0,0,0.3);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.d-pad-btn {
+  background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+  border: 1px solid rgba(255,255,255,0.3);
+  color: white;
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  transition: all 0.1s ease;
+}
+
+.d-pad-btn svg {
+  width: 28px;
+  height: 28px;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));
+}
+
+.d-pad-btn:active {
+  transform: scale(0.9) translateY(2px);
+  background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Action Fire Button Styling */
+.action-fire-btn {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  border: none;
+  padding: 4px;
+  border-radius: 50px;
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4), inset 0 2px 2px rgba(255,255,255,0.4);
+  transition: all 0.1s ease;
+}
+
+.fire-btn-inner {
+  background: linear-gradient(135deg, #f87171, #dc2626);
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 46px;
+  padding: 12px 25px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fire-icon {
+  font-size: 24px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.fire-text {
+  color: white;
+  font-family: var(--font-arabic);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.action-fire-btn:active {
+  transform: scale(0.92) translateY(4px);
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.4), inset 0 2px 2px rgba(255,255,255,0.1);
+}
+
+.d-pad-btn:disabled, .action-fire-btn:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  filter: grayscale(100%);
+}
+
+@media (max-width: 768px) {
+  .mobile-controls-overlay {
+    display: flex;
+  }
+  .monster-img {
+    width: 120px; /* Base size on mobile */
+  }
+  .monster-speech-bubble {
+    padding: 10px 15px;
+    max-width: 200px;
+  }
+  .monster-speech-bubble .sky-question-text {
+    font-size: 14px;
+  }
+  .lane-target-btn {
+    min-width: 180px;
+    padding: 8px 15px;
+    font-size: 14px;
+  }
+}
+
+/* Ensure absolute position for laser layer works */
+.laser-svg-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.explosion-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 25;
+}
+
+.laser-explosion-particle {
+  position: absolute;
+  border-radius: 50%;
+}
+
+/* Airplane Damage Charring */
+.charred-1 {
+  filter: brightness(0.6) sepia(0.4) hue-rotate(-20deg) saturate(1.5) drop-shadow(0 10px 15px rgba(0,0,0,0.4));
+}
+
+.charred-2 {
+  filter: brightness(0.3) sepia(0.6) hue-rotate(-30deg) saturate(2) drop-shadow(0 10px 20px rgba(0,0,0,0.6));
+}
+
+/* Inertia / Pitch Tilting */
+.tilt-up {
+  transform: rotate(-8deg) scale(1.02);
+}
+
+.tilt-down {
+  transform: rotate(8deg) scale(1.02);
+}
+
+/* --- Virtual Joystick Styles --- */
+.joystick-container {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+  z-index: 999;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.joystick-stick {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0%, #cbd5e1 100%);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  position: absolute;
+  transition: transform 0.05s ease-out;
+}
+
+/* --- Scrolling Obstacles (Minion Monsters) --- */
+.scrolling-obstacle {
+  position: absolute;
+  width: 125px;
+  height: 125px;
+  z-index: 15;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+}
+
+.scrolling-obstacle img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* --- Invincibility Flashing --- */
+@keyframes plane-flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.invincible-flash {
+  animation: plane-flash 0.2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.2); }
+}
+
+@keyframes pulse-centered {
+  0% { transform: translate(-50%, -50%) scale(1); }
+  100% { transform: translate(-50%, -50%) scale(1.1); }
+}
+
+/* --- Boss Defeat Crash Animation --- */
+@keyframes boss-fall-crash {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  20% {
+    transform: translate(-20px, -30px) rotate(-15deg);
+  }
+  100% {
+    transform: translate(-150px, 600px) rotate(-220deg);
+    opacity: 0.3;
+  }
+}
+
+.boss-crashing {
+  animation: boss-fall-crash 2.5s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards !important;
+}
+
+/* Boss Smoke / Fire Particles source container */
+.boss-smoke-emitter {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 19;
+}
+
+/* Black smoke and fire particle styling */
+.boss-smoke-particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+/* --- General Question Banner Style --- */
+.general-question-banner {
+  position: absolute;
+  top: 50%;
+  right: 4%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 20px;
+  padding: 22px 28px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  z-index: 20;
+  width: 25%;
+  max-width: 340px;
+  text-align: center;
+  border: 3.5px solid #8f94fb; /* --primary-light */
+  animation: float-question 3s infinite ease-in-out !important;
+}
+
+.general-question-banner .sky-question-text {
+  font-size: 21px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.6;
+  margin: 0;
+}
+
+@keyframes float-question {
+  0%, 100% { transform: translateY(-50%) translateY(0px); }
+  50% { transform: translateY(-50%) translateY(-8px); }
+}
+
+@media (max-width: 920px) {
+  .general-question-banner {
+    top: 70px !important;
+    left: 40% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    width: 44% !important;
+    max-width: 290px !important;
+    padding: 10px 16px !important;
+    border-radius: 14px !important;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2) !important;
+    animation: float-question-mobile 3s infinite ease-in-out !important;
+  }
+  
+  .general-question-banner .sky-question-text {
+    font-size: 15px !important;
+    line-height: 1.4 !important;
+  }
+}
+
+@keyframes float-question-mobile {
+  0%, 100% { transform: translateX(-50%) translateY(0px) !important; }
+  50% { transform: translateX(-50%) translateY(-6px) !important; }
+}
+
+/* --- Obstacle Projectiles/Bullets Styles --- */
+.obstacle-bullet {
+  position: absolute;
+  width: 25px;
+  height: 8px;
+  background: linear-gradient(90deg, #ff4e50, #f9d423);
+  border-radius: 4px;
+  box-shadow: 0 0 10px #ff4e50, 0 0 5px #f9d423, 3px 5px 6px rgba(0, 0, 0, 0.7);
+  z-index: 14;
+  pointer-events: none;
+}
+
+/* --- Player Projectiles/Bullets Styles --- */
+.player-bullet {
+  position: absolute;
+  width: 25px;
+  height: 8px;
+  background: linear-gradient(90deg, #00e5ff, #8f94fb);
+  border-radius: 4px;
+  box-shadow: 0 0 10px #00e5ff, 0 0 5px #8f94fb, 3px 5px 6px rgba(0, 0, 0, 0.7);
+  z-index: 14;
+  pointer-events: none;
+}
+
+/* --- Top Question Bar Style --- */
+.top-question-bar {
+  position: absolute;
+  top: 75px;
+  left: 5%;
+  right: 5%;
+  background: rgba(15, 23, 42, 0.85);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 12px 24px;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  animation: slide-down-bar 0.5s ease-out;
+}
+
+@keyframes slide-down-bar {
+  from { transform: translateY(-50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.top-question-bar .question-content {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  direction: rtl;
+}
+
+.top-question-bar .question-badge {
+  background: linear-gradient(135deg, #4e54c8, #8f94fb);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: 0 4px 10px rgba(78, 84, 200, 0.3);
+}
+
+.top-question-bar .question-text {
+  color: white;
+  font-size: 20px;
+  font-weight: 800;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  font-family: var(--font-arabic);
+}
+
+@media (max-width: 768px) {
+  .top-question-bar {
+    top: 65px;
+    padding: 8px 16px;
+    left: 2%;
+    right: 2%;
+  }
+  .top-question-bar .question-text {
+    font-size: 14px;
+  }
+  .top-question-bar .question-badge {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+}
+
+/* --- Moving Cloud Options Styles --- */
+.clouds-options-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.cloud-option-btn {
+  pointer-events: auto;
+  z-index: 25;
+  transition: transform 0.2s ease, filter 0.3s ease;
+}
+
+.cloud-bubble {
+  position: relative;
+  background: rgba(255, 255, 255, 0.95);
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  color: #1e293b;
+  padding: 14px 28px;
+  border-radius: 50px;
+  font-family: var(--font-arabic);
+  font-size: 18px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15), inset 0 -4px 8px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(5px);
+}
+
+.cloud-bubble::before,
+.cloud-bubble::after {
+  content: '';
+  position: absolute;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  z-index: -1;
+}
+
+.cloud-bubble::before {
+  width: 45px;
+  height: 45px;
+  top: -20px;
+  left: 20px;
+}
+
+.cloud-bubble::after {
+  width: 35px;
+  height: 35px;
+  top: -15px;
+  right: 25px;
+}
+
+.cloud-option-btn.selected-lane .cloud-bubble {
+  border-color: #00e5ff;
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.6), 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.cloud-option-btn.correct .cloud-bubble {
+  background: rgba(46, 196, 182, 0.95);
+  color: white;
+  border-color: #80ed99;
+  box-shadow: 0 0 25px rgba(46, 196, 182, 0.8);
+}
+.cloud-option-btn.correct .cloud-bubble::before,
+.cloud-option-btn.correct .cloud-bubble::after {
+  background: rgba(46, 196, 182, 0.95);
+}
+
+.cloud-option-btn.incorrect .cloud-bubble {
+  background: rgba(231, 29, 54, 0.95);
+  color: white;
+  border-color: #ff85a1;
+  box-shadow: 0 0 25px rgba(231, 29, 54, 0.8);
+}
+.cloud-option-btn.incorrect .cloud-bubble::before,
+.cloud-option-btn.incorrect .cloud-bubble::after {
+  background: rgba(231, 29, 54, 0.95);
+}
+
+.cloud-option-btn.faded {
+  opacity: 0.25;
+  filter: grayscale(80%);
+}
+
+.cloud-badge {
+  background: linear-gradient(135deg, #4e54c8, #8f94fb);
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 900;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.cloud-text {
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .cloud-bubble {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+  .cloud-bubble::before {
+    width: 30px;
+    height: 30px;
+    top: -12px;
+    left: 12px;
+  }
+  .cloud-bubble::after {
+    width: 22px;
+    height: 22px;
+    top: -9px;
+    right: 18px;
+  }
+  .cloud-badge {
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
+  }
+}
+
+/* Inline HUD Question Text */
+.hud-question-text-inline {
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 8px 24px;
+  border-radius: 30px;
+  max-width: 60vw;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25), inset 0 -4px 10px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  line-height: 1.4;
+  white-space: normal;
+  display: inline-block;
+  direction: rtl;
+}
+
+@media (max-width: 768px) {
+  .hud-question-text-inline {
+    font-size: 12px;
+    padding: 4px 10px;
+    max-width: 40vw;
+  }
+}
+
+/* Monster Damage Flash effect */
+.hit-flash {
+  filter: brightness(0.5) sepia(1) hue-rotate(-50deg) saturate(5) drop-shadow(0 0 12px #ff0000) !important;
+  transition: filter 0.05s ease-in-out;
+}
