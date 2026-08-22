@@ -1500,7 +1500,7 @@ function App() {
                 ))}
               </div>
               <div className="hud-stars">
-                <span className="stars-score">⭐ {stars}/10</span>
+                <span className="stars-score">⭐ {stars}/{questions.length}</span>
                 <span style={{ marginRight: '4px' }}>نجوم</span>
               </div>
               <span className="hud-question-number">السؤال {currentQuestionIndex + 1}</span>
