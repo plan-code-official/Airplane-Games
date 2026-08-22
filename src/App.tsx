@@ -82,8 +82,10 @@ function App() {
   }, []);
 
   const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
-  const [gameOverStats, setGameOverStats] = useState<{coins?: number, stars?: number, experience?: number, score?: number, percentage?: number} | null>(null);
+  const [gameOverStats, setGameOverStats] = useState<{ coins?: number, stars?: number, experience?: number, score?: number, percentage?: number } | null>(null);
   const [isStartingSession, setIsStartingSession] = useState(false);
+  const [isSubmittingStats, setIsSubmittingStats] = useState(false);
+  const [submitStatsError, setSubmitStatsError] = useState<string | null>(null);
 
   // Session tracking refs
   const sessionAnswersRef = useRef<{ questionId: number, selectedAnswer: string, timeTaken: number }[]>([]);
@@ -105,12 +107,21 @@ function App() {
       .then(data => {
         if (data.success && data.data && data.data.questions) {
           const mapped: Question[] = data.data.questions.map((q: any) => {
+            let parsedOptions = q.options;
+            if (typeof parsedOptions === 'string') {
+              try { parsedOptions = JSON.parse(parsedOptions); } catch (e) { parsedOptions = []; }
+            }
+            const textOptions = Array.isArray(parsedOptions)
+              ? parsedOptions.map((o: any) => typeof o === 'string' ? o : (o.text || ''))
+              : [];
+
             const correctAnswerText = q.correctAnswer;
-            const answerIndex = q.options.findIndex((o: any) => o.text === correctAnswerText);
+            const answerIndex = textOptions.findIndex((t: string) => t === correctAnswerText);
+
             return {
               id: q.id,
               question: q.question,
-              options: q.options.map((o: any) => o.text),
+              options: textOptions,
               answerIndex: answerIndex >= 0 ? answerIndex : 0,
               category: 'general',
               categoryName: data.data.lessonName
@@ -150,7 +161,7 @@ function App() {
       _setLives(val);
     }
   };
-  
+
   const [planeLane, setPlaneLane] = useState<number>(1);
   const [stars, setStars] = useState<number>(0);
   const starsRef = useRef<number>(0);
@@ -311,11 +322,11 @@ function App() {
     setHasActiveShield(false);
     setSelectedAnswer(null);
     setIsAnswerChecked(false);
-    
+
     heartsRef.current = [];
     setHeartIds([]);
     heartIdCounterRef.current = 0;
-    
+
     weaponDropsRef.current = [];
     setWeaponDropIds([]);
     weaponDropIdCounterRef.current = 0;
@@ -323,7 +334,7 @@ function App() {
     nextUpgradeKillsRef.current = 4;
     weaponLevelRef.current = 1;
     weaponUpgradeTimeRef.current = 0;
-    
+
     shieldDropsRef.current = [];
     setShieldDropIds([]);
     shieldDropIdCounterRef.current = 0;
@@ -742,7 +753,7 @@ function App() {
                     const wId = ++weaponDropIdCounterRef.current;
                     weaponDropsRef.current.push({ id: wId, x: obs.x, y: obs.y });
                     setWeaponDropIds(prev => [...prev, wId]);
-                    
+
                     monstersKilledRef.current = 0;
                     nextUpgradeKillsRef.current = 3 + Math.floor(Math.random() * 4); // next drop after 3 to 6 kills
                   } else if (Math.random() < 0.15) {
@@ -1217,7 +1228,7 @@ function App() {
 
   const handleDamagePlane = () => {
     setPlaneEffect('shake');
-    
+
     setLives(prev => {
       const newLives = prev - 1;
       livesRef.current = newLives;
@@ -1239,9 +1250,11 @@ function App() {
     if (autoAdvanceTimerRef.current) {
       clearTimeout(autoAdvanceTimerRef.current);
     }
-    autoAdvanceTimerRef.current = setTimeout(() => {
-      handleNextQuestion();
-    }, 1200);
+    if (livesRef.current > 0) {
+      autoAdvanceTimerRef.current = setTimeout(() => {
+        handleNextQuestion();
+      }, 1200);
+    }
   };
 
   const handleCheckAnswer = (correct: boolean) => {
@@ -1254,14 +1267,6 @@ function App() {
 
       audio.playSuccess();
       audio.speakText("إجابة صحيحة! أحسنت يا بطل!", 'ar-SA');
-
-      if (starsRef.current >= 10) {
-        // Victory! Trigger flyover
-        setIsFlyingOver(true);
-        audio.playWin();
-        setTimeout(() => handleEndGame(true), 2500);
-        return;
-      }
     }
 
     setTimeout(() => {
@@ -1296,13 +1301,9 @@ function App() {
         audio.speakText(questionsRef.current[nextIndex].question, 'ar-SA');
       }, 300);
     } else {
-      const shuffled = [...questionsRef.current].sort(() => Math.random() - 0.5);
-      setQuestions(shuffled);
-      setCurrentQuestionIndex(0);
-      initClouds(shuffled[0]);
-      setTimeout(() => {
-        audio.speakText(shuffled[0].question, 'ar-SA');
-      }, 300);
+      setIsFlyingOver(true);
+      audio.playWin();
+      setTimeout(() => handleEndGame(true), 2500);
     }
   };
 
@@ -1313,6 +1314,8 @@ function App() {
     audio.stopEngine();
 
     if (currentSessionId) {
+      setIsSubmittingStats(true);
+      setSubmitStatsError(null);
       try {
         await submitGameAnswers(currentSessionId, sessionAnswersRef.current, token);
         const res = await completeGameSession(currentSessionId, token);
@@ -1324,9 +1327,14 @@ function App() {
             score: res.data.score,
             percentage: res.data.percentage
           });
+        } else {
+          setSubmitStatsError("فشل في جلب النتائج. يرجى المحاولة مرة أخرى.");
         }
       } catch (e) {
         console.error("Error submitting answers or completing session", e);
+        setSubmitStatsError("حدث خطأ أثناء حفظ النتائج. يرجى المحاولة لاحقاً.");
+      } finally {
+        setIsSubmittingStats(false);
       }
     }
 
@@ -1407,7 +1415,7 @@ function App() {
             <h1 className="welcome-title">مغامرة الطائرة الفضائية ✈️🚀</h1>
             <p className="welcome-subtitle">
               أطلق شعاع الليزر على الإجابة الصحيحة لتسجيل النقاط!
-              تجنب الاصطدام بالعقبات الفضائية الطائرة وأجب على 10 أسئلة بشكل صحيح للفوز.
+              تجنب الاصطدام بالعقبات الفضائية الطائرة وأجب على {apiQuestions.length} أسئلة بشكل صحيح للفوز.
             </p>
 
             {isLoadingQuestions ? (
@@ -1644,7 +1652,7 @@ function App() {
 
             {/* Glowing 3D Glass Sphere Shield Effect */}
             {hasActiveShield && (
-              <div 
+              <div
                 style={{
                   position: 'absolute',
                   top: '50%',
@@ -1797,75 +1805,92 @@ function App() {
       {gameState === 'gameover' && (
         <div className="game-over-screen">
           <div className="result-card">
-            {stars >= 10 ? (
-              <>
-                <span className="result-badge">🏆✈️✨</span>
-                <h2 className="result-title win">أنت بطل حقيقي!</h2>
-                <p className="result-desc">
-                  لقد استطعت الإجابة بذكاء وتجنب جميع العقبات الفضائية بنجاح!
-                </p>
-              </>
+            {isSubmittingStats ? (
+              <div style={{ padding: '2rem', textAlign: 'center', color: '#fff' }}>
+                <h2 style={{ fontSize: '1.8rem', marginBottom: '1rem' }}>جاري حفظ النتائج... ⏳</h2>
+                <div className="loading-spinner" style={{ width: '40px', height: '40px', border: '4px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto' }}></div>
+              </div>
+            ) : submitStatsError ? (
+              <div style={{ padding: '2rem', textAlign: 'center', color: '#fff' }}>
+                <h2 style={{ fontSize: '2rem', marginBottom: '1rem', color: '#ef4444' }}>⚠️ خطأ</h2>
+                <p>{submitStatsError}</p>
+                <button className="retry-btn" onClick={handleBackToMenu} style={{ background: '#64748b', boxShadow: 'none', marginTop: '1rem' }}>
+                  العودة للشاشة الرئيسية 🏠
+                </button>
+              </div>
             ) : (
               <>
-                <span className="result-badge">🔥💥🥺</span>
-                <h2 className="result-title lose">الطائرة تفحمت!</h2>
-                <p className="result-desc">
-                  أصيبت طائرتك بالعقبات الفضائية ونفذت محاولاتك. حاول مرة أخرى!
-                </p>
+                {lives > 0 ? (
+                  <>
+                    <span className="result-badge">🏆✈️✨</span>
+                    <h2 className="result-title win">أنت بطل حقيقي!</h2>
+                    <p className="result-desc">
+                      لقد استطعت الإجابة بذكاء وتجنب جميع العقبات الفضائية بنجاح!
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <span className="result-badge">🔥💥🥺</span>
+                    <h2 className="result-title lose">الطائرة تفحمت!</h2>
+                    <p className="result-desc">
+                      أصيبت طائرتك بالعقبات الفضائية ونفذت محاولاتك. حاول مرة أخرى!
+                    </p>
+                  </>
+                )}
+
+                <div className="result-stats">
+                  <div className="stat-item">
+                    <span className="stat-val">⭐ {stars}/{questions.length}</span>
+                    <span className="stat-lbl">الإجابات الصحيحة</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-val">{lives}/3</span>
+                    <span className="stat-lbl">القلوب المتبقية</span>
+                  </div>
+
+                  {gameOverStats && gameOverStats.score !== undefined && (
+                    <div className="stat-item" style={{ background: 'linear-gradient(135deg, #ec4899, #be185d)' }}>
+                      <span className="stat-val">🎯 {gameOverStats.score}</span>
+                      <span className="stat-lbl">إجمالي النقاط</span>
+                    </div>
+                  )}
+                  {gameOverStats && gameOverStats.percentage !== undefined && (
+                    <div className="stat-item" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' }}>
+                      <span className="stat-val">📊 %{gameOverStats.percentage}</span>
+                      <span className="stat-lbl">النسبة المئوية</span>
+                    </div>
+                  )}
+
+                  {gameOverStats && gameOverStats.coins !== undefined && (
+                    <div className="stat-item" style={{ background: 'linear-gradient(135deg, #ffd700, #f59e0b)', color: '#000' }}>
+                      <span className="stat-val">🪙 {gameOverStats.coins}</span>
+                      <span className="stat-lbl">عملات مكتسبة</span>
+                    </div>
+                  )}
+                  {gameOverStats && gameOverStats.stars !== undefined && gameOverStats.stars > 0 && (
+                    <div className="stat-item" style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}>
+                      <span className="stat-val">🌟 +{gameOverStats.stars}</span>
+                      <span className="stat-lbl">نجوم إضافية</span>
+                    </div>
+                  )}
+                  {gameOverStats && gameOverStats.experience !== undefined && (
+                    <div className="stat-item" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+                      <span className="stat-val">⚡ {gameOverStats.experience}</span>
+                      <span className="stat-lbl">نقاط خبرة</span>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+                  <button className="retry-btn" onClick={() => startGame(selectedCategory)}>
+                    العب مرة أخرى 🔄
+                  </button>
+                  <button className="retry-btn" onClick={handleBackToMenu} style={{ background: '#64748b', boxShadow: 'none' }}>
+                    العودة للشاشة الرئيسية 🏠
+                  </button>
+                </div>
               </>
             )}
-
-            <div className="result-stats">
-              <div className="stat-item">
-                <span className="stat-val">⭐ {stars}</span>
-                <span className="stat-lbl">النجوم المكتسبة باللعبة</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-val">{lives}/3</span>
-                <span className="stat-lbl">القلوب المتبقية</span>
-              </div>
-              
-              {gameOverStats && gameOverStats.score !== undefined && (
-                <div className="stat-item" style={{ background: 'linear-gradient(135deg, #ec4899, #be185d)' }}>
-                  <span className="stat-val">🎯 {gameOverStats.score}</span>
-                  <span className="stat-lbl">إجمالي النقاط</span>
-                </div>
-              )}
-              {gameOverStats && gameOverStats.percentage !== undefined && (
-                <div className="stat-item" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' }}>
-                  <span className="stat-val">📊 %{gameOverStats.percentage}</span>
-                  <span className="stat-lbl">النسبة المئوية</span>
-                </div>
-              )}
-              
-              {gameOverStats && gameOverStats.coins !== undefined && (
-                <div className="stat-item" style={{ background: 'linear-gradient(135deg, #ffd700, #f59e0b)', color: '#000' }}>
-                  <span className="stat-val">🪙 {gameOverStats.coins}</span>
-                  <span className="stat-lbl">عملات مكتسبة</span>
-                </div>
-              )}
-              {gameOverStats && gameOverStats.stars !== undefined && gameOverStats.stars > 0 && (
-                <div className="stat-item" style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}>
-                  <span className="stat-val">🌟 +{gameOverStats.stars}</span>
-                  <span className="stat-lbl">نجوم إضافية</span>
-                </div>
-              )}
-              {gameOverStats && gameOverStats.experience !== undefined && (
-                <div className="stat-item" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
-                  <span className="stat-val">⚡ {gameOverStats.experience}</span>
-                  <span className="stat-lbl">نقاط خبرة</span>
-                </div>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
-              <button className="retry-btn" onClick={() => startGame(selectedCategory)}>
-                العب مرة أخرى 🔄
-              </button>
-              <button className="retry-btn" onClick={handleBackToMenu} style={{ background: '#64748b', boxShadow: 'none' }}>
-                العودة للشاشة الرئيسية 🏠
-              </button>
-            </div>
           </div>
         </div>
       )}
