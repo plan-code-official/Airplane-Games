@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { type Question, getQuestionsByCategory } from './data/questions';
 import { audio } from './utils/audio';
+import { getGameQuestions, startGameSession, submitGameAnswers, completeGameSession } from './utils/gameApi';
 
 interface Particle {
   id: number;
@@ -72,6 +73,22 @@ interface ShieldDrop {
 
 
 function App() {
+  const { lessonId, token } = useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      lessonId: params.get('lessonId'),
+      token: params.get('token')
+    };
+  }, []);
+
+  const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
+  const [gameOverStats, setGameOverStats] = useState<{coins?: number, stars?: number, experience?: number, score?: number, percentage?: number} | null>(null);
+  const [isStartingSession, setIsStartingSession] = useState(false);
+
+  // Session tracking refs
+  const sessionAnswersRef = useRef<{ questionId: number, selectedAnswer: string, timeTaken: number }[]>([]);
+  const questionStartTimeRef = useRef<number>(0);
+
   // Game Configuration & Play State
   const [gameState, setGameState] = useState<'welcome' | 'playing' | 'gameover'>('welcome');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -79,22 +96,12 @@ function App() {
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const lessonId = searchParams.get('lessonId') || '2';
-    const token = searchParams.get('token');
-
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json'
-    };
-
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+    if (!lessonId) {
+      setIsLoadingQuestions(false);
+      return;
     }
 
-    fetch(`https://learning-platform-1euu.onrender.com/api/v1/student/games/3/questions?lessonId=${lessonId}`, {
-      headers
-    })
-      .then(res => res.json())
+    getGameQuestions(3, lessonId, token)
       .then(data => {
         if (data.success && data.data && data.data.questions) {
           const mapped: Question[] = data.data.questions.map((q: any) => {
@@ -114,7 +121,7 @@ function App() {
       })
       .catch(err => console.error("Error fetching questions:", err))
       .finally(() => setIsLoadingQuestions(false));
-  }, []);
+  }, [lessonId, token]);
   const [questions, _setQuestions] = useState<Question[]>([]);
   const questionsRef = useRef<Question[]>([]);
   const setQuestions = (q: Question[]) => {
@@ -255,10 +262,22 @@ function App() {
     }));
   };
 
-  const startGame = (category: string) => {
+  const startGame = async (category: string) => {
     if (autoAdvanceTimerRef.current) {
       clearTimeout(autoAdvanceTimerRef.current);
       autoAdvanceTimerRef.current = null;
+    }
+
+    try {
+      setIsStartingSession(true);
+      const sessionResult = await startGameSession(3, lessonId, token);
+      if (sessionResult.success && sessionResult.data) {
+        setCurrentSessionId(sessionResult.data.id);
+      }
+    } catch (e) {
+      console.error("Failed to start session:", e);
+    } finally {
+      setIsStartingSession(false);
     }
 
     setSelectedCategory(category);
@@ -312,6 +331,9 @@ function App() {
     setIsFlyingOver(false);
     setMovementDir('none');
     setGameState('playing');
+
+    sessionAnswersRef.current = [];
+    questionStartTimeRef.current = Date.now();
 
     if (shuffled.length > 0) {
       initClouds(shuffled[0]);
@@ -1113,6 +1135,13 @@ function App() {
     const currentQuestion = questionsRef.current[currentQuestionIndexRef.current];
     const correct = cloud.idx === currentQuestion.answerIndex;
 
+    const timeTaken = Math.floor((Date.now() - questionStartTimeRef.current) / 1000);
+    sessionAnswersRef.current.push({
+      questionId: currentQuestion.id,
+      selectedAnswer: cloud.text,
+      timeTaken
+    });
+
     const cloudEl = document.getElementById(`cloud-option-${cloud.idx}`);
     let explodeX = window.innerWidth * 0.7;
     let explodeY = window.innerHeight * 0.5;
@@ -1255,6 +1284,7 @@ function App() {
 
     setSelectedAnswer(null);
     setIsAnswerChecked(false);
+    questionStartTimeRef.current = Date.now();
 
 
     const currentQIdx = currentQuestionIndexRef.current;
@@ -1276,11 +1306,30 @@ function App() {
     }
   };
 
-  const handleEndGame = (won: boolean) => {
+  const handleEndGame = async (won: boolean) => {
     stopAutoFire();
     setGameState('gameover');
     setIsFlyingOver(false);
     audio.stopEngine();
+
+    if (currentSessionId) {
+      try {
+        await submitGameAnswers(currentSessionId, sessionAnswersRef.current, token);
+        const res = await completeGameSession(currentSessionId, token);
+        if (res.success && res.data) {
+          setGameOverStats({
+            coins: res.data.coins,
+            stars: res.data.stars,
+            experience: res.data.experience,
+            score: res.data.score,
+            percentage: res.data.percentage
+          });
+        }
+      } catch (e) {
+        console.error("Error submitting answers or completing session", e);
+      }
+    }
+
     if (won) {
       audio.speakText("رائع! لقد نجحت في إنهاء جميع الأسئلة وتجنب العقبات بنجاح، أنت بطل حقيقي!", 'ar-SA');
     } else {
@@ -1290,6 +1339,8 @@ function App() {
   };
 
   const handleBackToMenu = () => {
+    setGameOverStats(null);
+    setCurrentSessionId(null);
     stopAutoFire();
     if (autoAdvanceTimerRef.current) {
       clearTimeout(autoAdvanceTimerRef.current);
@@ -1362,8 +1413,8 @@ function App() {
             {isLoadingQuestions ? (
               <p style={{ textAlign: 'center', fontSize: '1.2rem', color: '#fff', margin: '1rem 0' }}>جاري تحميل الأسئلة...</p>
             ) : apiQuestions.length > 0 ? (
-              <button className="start-btn" onClick={() => startGame('all')}>
-                ابدأ المغامرة الآن! 🚀
+              <button className="start-btn" onClick={() => startGame('all')} disabled={isStartingSession}>
+                {isStartingSession ? 'جاري بدء اللعب...' : 'ابدأ المغامرة الآن! 🚀'}
               </button>
             ) : (
               <>
@@ -1377,8 +1428,8 @@ function App() {
                   </div>
                 </div>
 
-                <button className="start-btn" onClick={() => startGame(selectedCategory)}>
-                  ابدأ المغامرة الآن! 🚀
+                <button className="start-btn" onClick={() => startGame(selectedCategory)} disabled={isStartingSession}>
+                  {isStartingSession ? 'جاري بدء اللعب...' : 'ابدأ المغامرة الآن! 🚀'}
                 </button>
               </>
             )}
@@ -1767,12 +1818,44 @@ function App() {
             <div className="result-stats">
               <div className="stat-item">
                 <span className="stat-val">⭐ {stars}</span>
-                <span className="stat-lbl">النجوم</span>
+                <span className="stat-lbl">النجوم المكتسبة باللعبة</span>
               </div>
               <div className="stat-item">
                 <span className="stat-val">{lives}/3</span>
                 <span className="stat-lbl">القلوب المتبقية</span>
               </div>
+              
+              {gameOverStats && gameOverStats.score !== undefined && (
+                <div className="stat-item" style={{ background: 'linear-gradient(135deg, #ec4899, #be185d)' }}>
+                  <span className="stat-val">🎯 {gameOverStats.score}</span>
+                  <span className="stat-lbl">إجمالي النقاط</span>
+                </div>
+              )}
+              {gameOverStats && gameOverStats.percentage !== undefined && (
+                <div className="stat-item" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' }}>
+                  <span className="stat-val">📊 %{gameOverStats.percentage}</span>
+                  <span className="stat-lbl">النسبة المئوية</span>
+                </div>
+              )}
+              
+              {gameOverStats && gameOverStats.coins !== undefined && (
+                <div className="stat-item" style={{ background: 'linear-gradient(135deg, #ffd700, #f59e0b)', color: '#000' }}>
+                  <span className="stat-val">🪙 {gameOverStats.coins}</span>
+                  <span className="stat-lbl">عملات مكتسبة</span>
+                </div>
+              )}
+              {gameOverStats && gameOverStats.stars !== undefined && gameOverStats.stars > 0 && (
+                <div className="stat-item" style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}>
+                  <span className="stat-val">🌟 +{gameOverStats.stars}</span>
+                  <span className="stat-lbl">نجوم إضافية</span>
+                </div>
+              )}
+              {gameOverStats && gameOverStats.experience !== undefined && (
+                <div className="stat-item" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+                  <span className="stat-val">⚡ {gameOverStats.experience}</span>
+                  <span className="stat-lbl">نقاط خبرة</span>
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
