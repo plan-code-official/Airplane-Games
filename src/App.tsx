@@ -1347,25 +1347,7 @@ function App() {
   };
 
   const handleBackToMenu = () => {
-    setGameOverStats(null);
-    setCurrentSessionId(null);
-    stopAutoFire();
-    if (autoAdvanceTimerRef.current) {
-      clearTimeout(autoAdvanceTimerRef.current);
-      autoAdvanceTimerRef.current = null;
-    }
-    obstacleBulletsRef.current = [];
-    setBulletIds([]);
-    bulletIdCounterRef.current = 0;
-
-    playerBulletsRef.current = [];
-    setPlayerBulletIds([]);
-    playerBulletIdCounterRef.current = 0;
-    cloudsRef.current = [];
-
-    setGameState('welcome');
-    setIsFlyingOver(false);
-    audio.stopEngine();
+    window.location.href = "https://frontend-six-xi-37.vercel.app/";
   };
 
   const currentQuestion = questions[currentQuestionIndex];
@@ -1839,42 +1821,42 @@ function App() {
                 )}
 
                 <div className="result-stats">
-                  <div className="stat-item">
+                  <div className="stat-item base-stat">
                     <span className="stat-val">⭐ {stars}/{questions.length}</span>
                     <span className="stat-lbl">الإجابات الصحيحة</span>
                   </div>
-                  <div className="stat-item">
-                    <span className="stat-val">{lives}/3</span>
+                  <div className="stat-item base-stat">
+                    <span className="stat-val">❤️ {lives}/3</span>
                     <span className="stat-lbl">القلوب المتبقية</span>
                   </div>
 
                   {gameOverStats && gameOverStats.score !== undefined && (
-                    <div className="stat-item" style={{ background: 'linear-gradient(135deg, #ec4899, #be185d)' }}>
+                    <div className="stat-item score-stat">
                       <span className="stat-val">🎯 {gameOverStats.score}</span>
                       <span className="stat-lbl">إجمالي النقاط</span>
                     </div>
                   )}
                   {gameOverStats && gameOverStats.percentage !== undefined && (
-                    <div className="stat-item" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' }}>
+                    <div className="stat-item percentage-stat">
                       <span className="stat-val">📊 %{gameOverStats.percentage}</span>
                       <span className="stat-lbl">النسبة المئوية</span>
                     </div>
                   )}
 
                   {gameOverStats && gameOverStats.coins !== undefined && (
-                    <div className="stat-item" style={{ background: 'linear-gradient(135deg, #ffd700, #f59e0b)', color: '#000' }}>
+                    <div className="stat-item coins-stat">
                       <span className="stat-val">🪙 {gameOverStats.coins}</span>
                       <span className="stat-lbl">عملات مكتسبة</span>
                     </div>
                   )}
                   {gameOverStats && gameOverStats.stars !== undefined && gameOverStats.stars > 0 && (
-                    <div className="stat-item" style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}>
+                    <div className="stat-item stars-stat">
                       <span className="stat-val">🌟 +{gameOverStats.stars}</span>
                       <span className="stat-lbl">نجوم إضافية</span>
                     </div>
                   )}
                   {gameOverStats && gameOverStats.experience !== undefined && (
-                    <div className="stat-item" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+                    <div className="stat-item exp-stat">
                       <span className="stat-val">⚡ {gameOverStats.experience}</span>
                       <span className="stat-lbl">نقاط خبرة</span>
                     </div>
