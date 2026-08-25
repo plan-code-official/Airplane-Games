@@ -357,13 +357,10 @@ function App() {
     audio.startEngine(50);
 
     setTimeout(() => {
-      audio.speakText("مرحباً بك! لنبدأ المغامرة. وجّه الطائرة للاصطدام بالسحابة الصحيحة التي تحمل الإجابة، وحارب الوحوش بالضغط على زر إطلاق!", 'ar-SA');
       if (shuffled.length > 0) {
-        setTimeout(() => {
-          audio.speakText(shuffled[0].question, 'ar-SA', shuffled[0].audioUrl);
-        }, 5500);
+        audio.speakText(shuffled[0].question, 'ar-SA', shuffled[0].audioUrl);
       }
-    }, 500);
+    }, 1000);
   };
 
   const toggleMute = () => {
@@ -1300,7 +1297,7 @@ function App() {
       initClouds(questionsRef.current[nextIndex]);
       setTimeout(() => {
         audio.speakText(questionsRef.current[nextIndex].question, 'ar-SA', questionsRef.current[nextIndex].audioUrl);
-      }, 300);
+      }, 1000);
     } else {
       setIsFlyingOver(true);
       audio.playWin();
