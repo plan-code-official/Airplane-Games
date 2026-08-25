@@ -1465,8 +1465,31 @@ function App() {
             </div>
             <div className="hud-center">
               {currentQuestion && !isFlyingOver && (
-                <div className="hud-question-text-inline">
-                  {currentQuestion.question}
+                <div className="hud-question-text-inline" style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+                  {currentQuestion.audioUrl && (
+                    <button 
+                      className="play-audio-btn" 
+                      onClick={() => audio.speakText(currentQuestion.question, 'ar-SA', currentQuestion.audioUrl)}
+                      style={{ 
+                        background: 'rgba(255, 255, 255, 0.2)', 
+                        border: '1px solid rgba(255,255,255,0.4)', 
+                        borderRadius: '50%', 
+                        cursor: 'pointer', 
+                        fontSize: '20px', 
+                        width: '36px', 
+                        height: '36px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        color: 'white',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                      }}
+                      title="استمع للسؤال"
+                    >
+                      ▶️
+                    </button>
+                  )}
+                  <span>{currentQuestion.question}</span>
                 </div>
               )}
             </div>
