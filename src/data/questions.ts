@@ -5,6 +5,7 @@ export interface Question {
   answerIndex: number;
   category: 'math' | 'science' | 'general';
   categoryName: string;
+  audioUrl?: string | null;
 }
 
 export const QUESTIONS: Question[] = [

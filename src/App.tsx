@@ -124,7 +124,8 @@ function App() {
               options: textOptions,
               answerIndex: answerIndex >= 0 ? answerIndex : 0,
               category: 'general',
-              categoryName: data.data.lessonName
+              categoryName: data.data.lessonName,
+              audioUrl: q.audioUrl || null
             };
           });
           setApiQuestions(mapped);
@@ -359,7 +360,7 @@ function App() {
       audio.speakText("مرحباً بك! لنبدأ المغامرة. وجّه الطائرة للاصطدام بالسحابة الصحيحة التي تحمل الإجابة، وحارب الوحوش بالضغط على زر إطلاق!", 'ar-SA');
       if (shuffled.length > 0) {
         setTimeout(() => {
-          audio.speakText(shuffled[0].question, 'ar-SA');
+          audio.speakText(shuffled[0].question, 'ar-SA', shuffled[0].audioUrl);
         }, 5500);
       }
     }, 500);
@@ -1298,7 +1299,7 @@ function App() {
       setCurrentQuestionIndex(nextIndex);
       initClouds(questionsRef.current[nextIndex]);
       setTimeout(() => {
-        audio.speakText(questionsRef.current[nextIndex].question, 'ar-SA');
+        audio.speakText(questionsRef.current[nextIndex].question, 'ar-SA', questionsRef.current[nextIndex].audioUrl);
       }, 300);
     } else {
       setIsFlyingOver(true);

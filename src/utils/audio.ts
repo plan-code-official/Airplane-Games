@@ -270,10 +270,28 @@ class AudioSystem {
     noise.stop(now + 0.4);
   }
 
-  speakText(text: string, langCode: string = 'ar-SA') {
+  speakText(text: string, langCode: string = 'ar-SA', audioUrl?: string | null) {
     if (this.isMuted) return;
     try {
       window.speechSynthesis.cancel(); // Stop any ongoing speech
+
+      if (audioUrl) {
+        const audioObj = new Audio(audioUrl);
+        audioObj.play().catch(e => {
+          console.error("Audio playback failed:", e);
+          this.fallbackToTTS(text, langCode);
+        });
+        return;
+      }
+
+      this.fallbackToTTS(text, langCode);
+    } catch (e) {
+      console.error("Speech synthesis/audio failed:", e);
+    }
+  }
+
+  private fallbackToTTS(text: string, langCode: string) {
+    try {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = langCode;
       utterance.rate = 0.9; // Slightly slower for kids
@@ -290,7 +308,7 @@ class AudioSystem {
       
       window.speechSynthesis.speak(utterance);
     } catch (e) {
-      console.error("Speech synthesis failed:", e);
+      console.error("TTS fallback failed:", e);
     }
   }
 }
