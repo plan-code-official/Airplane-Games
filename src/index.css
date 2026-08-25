@@ -45,40 +45,93 @@ body {
 
 /* Animations */
 @keyframes float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-10px) rotate(1deg); }
+
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-10px) rotate(1deg);
+  }
 }
 
 @keyframes cloud-move {
-  from { transform: translateX(100%); }
-  to { transform: translateX(-100vw); }
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(-100vw);
+  }
 }
 
 @keyframes cloud-move-reverse {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(100vw); }
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(100vw);
+  }
 }
 
 @keyframes shake {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  20%, 60% { transform: translate(-5px, 0) rotate(-2deg); }
-  40%, 80% { transform: translate(5px, 0) rotate(2deg); }
+
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+
+  20%,
+  60% {
+    transform: translate(-5px, 0) rotate(-2deg);
+  }
+
+  40%,
+  80% {
+    transform: translate(5px, 0) rotate(2deg);
+  }
 }
 
 @keyframes engine-glow {
-  0%, 100% { transform: scale(1); opacity: 0.8; }
-  50% { transform: scale(1.2); opacity: 1; }
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
 }
 
 @keyframes pulse-btn {
-  0% { box-shadow: 0 0 0 0 rgba(78, 84, 200, 0.7); }
-  70% { box-shadow: 0 0 0 15px rgba(78, 84, 200, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(78, 84, 200, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(78, 84, 200, 0.7);
+  }
+
+  70% {
+    box-shadow: 0 0 0 15px rgba(78, 84, 200, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(78, 84, 200, 0);
+  }
 }
 
 @keyframes star-twinkle {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
+
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 /* Game Layout */
@@ -105,8 +158,13 @@ body {
 }
 
 @keyframes scroll-sky {
-  from { background-position-x: 0; }
-  to { background-position-x: -2500px; }
+  from {
+    background-position-x: 0;
+  }
+
+  to {
+    background-position-x: -2500px;
+  }
 }
 
 /* Stars for Space layer - hidden in day mode */
@@ -126,7 +184,8 @@ body {
   background-repeat: repeat-x;
   background-size: 1500px 45vh;
   background-position: bottom;
-  z-index: 4; /* Behind the plane */
+  z-index: 4;
+  /* Behind the plane */
   pointer-events: none;
   opacity: 0.6;
   filter: blur(2px) brightness(0.8);
@@ -134,8 +193,13 @@ body {
 }
 
 @keyframes scroll-buildings-bg {
-  from { background-position-x: 0; }
-  to { background-position-x: -1500px; }
+  from {
+    background-position-x: 0;
+  }
+
+  to {
+    background-position-x: -1500px;
+  }
 }
 
 .buildings-layer-fg {
@@ -149,15 +213,21 @@ body {
   background-repeat: repeat-x;
   background-size: 2000px 65vh;
   background-position: bottom;
-  z-index: 8; /* Behind the plane to prevent covering the questions/plane! */
+  z-index: 8;
+  /* Behind the plane to prevent covering the questions/plane! */
   pointer-events: none;
   opacity: 0.95;
   animation: scroll-buildings-fg 20s linear infinite;
 }
 
 @keyframes scroll-buildings-fg {
-  from { background-position-x: 0; }
-  to { background-position-x: -2000px; }
+  from {
+    background-position-x: 0;
+  }
+
+  to {
+    background-position-x: -2000px;
+  }
 }
 
 .star {
@@ -191,7 +261,8 @@ body {
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
 }
 
-.cloud::before, .cloud::after {
+.cloud::before,
+.cloud::after {
   content: '';
   position: absolute;
   background-color: rgba(255, 255, 255, 0.85);
@@ -203,12 +274,14 @@ body {
   height: 50px;
   animation: cloud-move 25s infinite linear;
 }
+
 .cloud-type-1::before {
   width: 70px;
   height: 70px;
   top: -30px;
   left: 20px;
 }
+
 .cloud-type-1::after {
   width: 50px;
   height: 50px;
@@ -222,12 +295,14 @@ body {
   animation: cloud-move 40s infinite linear;
   animation-delay: -5s;
 }
+
 .cloud-type-2::before {
   width: 100px;
   height: 100px;
   top: -45px;
   left: 30px;
 }
+
 .cloud-type-2::after {
   width: 70px;
   height: 70px;
@@ -240,12 +315,14 @@ body {
   height: 40px;
   animation: cloud-move-reverse 30s infinite linear;
 }
+
 .cloud-type-3::before {
   width: 55px;
   height: 55px;
   top: -25px;
   left: 15px;
 }
+
 .cloud-type-3::after {
   width: 40px;
   height: 40px;
@@ -311,18 +388,36 @@ body {
   height: 90px;
   background-color: #fefae0;
   border-radius: 50%;
-  box-shadow: 0 0 30px #fefae0, inset -10px -10px 0 rgba(0,0,0,0.05);
+  box-shadow: 0 0 30px #fefae0, inset -10px -10px 0 rgba(0, 0, 0, 0.05);
   position: relative;
 }
 
 .crater {
   position: absolute;
-  background-color: rgba(0,0,0,0.05);
+  background-color: rgba(0, 0, 0, 0.05);
   border-radius: 50%;
 }
-.crater-1 { width: 15px; height: 15px; top: 20px; left: 25px; }
-.crater-2 { width: 25px; height: 25px; top: 40px; left: 45px; }
-.crater-3 { width: 10px; height: 10px; top: 50px; left: 20px; }
+
+.crater-1 {
+  width: 15px;
+  height: 15px;
+  top: 20px;
+  left: 25px;
+}
+
+.crater-2 {
+  width: 25px;
+  height: 25px;
+  top: 40px;
+  left: 45px;
+}
+
+.crater-3 {
+  width: 10px;
+  height: 10px;
+  top: 50px;
+  left: 20px;
+}
 
 /* The Airplane Sprite */
 .airplane-wrapper {
@@ -516,7 +611,7 @@ body {
   color: #1e293b;
   border-radius: 24px;
   padding: 30px 25px;
-  box-shadow: var(--shadow-lg), inset 0 -5px 0 rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-lg), inset 0 -5px 0 rgba(0, 0, 0, 0.1);
   border: 2px solid white;
   text-align: center;
   position: relative;
@@ -536,7 +631,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .question-text {
@@ -561,7 +656,7 @@ body {
   justify-content: center;
   margin-top: 15px;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .tts-button:hover {
@@ -644,8 +739,13 @@ body {
   margin-top: 10px;
 }
 
-.feedback-msg.correct { color: var(--success); }
-.feedback-msg.incorrect { color: var(--danger); }
+.feedback-msg.correct {
+  color: var(--success);
+}
+
+.feedback-msg.incorrect {
+  color: var(--danger);
+}
 
 /* Progress bar inside panel */
 .progress-panel {
@@ -806,8 +906,13 @@ body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .result-card {
@@ -821,7 +926,7 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 32px;
   padding: 25px 25px;
-  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.4), inset 0 0 0 2px rgba(255,255,255,0.2);
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.4), inset 0 0 0 2px rgba(255, 255, 255, 0.2);
   text-align: center;
   color: #0f172a;
   display: flex;
@@ -835,23 +940,27 @@ body {
 .result-card::-webkit-scrollbar {
   width: 6px;
 }
+
 .result-card::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .result-card::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,0.15);
+  background: rgba(0, 0, 0, 0.15);
   border-radius: 10px;
 }
 
 @keyframes slideUp {
-  to { transform: translateY(0); }
+  to {
+    transform: translateY(0);
+  }
 }
 
 .result-badge {
   font-size: 55px;
   margin-bottom: 0px;
   animation: float 2.5s infinite ease-in-out;
-  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2));
+  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.2));
 }
 
 .result-title {
@@ -909,7 +1018,7 @@ body {
   font-size: 20px;
   font-weight: 900;
   font-family: var(--font-english);
-  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .stat-lbl {
@@ -924,31 +1033,40 @@ body {
   color: #334155;
   border: 1px solid #cbd5e1;
 }
+
 .base-stat .stat-lbl {
   color: #64748b;
 }
+
 .base-stat .stat-val {
   text-shadow: none;
 }
+
 .score-stat {
   background: linear-gradient(135deg, #ec4899, #be185d);
 }
+
 .percentage-stat {
   background: linear-gradient(135deg, #8b5cf6, #6d28d9);
 }
+
 .coins-stat {
   background: linear-gradient(135deg, #fcd34d, #d97706);
   color: #451a03;
 }
+
 .coins-stat .stat-lbl {
   color: #78350f;
 }
+
 .coins-stat .stat-val {
   text-shadow: none;
 }
+
 .stars-stat {
   background: linear-gradient(135deg, #3b82f6, #2563eb);
 }
+
 .exp-stat {
   background: linear-gradient(135deg, #10b981, #059669);
 }
@@ -1245,17 +1363,62 @@ body {
     background-size: 700px 30vh;
   }
 
-  .cloud-type-1 { width: 80px; height: 28px; }
-  .cloud-type-1::before { width: 40px; height: 40px; top: -18px; left: 10px; }
-  .cloud-type-1::after { width: 30px; height: 30px; top: -12px; right: 12px; }
+  .cloud-type-1 {
+    width: 80px;
+    height: 28px;
+  }
 
-  .cloud-type-2 { width: 120px; height: 40px; }
-  .cloud-type-2::before { width: 55px; height: 55px; top: -25px; left: 15px; }
-  .cloud-type-2::after { width: 40px; height: 40px; top: -15px; right: 20px; }
+  .cloud-type-1::before {
+    width: 40px;
+    height: 40px;
+    top: -18px;
+    left: 10px;
+  }
 
-  .cloud-type-3 { width: 70px; height: 24px; }
-  .cloud-type-3::before { width: 30px; height: 30px; top: -14px; left: 8px; }
-  .cloud-type-3::after { width: 22px; height: 22px; top: -10px; right: 10px; }
+  .cloud-type-1::after {
+    width: 30px;
+    height: 30px;
+    top: -12px;
+    right: 12px;
+  }
+
+  .cloud-type-2 {
+    width: 120px;
+    height: 40px;
+  }
+
+  .cloud-type-2::before {
+    width: 55px;
+    height: 55px;
+    top: -25px;
+    left: 15px;
+  }
+
+  .cloud-type-2::after {
+    width: 40px;
+    height: 40px;
+    top: -15px;
+    right: 20px;
+  }
+
+  .cloud-type-3 {
+    width: 70px;
+    height: 24px;
+  }
+
+  .cloud-type-3::before {
+    width: 30px;
+    height: 30px;
+    top: -14px;
+    left: 8px;
+  }
+
+  .cloud-type-3::after {
+    width: 22px;
+    height: 22px;
+    top: -10px;
+    right: 10px;
+  }
 
   /* Welcome Screen */
   .welcome-screen {
@@ -1351,7 +1514,7 @@ body {
   .question-card {
     padding: 14px 12px;
     border-radius: 16px;
-    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.08), inset 0 -3px 0 rgba(0,0,0,0.08);
+    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.08), inset 0 -3px 0 rgba(0, 0, 0, 0.08);
   }
 
   .question-card::before {
@@ -1500,12 +1663,16 @@ body {
     font-size: 14px;
   }
 
-  .hud-back-btn, .hud-category, .hud-stars, .hud-question-number {
+  .hud-back-btn,
+  .hud-category,
+  .hud-stars,
+  .hud-question-number {
     font-size: 11px;
     padding: 4px 10px;
   }
 
-  .hud-left, .hud-right {
+  .hud-left,
+  .hud-right {
     gap: 6px;
   }
 
@@ -1824,8 +1991,15 @@ body {
 
 /* Float Animation Fast */
 @keyframes float-fast {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-6px); }
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
 }
 
 .animate-float-fast {
@@ -1879,7 +2053,8 @@ body {
   direction: rtl;
 }
 
-.hud-left, .hud-right {
+.hud-left,
+.hud-right {
   display: flex;
   align-items: center;
   gap: 15px;
@@ -1972,14 +2147,20 @@ body {
   background: rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  z-index: 95; /* Behind dialog (150) but ahead of normal gameplay elements (10-25) */
+  z-index: 95;
+  /* Behind dialog (150) but ahead of normal gameplay elements (10-25) */
   animation: fadeInBackdrop 0.3s ease forwards;
   cursor: pointer;
 }
 
 @keyframes fadeInBackdrop {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* Sky HUD Bottom Action Bar (Now centered as a dialog) */
@@ -1988,7 +2169,8 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 150; /* Above all content including target buttons */
+  z-index: 150;
+  /* Above all content including target buttons */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2010,6 +2192,7 @@ body {
     opacity: 0;
     transform: translate(-50%, -45%) scale(0.9);
   }
+
   to {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
@@ -2027,7 +2210,7 @@ body {
   font-weight: 700;
   font-size: 18px;
   text-align: center;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
   font-family: var(--font-arabic);
 }
 
@@ -2094,8 +2277,11 @@ body {
   .sky-hud-header {
     padding: 6px 15px;
   }
-  
-  .hud-back-btn, .hud-category, .hud-stars, .hud-question-number {
+
+  .hud-back-btn,
+  .hud-category,
+  .hud-stars,
+  .hud-question-number {
     font-size: 11px !important;
     padding: 3px 8px !important;
   }
