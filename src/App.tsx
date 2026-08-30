@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { type Question, getQuestionsByCategory } from './data/questions';
+import { type Question } from './data/questions';
 import { audio } from './utils/audio';
 import { getGameQuestions, startGameSession, submitGameAnswers, completeGameSession } from './utils/gameApi';
 import daadCoins from "./assets/daddcoin.webp"
@@ -294,7 +294,7 @@ function App() {
     }
 
     setSelectedCategory(category);
-    const selectedQuestions = apiQuestions.length > 0 ? apiQuestions : getQuestionsByCategory(category);
+    const selectedQuestions = apiQuestions;
     const shuffled = [...selectedQuestions].sort(() => Math.random() - 0.5);
     setQuestions(shuffled);
     setCurrentQuestionIndex(0);
@@ -1403,13 +1403,14 @@ function App() {
                 {isStartingSession ? ' ...جَارِي بَدأْ اللعِبْ' : 'إِِبْدَأْ '}
               </button>
             ) : (
-              <>
-
-
-                <button className="start-btn" onClick={() => startGame(selectedCategory)} disabled={isStartingSession}>
-                  {isStartingSession ? '...جَارِي بَدأْ اللعِبْ' : 'إِِبْدَأْ '}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', marginTop: '1rem' }}>
+                <p style={{ fontSize: '1.2rem', color: '#fff', textAlign: 'center', fontWeight: 'bold' }}>
+                  عذراً، لا يوجد أسئلة متاحة أو حدث خطأ في الاتصال.
+                </p>
+                <button className="start-btn" onClick={() => window.location.reload()} style={{ background: '#ef4444', fontSize: '1.2rem' }}>
+                  إعادة المحاولة 🔄
                 </button>
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -1453,7 +1454,7 @@ function App() {
               <button className="hud-back-btn" onClick={handleBackToMenu}>🏠 القائمة الرئيسية</button>
               <span className="hud-category">{currentQuestion?.categoryName}</span>
             </div>
-            <div className="hud-center" style={{ fontSize: '2.5rem', fontWeight: '900' }}>
+            <div className="hud-center" style={{ fontSize: '30px', fontWeight: '900' }}>
               {currentQuestion && !isFlyingOver && (
                 <div className="hud-question-text-inline" style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center' }}>
                   {currentQuestion.audioUrl && (
@@ -1479,7 +1480,7 @@ function App() {
                       ▶️
                     </button>
                   )}
-                  <span>{currentQuestion.question}</span>
+                  <span style={{ fontSize: '30px', fontWeight: '900' }}>{currentQuestion.question}</span>
                 </div>
               )}
             </div>
