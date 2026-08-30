@@ -1,8 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Outfit:wght@400;600;800&display=swap');
 
+@font-face {
+  font-family: 'FontGame';
+  src: url('./assets/FontGame.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 :root {
-  --font-arabic: 'Cairo', sans-serif;
-  --font-english: 'Outfit', sans-serif;
+  --font-arabic: 'FontGame', 'Cairo', sans-serif;
+  --font-english: 'FontGame', 'Outfit', sans-serif;
   --primary: #4e54c8;
   --primary-light: #8f94fb;
   --success: #2ec4b6;

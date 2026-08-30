@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { type Question, getQuestionsByCategory } from './data/questions';
 import { audio } from './utils/audio';
 import { getGameQuestions, startGameSession, submitGameAnswers, completeGameSession } from './utils/gameApi';
+import daadCoins from "./assets/daddcoin.webp"
 
 interface Particle {
   id: number;
@@ -1392,32 +1393,21 @@ function App() {
             <div className="welcome-logo-container">
               <img src="/cartoon_airplane.png" className="welcome-plane" alt="طائرة كرتونية" />
             </div>
-            <h1 className="welcome-title">مغامرة الطائرة الفضائية ✈️🚀</h1>
-            <p className="welcome-subtitle">
-              أطلق شعاع الليزر على الإجابة الصحيحة لتسجيل النقاط!
-              تجنب الاصطدام بالعقبات الفضائية الطائرة وأجب على {apiQuestions.length} أسئلة بشكل صحيح للفوز.
-            </p>
+            <h1 className="welcome-title"> الطَّائِرَةُ </h1>
+
 
             {isLoadingQuestions ? (
               <p style={{ textAlign: 'center', fontSize: '1.2rem', color: '#fff', margin: '1rem 0' }}>جاري تحميل الأسئلة...</p>
             ) : apiQuestions.length > 0 ? (
               <button className="start-btn" onClick={() => startGame('all')} disabled={isStartingSession}>
-                {isStartingSession ? 'جاري بدء اللعب...' : 'ابدأ المغامرة الآن! 🚀'}
+                {isStartingSession ? ' ...جَارِي بَدأْ اللعِبْ' : 'إِِبْدَأْ '}
               </button>
             ) : (
               <>
-                <div className="category-selection">
-                  <span className="category-label">اختر مغامرتك المفضلة:</span>
-                  <div className="category-chips">
-                    <button className={`category-chip ${selectedCategory === 'all' ? 'active' : ''}`} onClick={() => setSelectedCategory('all')}>🌟 كل المغامرات</button>
-                    <button className={`category-chip ${selectedCategory === 'math' ? 'active' : ''}`} onClick={() => setSelectedCategory('math')}>🔢 الرياضيات الذكية</button>
-                    <button className={`category-chip ${selectedCategory === 'science' ? 'active' : ''}`} onClick={() => setSelectedCategory('science')}>🌿 عالم العلوم</button>
-                    <button className={`category-chip ${selectedCategory === 'general' ? 'active' : ''}`} onClick={() => setSelectedCategory('general')}>💡 معلومات عامة</button>
-                  </div>
-                </div>
+
 
                 <button className="start-btn" onClick={() => startGame(selectedCategory)} disabled={isStartingSession}>
-                  {isStartingSession ? 'جاري بدء اللعب...' : 'ابدأ المغامرة الآن! 🚀'}
+                  {isStartingSession ? '...جَارِي بَدأْ اللعِبْ' : 'إِِبْدَأْ '}
                 </button>
               </>
             )}
@@ -1463,23 +1453,23 @@ function App() {
               <button className="hud-back-btn" onClick={handleBackToMenu}>🏠 القائمة الرئيسية</button>
               <span className="hud-category">{currentQuestion?.categoryName}</span>
             </div>
-            <div className="hud-center">
+            <div className="hud-center" style={{ fontSize: '1.5rem' }}>
               {currentQuestion && !isFlyingOver && (
-                <div className="hud-question-text-inline" style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+                <div className="hud-question-text-inline" style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center' }}>
                   {currentQuestion.audioUrl && (
-                    <button 
-                      className="play-audio-btn" 
+                    <button
+                      className="play-audio-btn"
                       onClick={() => audio.speakText(currentQuestion.question, 'ar-SA', currentQuestion.audioUrl)}
-                      style={{ 
-                        background: 'rgba(255, 255, 255, 0.2)', 
-                        border: '1px solid rgba(255,255,255,0.4)', 
-                        borderRadius: '50%', 
-                        cursor: 'pointer', 
-                        fontSize: '20px', 
-                        width: '36px', 
-                        height: '36px', 
-                        display: 'flex', 
-                        alignItems: 'center', 
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.2)',
+                        border: '1px solid rgba(255,255,255,0.4)',
+                        borderRadius: '50%',
+                        cursor: 'pointer',
+                        fontSize: '24px',
+                        width: '45px',
+                        height: '45px',
+                        display: 'flex',
+                        alignItems: 'center',
                         justifyContent: 'center',
                         color: 'white',
                         boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
@@ -1826,18 +1816,18 @@ function App() {
                 {lives > 0 ? (
                   <>
                     <span className="result-badge">🏆✈️✨</span>
-                    <h2 className="result-title win">أنت بطل حقيقي!</h2>
+                    <h2 className="result-title win">أَنتَ بَطَلٌ</h2>
                     <p className="result-desc">
-                      لقد استطعت الإجابة بذكاء وتجنب جميع العقبات الفضائية بنجاح!
+                      مَبْرُوكْ
                     </p>
                   </>
                 ) : (
                   <>
                     <span className="result-badge">🔥💥🥺</span>
                     <h2 className="result-title lose">الطائرة تفحمت!</h2>
-                    <p className="result-desc">
+                    {/* <p className="result-desc">
                       أصيبت طائرتك بالعقبات الفضائية ونفذت محاولاتك. حاول مرة أخرى!
-                    </p>
+                    </p> */}
                   </>
                 )}
 
@@ -1848,26 +1838,29 @@ function App() {
                   </div>
                   <div className="stat-item base-stat">
                     <span className="stat-val">❤️ {lives}/3</span>
-                    <span className="stat-lbl">القلوب المتبقية</span>
+                    <span className="stat-lbl">القُلُوبُ</span>
                   </div>
 
                   {gameOverStats && gameOverStats.score !== undefined && (
                     <div className="stat-item score-stat">
                       <span className="stat-val">🎯 {gameOverStats.score}</span>
-                      <span className="stat-lbl">إجمالي النقاط</span>
+                      <span className="stat-lbl "> النّقَاطُ</span>
                     </div>
                   )}
                   {gameOverStats && gameOverStats.percentage !== undefined && (
                     <div className="stat-item percentage-stat">
                       <span className="stat-val">📊 %{gameOverStats.percentage}</span>
-                      <span className="stat-lbl">النسبة المئوية</span>
+                      <span className="stat-lbl">الدَّرَجَةُ</span>
                     </div>
                   )}
 
                   {gameOverStats && gameOverStats.coins !== undefined && (
                     <div className="stat-item coins-stat">
-                      <span className="stat-val">🪙 {gameOverStats.coins}</span>
-                      <span className="stat-lbl">عملات مكتسبة</span>
+                      <span className="stat-val" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        {gameOverStats.coins}
+                        <img src={daadCoins} alt="Daddcoin" style={{ width: '28px', height: '28px' }} />
+                      </span>
+                      <span className="stat-lbl">فِلُوس </span>
                     </div>
                   )}
                   {gameOverStats && gameOverStats.stars !== undefined && gameOverStats.stars > 0 && (
@@ -1876,28 +1869,24 @@ function App() {
                       <span className="stat-lbl">نجوم إضافية</span>
                     </div>
                   )}
-                  {gameOverStats && gameOverStats.experience !== undefined && (
-                    <div className="stat-item exp-stat">
-                      <span className="stat-val">⚡ {gameOverStats.experience}</span>
-                      <span className="stat-lbl">نقاط خبرة</span>
-                    </div>
-                  )}
+
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
                   <button className="retry-btn" onClick={() => startGame(selectedCategory)}>
-                    العب مرة أخرى 🔄
+                    إِلعَبْ ثَانِيةً 🔄
                   </button>
                   <button className="retry-btn" onClick={handleBackToMenu} style={{ background: '#64748b', boxShadow: 'none' }}>
-                    العودة للشاشة الرئيسية 🏠
+                    ارْجِع🏠
                   </button>
                 </div>
               </>
             )}
           </div>
         </div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 }
 
