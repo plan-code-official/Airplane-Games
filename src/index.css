@@ -1058,16 +1058,17 @@ body {
 }
 
 .coins-stat {
-  background: linear-gradient(135deg, #fcd34d, #d97706);
-  color: #451a03;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .coins-stat .stat-lbl {
-  color: #78350f;
+  color: #cbd5e1;
 }
 
 .coins-stat .stat-val {
-  text-shadow: none;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
 .stars-stat {
