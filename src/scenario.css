@@ -578,7 +578,7 @@
   padding: 14px 28px;
   border-radius: 50px;
   font-family: var(--font-arabic);
-  font-size: 18px;
+  font-size: 27px;
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -663,7 +663,7 @@
 @media (max-width: 768px) {
   .cloud-bubble {
     padding: 8px 16px;
-    font-size: 13px;
+    font-size: 20px;
   }
   .cloud-bubble::before {
     width: 30px;
