@@ -1453,7 +1453,7 @@ function App() {
               <button className="hud-back-btn" onClick={handleBackToMenu}>🏠 القائمة الرئيسية</button>
               <span className="hud-category">{currentQuestion?.categoryName}</span>
             </div>
-            <div className="hud-center" style={{ fontSize: '1.5rem' }}>
+            <div className="hud-center" style={{ fontSize: '2.5rem', fontWeight: '900' }}>
               {currentQuestion && !isFlyingOver && (
                 <div className="hud-question-text-inline" style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center' }}>
                   {currentQuestion.audioUrl && (
@@ -1817,7 +1817,7 @@ function App() {
                   <>
                     <span className="result-badge">🏆✈️✨</span>
                     <h2 className="result-title win">أَنتَ بَطَلٌ</h2>
-                    <p className="result-desc">
+                    <p className="result-desc" style={{ fontSize: "30px" }} >
                       مَبْرُوكْ
                     </p>
                   </>
