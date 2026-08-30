@@ -1858,7 +1858,7 @@ function App() {
                     <div className="stat-item coins-stat">
                       <span className="stat-val" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                         {gameOverStats.coins}
-                        <img src={daadCoins} alt="Daddcoin" style={{ width: '28px', height: '28px' }} />
+                        <img src={daadCoins} alt="Daddcoin" style={{ width: '38px', height: '38px' }} />
                       </span>
                       <span className="stat-lbl">فِلُوس </span>
                     </div>
