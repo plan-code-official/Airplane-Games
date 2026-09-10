@@ -358,9 +358,7 @@ function App() {
     audio.startEngine(50);
 
     setTimeout(() => {
-      if (shuffled.length > 0) {
-        audio.speakText(shuffled[0].question, 'ar-SA', shuffled[0].audioUrl);
-      }
+      // Auto-speech removed per request. Audio will only play when user clicks the play button.
     }, 1000);
   };
 
@@ -1238,7 +1236,7 @@ function App() {
         setTimeout(() => handleEndGame(false), 1500);
       } else {
         audio.playFailure();
-        audio.speakText("إجابة خاطئة! احذر، الطائرة تتضرر!", 'ar-SA');
+        // audio.speakText removed
         setTimeout(() => {
           setPlaneEffect('normal');
         }, 1000);
@@ -1265,7 +1263,7 @@ function App() {
       setPlaneEffect('boost');
 
       audio.playSuccess();
-      audio.speakText("إجابة صحيحة! أحسنت يا بطل!", 'ar-SA');
+      // audio.speakText removed
     }
 
     setTimeout(() => {
@@ -1297,7 +1295,7 @@ function App() {
       setCurrentQuestionIndex(nextIndex);
       initClouds(questionsRef.current[nextIndex]);
       setTimeout(() => {
-        audio.speakText(questionsRef.current[nextIndex].question, 'ar-SA', questionsRef.current[nextIndex].audioUrl);
+        // Auto-speech removed per request
       }, 1000);
     } else {
       setIsFlyingOver(true);
