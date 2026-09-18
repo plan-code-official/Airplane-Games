@@ -174,7 +174,6 @@ function App() {
 
   // Dynamic Joystick States
   const [joystickStart, setJoystickStart] = useState<{ x: number; y: number } | null>(null);
-  const [joystickCurrent, setJoystickCurrent] = useState<{ x: number; y: number } | null>(null);
   const [isInvincible, setIsInvincible] = useState<boolean>(false);
   const [hasActiveShield, setHasActiveShield] = useState<boolean>(false);
   const [isBossCrashing, setIsBossCrashing] = useState<boolean>(false);
@@ -216,6 +215,7 @@ function App() {
 
   const joystickStartRef = useRef<{ x: number; y: number } | null>(null);
   const joystickCurrentRef = useRef<{ x: number; y: number } | null>(null);
+  const joystickStickRef = useRef<HTMLDivElement>(null);
 
   const keysPressedRef = useRef<{ [key: string]: boolean }>({});
 
@@ -443,9 +443,11 @@ function App() {
       const localX = clientX - rect.left;
       const localY = clientY - rect.top;
       setJoystickStart({ x: localX, y: localY });
-      setJoystickCurrent({ x: localX, y: localY });
       joystickStartRef.current = { x: localX, y: localY };
       joystickCurrentRef.current = { x: localX, y: localY };
+      if (joystickStickRef.current) {
+        joystickStickRef.current.style.transform = `translate(0px, 0px)`;
+      }
     }
   };
 
@@ -469,8 +471,20 @@ function App() {
     if (rect) {
       const localX = clientX - rect.left;
       const localY = clientY - rect.top;
-      setJoystickCurrent({ x: localX, y: localY });
       joystickCurrentRef.current = { x: localX, y: localY };
+
+      if (joystickStickRef.current) {
+        const dx = localX - joystickStartRef.current.x;
+        const dy = localY - joystickStartRef.current.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const maxRadius = 35;
+        let stickX = dx, stickY = dy;
+        if (dist >= maxRadius) {
+          stickX = (dx / dist) * maxRadius;
+          stickY = (dy / dist) * maxRadius;
+        }
+        joystickStickRef.current.style.transform = `translate(${stickX}px, ${stickY}px)`;
+      }
     }
   };
 
@@ -481,25 +495,10 @@ function App() {
     }
 
     setJoystickStart(null);
-    setJoystickCurrent(null);
     joystickStartRef.current = null;
     joystickCurrentRef.current = null;
     joystickTouchIdRef.current = null;
   };
-
-  const getStickDelta = () => {
-    if (!joystickStart || !joystickCurrent) return { x: 0, y: 0 };
-    const dx = joystickCurrent.x - joystickStart.x;
-    const dy = joystickCurrent.y - joystickStart.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    const maxRadius = 35;
-    if (dist < maxRadius) {
-      return { x: dx, y: dy };
-    } else {
-      return { x: (dx / dist) * maxRadius, y: (dy / dist) * maxRadius };
-    }
-  };
-  const stickDelta = getStickDelta();
 
   // Gameplay / Obstacles Loop & Invincibility Checking
   useEffect(() => {
@@ -1439,8 +1438,9 @@ function App() {
             >
               <div
                 className="joystick-stick"
+                ref={joystickStickRef}
                 style={{
-                  transform: `translate(${stickDelta.x}px, ${stickDelta.y}px)`
+                  transform: `translate(0px, 0px)`
                 }}
               />
             </div>
