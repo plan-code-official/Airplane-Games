@@ -279,38 +279,13 @@ class AudioSystem {
         const audioObj = new Audio(audioUrl);
         audioObj.play().catch(e => {
           console.error("Audio playback failed:", e);
-          this.fallbackToTTS(text, langCode);
         });
-        return;
       }
-
-      this.fallbackToTTS(text, langCode);
     } catch (e) {
       console.error("Speech synthesis/audio failed:", e);
     }
   }
 
-  private fallbackToTTS(text: string, langCode: string) {
-    try {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = langCode;
-      utterance.rate = 0.9; // Slightly slower for kids
-      utterance.pitch = 1.1; // Slightly higher/friendlier voice for kids
-      
-      // Try to find a nice arabic voice if lang is ar-SA
-      if (langCode.startsWith('ar')) {
-        const voices = window.speechSynthesis.getVoices();
-        const arabicVoice = voices.find(v => v.lang.startsWith('ar') || v.name.includes('Arabic'));
-        if (arabicVoice) {
-          utterance.voice = arabicVoice;
-        }
-      }
-      
-      window.speechSynthesis.speak(utterance);
-    } catch (e) {
-      console.error("TTS fallback failed:", e);
-    }
-  }
 }
 
 export const audio = new AudioSystem();

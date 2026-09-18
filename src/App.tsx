@@ -1027,7 +1027,7 @@ function App() {
       if (nextLives <= 0) {
         setTimeout(() => handleEndGame(false), 1500);
       } else {
-        audio.speakText("احذر! اصطدمت بالعائق!", 'ar-SA');
+        // audio.speakText removed
       }
       return nextLives;
     });
@@ -1336,10 +1336,10 @@ function App() {
     }
 
     if (won) {
-      audio.speakText("رائع! لقد نجحت في إنهاء جميع الأسئلة وتجنب العقبات بنجاح، أنت بطل حقيقي!", 'ar-SA');
+      // audio.speakText removed
     } else {
       audio.playLose();
-      audio.speakText("لقد نفذت القلوب وتدمرت الطائرة. حاول مرة أخرى للتفوق!", 'ar-SA');
+      // audio.speakText removed
     }
   };
 
