@@ -312,7 +312,6 @@ function App() {
     playerBulletIdCounterRef.current = 0;
 
     setJoystickStart(null);
-    setJoystickCurrent(null);
     joystickStartRef.current = null;
     joystickCurrentRef.current = null;
     planeXRef.current = 20;
