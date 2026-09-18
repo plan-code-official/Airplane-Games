@@ -213,9 +213,6 @@ function App() {
   const hasShieldRef = useRef<boolean>(false);
   const invincibilityTimeRef = useRef<number>(0);
 
-  const joystickStartRef = useRef<{ x: number; y: number } | null>(null);
-  const joystickCurrentRef = useRef<{ x: number; y: number } | null>(null);
-  const joystickStickRef = useRef<HTMLDivElement>(null);
 
   const keysPressedRef = useRef<{ [key: string]: boolean }>({});
 
@@ -259,8 +256,6 @@ function App() {
   // Auto fire interval ref
   const autoFireIntervalRef = useRef<any>(null);
 
-  // Joystick touch ID ref for multi-touch tracking
-  const joystickTouchIdRef = useRef<number | null>(null);
 
   const initClouds = (question: Question) => {
     if (!question) return;
@@ -311,9 +306,6 @@ function App() {
     setPlayerBulletIds([]);
     playerBulletIdCounterRef.current = 0;
 
-    setJoystickStart(null);
-    joystickStartRef.current = null;
-    joystickCurrentRef.current = null;
     planeXRef.current = 20;
     planeYRef.current = 50;
     planeLaneRef.current = 1;
@@ -403,100 +395,15 @@ function App() {
     };
   }, [gameState]);
 
-  // Touch/Mouse Dynamic Joystick Event Handlers
-  const handleStartJoystick = (e: React.MouseEvent | React.TouchEvent) => {
-    const target = e.target as HTMLElement;
-    if (
-      target.closest('.lane-target-btn') ||
-      target.closest('.hud-back-btn') ||
-      target.closest('.sound-toggle-inline') ||
-      target.closest('.sound-toggle') ||
-      target.closest('.hud-next-btn') ||
-      target.closest('.sky-blur-backdrop') ||
-      target.closest('.action-fire-btn') ||
-      target.closest('.mobile-controls-overlay')
-    ) {
-      return;
-    }
-
-    let clientX = 0;
-    let clientY = 0;
-
-    if ('touches' in e) {
-      // Find the touch that is not on the fire button
-      const touch = Array.from(e.changedTouches).find(t => {
-        const touchTarget = t.target as HTMLElement;
-        return !touchTarget.closest('.action-fire-btn') && !touchTarget.closest('.mobile-controls-overlay');
-      });
-      if (!touch) return;
-      clientX = touch.clientX;
-      clientY = touch.clientY;
-      joystickTouchIdRef.current = touch.identifier;
-    } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
-
-    const rect = skyRef.current?.getBoundingClientRect();
-    if (rect) {
-      const localX = clientX - rect.left;
-      const localY = clientY - rect.top;
-      setJoystickStart({ x: localX, y: localY });
-      joystickStartRef.current = { x: localX, y: localY };
-      joystickCurrentRef.current = { x: localX, y: localY };
-      if (joystickStickRef.current) {
-        joystickStickRef.current.style.transform = `translate(0px, 0px)`;
-      }
-    }
+  // D-Pad Event Handlers
+  const handleDpadTouchStart = (key: string, e: React.TouchEvent | React.MouseEvent) => {
+    e.preventDefault();
+    keysPressedRef.current[key] = true;
   };
 
-  const handleMoveJoystick = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!joystickStartRef.current) return;
-
-    let clientX = 0;
-    let clientY = 0;
-
-    if ('touches' in e) {
-      const touch = Array.from(e.touches).find(t => t.identifier === joystickTouchIdRef.current);
-      if (!touch) return;
-      clientX = touch.clientX;
-      clientY = touch.clientY;
-    } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
-
-    const rect = skyRef.current?.getBoundingClientRect();
-    if (rect) {
-      const localX = clientX - rect.left;
-      const localY = clientY - rect.top;
-      joystickCurrentRef.current = { x: localX, y: localY };
-
-      if (joystickStickRef.current) {
-        const dx = localX - joystickStartRef.current.x;
-        const dy = localY - joystickStartRef.current.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const maxRadius = 35;
-        let stickX = dx, stickY = dy;
-        if (dist >= maxRadius) {
-          stickX = (dx / dist) * maxRadius;
-          stickY = (dy / dist) * maxRadius;
-        }
-        joystickStickRef.current.style.transform = `translate(${stickX}px, ${stickY}px)`;
-      }
-    }
-  };
-
-  const handleEndJoystick = (e: React.MouseEvent | React.TouchEvent) => {
-    if ('touches' in e) {
-      const hasJoystickTouch = Array.from(e.touches).some(t => t.identifier === joystickTouchIdRef.current);
-      if (hasJoystickTouch) return;
-    }
-
-    setJoystickStart(null);
-    joystickStartRef.current = null;
-    joystickCurrentRef.current = null;
-    joystickTouchIdRef.current = null;
+  const handleDpadTouchEnd = (key: string, e: React.TouchEvent | React.MouseEvent) => {
+    e.preventDefault();
+    keysPressedRef.current[key] = false;
   };
 
   // Gameplay / Obstacles Loop & Invincibility Checking
@@ -546,20 +453,6 @@ function App() {
 
       if (keysPressedRef.current[' '] || keysPressedRef.current['Enter']) {
         firePlayerBullet();
-      }
-
-      // 2. Joysticks movement
-      if (joystickStartRef.current && joystickCurrentRef.current) {
-        const jdx = joystickCurrentRef.current.x - joystickStartRef.current.x;
-        const jdy = joystickCurrentRef.current.y - joystickStartRef.current.y;
-        const dist = Math.sqrt(jdx * jdx + jdy * jdy);
-        if (dist > 5) {
-          const maxRadius = 35;
-          const factor = Math.min(dist, maxRadius) / maxRadius;
-          const angle = Math.atan2(jdy, jdx);
-          planeXRef.current = Math.max(5, Math.min(55, planeXRef.current + Math.cos(angle) * factor * 0.6));
-          planeYRef.current = Math.max(10, Math.min(85, planeYRef.current - Math.sin(angle) * factor * 0.6));
-        }
       }
 
       // Update plane position directly on DOM
@@ -1417,31 +1310,54 @@ function App() {
         <div
           className="sky-container"
           ref={skyRef}
-          onMouseDown={handleStartJoystick}
-          onMouseMove={handleMoveJoystick}
-          onMouseUp={handleEndJoystick}
-          onMouseLeave={handleEndJoystick}
-          onTouchStart={handleStartJoystick}
-          onTouchMove={handleMoveJoystick}
-          onTouchEnd={handleEndJoystick}
         >
 
-          {/* Virtual Joystick UI Overlay */}
-          {joystickStart && (
-            <div
-              className="joystick-container"
-              style={{
-                left: joystickStart.x,
-                top: joystickStart.y
-              }}
-            >
-              <div
-                className="joystick-stick"
-                ref={joystickStickRef}
-                style={{
-                  transform: `translate(0px, 0px)`
-                }}
-              />
+          {/* Mobile D-Pad UI */}
+          {gameState === 'playing' && (
+            <div className="dpad-container">
+              <div className="dpad-row">
+                <button
+                  className="dpad-btn up"
+                  onPointerDown={(e) => handleDpadTouchStart('ArrowUp', e)}
+                  onPointerUp={(e) => handleDpadTouchEnd('ArrowUp', e)}
+                  onPointerCancel={(e) => handleDpadTouchEnd('ArrowUp', e)}
+                  onContextMenu={(e) => e.preventDefault()}
+                >
+                  ▲
+                </button>
+              </div>
+              <div className="dpad-row">
+                <button
+                  className="dpad-btn left"
+                  onPointerDown={(e) => handleDpadTouchStart('ArrowLeft', e)}
+                  onPointerUp={(e) => handleDpadTouchEnd('ArrowLeft', e)}
+                  onPointerCancel={(e) => handleDpadTouchEnd('ArrowLeft', e)}
+                  onContextMenu={(e) => e.preventDefault()}
+                >
+                  ◀
+                </button>
+                <div className="dpad-center"></div>
+                <button
+                  className="dpad-btn right"
+                  onPointerDown={(e) => handleDpadTouchStart('ArrowRight', e)}
+                  onPointerUp={(e) => handleDpadTouchEnd('ArrowRight', e)}
+                  onPointerCancel={(e) => handleDpadTouchEnd('ArrowRight', e)}
+                  onContextMenu={(e) => e.preventDefault()}
+                >
+                  ▶
+                </button>
+              </div>
+              <div className="dpad-row">
+                <button
+                  className="dpad-btn down"
+                  onPointerDown={(e) => handleDpadTouchStart('ArrowDown', e)}
+                  onPointerUp={(e) => handleDpadTouchEnd('ArrowDown', e)}
+                  onPointerCancel={(e) => handleDpadTouchEnd('ArrowDown', e)}
+                  onContextMenu={(e) => e.preventDefault()}
+                >
+                  ▼
+                </button>
+              </div>
             </div>
           )}
 

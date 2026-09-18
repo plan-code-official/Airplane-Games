@@ -308,34 +308,60 @@
   transform: rotate(8deg) scale(1.02);
 }
 
-/* --- Virtual Joystick Styles --- */
-.joystick-container {
+/* --- Mobile D-Pad Styles --- */
+.dpad-container {
   position: absolute;
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1);
-  pointer-events: none;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
   z-index: 999;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  transform: translate(-50%, -50%);
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  pointer-events: auto; /* Ensure it receives touches */
+}
+
+.dpad-container:active,
+.dpad-container:focus-within {
+  opacity: 0.9;
+}
+
+.dpad-row {
+  display: flex;
+  gap: 5px;
+}
+
+.dpad-center {
+  width: 50px;
+  height: 50px;
+}
+
+.dpad-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 2px solid #94a3b8;
+  color: #334155;
+  font-size: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4px 0 #94a3b8;
+  cursor: pointer;
+  user-select: none;
+  touch-action: none; /* Prevent browser scrolling on drag */
+  padding: 0;
+  margin: 0;
+  outline: none;
 }
 
-.joystick-stick {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #ffffff 0%, #cbd5e1 100%);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-  position: absolute;
-  transition: transform 0.05s ease-out;
+.dpad-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 #94a3b8;
+  background: #cbd5e1;
 }
 
 /* --- Scrolling Obstacles (Minion Monsters) --- */
