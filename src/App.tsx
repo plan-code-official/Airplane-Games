@@ -1312,54 +1312,6 @@ function App() {
           ref={skyRef}
         >
 
-          {/* Mobile D-Pad UI */}
-          {gameState === 'playing' && (
-            <div className="dpad-container">
-              <div className="dpad-row">
-                <button
-                  className="dpad-btn up"
-                  onPointerDown={(e) => handleDpadTouchStart('ArrowUp', e)}
-                  onPointerUp={(e) => handleDpadTouchEnd('ArrowUp', e)}
-                  onPointerCancel={(e) => handleDpadTouchEnd('ArrowUp', e)}
-                  onContextMenu={(e) => e.preventDefault()}
-                >
-                  ▲
-                </button>
-              </div>
-              <div className="dpad-row">
-                <button
-                  className="dpad-btn left"
-                  onPointerDown={(e) => handleDpadTouchStart('ArrowLeft', e)}
-                  onPointerUp={(e) => handleDpadTouchEnd('ArrowLeft', e)}
-                  onPointerCancel={(e) => handleDpadTouchEnd('ArrowLeft', e)}
-                  onContextMenu={(e) => e.preventDefault()}
-                >
-                  ◀
-                </button>
-                <div className="dpad-center"></div>
-                <button
-                  className="dpad-btn right"
-                  onPointerDown={(e) => handleDpadTouchStart('ArrowRight', e)}
-                  onPointerUp={(e) => handleDpadTouchEnd('ArrowRight', e)}
-                  onPointerCancel={(e) => handleDpadTouchEnd('ArrowRight', e)}
-                  onContextMenu={(e) => e.preventDefault()}
-                >
-                  ▶
-                </button>
-              </div>
-              <div className="dpad-row">
-                <button
-                  className="dpad-btn down"
-                  onPointerDown={(e) => handleDpadTouchStart('ArrowDown', e)}
-                  onPointerUp={(e) => handleDpadTouchEnd('ArrowDown', e)}
-                  onPointerCancel={(e) => handleDpadTouchEnd('ArrowDown', e)}
-                  onContextMenu={(e) => e.preventDefault()}
-                >
-                  ▼
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* Top HUD Header */}
           <div className="sky-hud-header">
@@ -1688,6 +1640,55 @@ function App() {
 
           {/* Styled Mobile Overlay Controls */}
           <div className="mobile-controls-overlay">
+            {/* Mobile D-Pad UI */}
+            {gameState === 'playing' && (
+              <div className="dpad-container">
+                <div className="dpad-row">
+                  <button
+                    className="dpad-btn up"
+                    onPointerDown={(e) => handleDpadTouchStart('ArrowUp', e)}
+                    onPointerUp={(e) => handleDpadTouchEnd('ArrowUp', e)}
+                    onPointerCancel={(e) => handleDpadTouchEnd('ArrowUp', e)}
+                    onContextMenu={(e) => e.preventDefault()}
+                  >
+                    ▲
+                  </button>
+                </div>
+                <div className="dpad-row">
+                  <button
+                    className="dpad-btn left"
+                    onPointerDown={(e) => handleDpadTouchStart('ArrowLeft', e)}
+                    onPointerUp={(e) => handleDpadTouchEnd('ArrowLeft', e)}
+                    onPointerCancel={(e) => handleDpadTouchEnd('ArrowLeft', e)}
+                    onContextMenu={(e) => e.preventDefault()}
+                  >
+                    ◀
+                  </button>
+                  <div className="dpad-center"></div>
+                  <button
+                    className="dpad-btn right"
+                    onPointerDown={(e) => handleDpadTouchStart('ArrowRight', e)}
+                    onPointerUp={(e) => handleDpadTouchEnd('ArrowRight', e)}
+                    onPointerCancel={(e) => handleDpadTouchEnd('ArrowRight', e)}
+                    onContextMenu={(e) => e.preventDefault()}
+                  >
+                    ▶
+                  </button>
+                </div>
+                <div className="dpad-row">
+                  <button
+                    className="dpad-btn down"
+                    onPointerDown={(e) => handleDpadTouchStart('ArrowDown', e)}
+                    onPointerUp={(e) => handleDpadTouchEnd('ArrowDown', e)}
+                    onPointerCancel={(e) => handleDpadTouchEnd('ArrowDown', e)}
+                    onContextMenu={(e) => e.preventDefault()}
+                  >
+                    ▼
+                  </button>
+                </div>
+              </div>
+            )}
+
             <button
               className="action-fire-btn"
               disabled={isFlyingOver}

@@ -153,6 +153,7 @@
   justify-content: space-between;
   align-items: flex-end;
   pointer-events: none; /* allow clicking through empty space */
+  direction: ltr; /* Force LTR so D-pad is always on the left, Fire always on the right */
 }
 
 .d-pad-vertical, .action-fire-btn {
@@ -310,14 +311,10 @@
 
 /* --- Mobile D-Pad Styles --- */
 .dpad-container {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 5px;
-  z-index: 999;
   opacity: 0.5;
   transition: opacity 0.2s;
   pointer-events: auto; /* Ensure it receives touches */
