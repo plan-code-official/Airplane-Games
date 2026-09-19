@@ -16,7 +16,7 @@
   width: 180px;
   height: auto;
   animation: float 4s infinite ease-in-out;
-  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.3));
+  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.3));
   transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
   transform-origin: bottom center;
 }
@@ -25,7 +25,7 @@
   background: rgba(255, 255, 255, 0.95);
   border-radius: 20px;
   padding: 15px 25px;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
   margin-bottom: 20px;
   position: relative;
   max-width: 300px;
@@ -55,7 +55,10 @@
 /* Lanes & Targets */
 .lanes-container {
   position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
 }
 
@@ -115,7 +118,7 @@
 .heart-icon {
   font-size: 22px;
   transition: all 0.3s ease;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .heart-icon.lost {
@@ -137,14 +140,27 @@
 }
 
 @keyframes shake-anim {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  20%, 60% { transform: translate(-5px, 0) rotate(-2deg); }
-  40%, 80% { transform: translate(5px, 0) rotate(2deg); }
+
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+
+  20%,
+  60% {
+    transform: translate(-5px, 0) rotate(-2deg);
+  }
+
+  40%,
+  80% {
+    transform: translate(5px, 0) rotate(2deg);
+  }
 }
 
 /* Redesigned Mobile Controls Overlay */
 .mobile-controls-overlay {
-  display: none; /* hidden on desktop */
+  display: none;
+  /* hidden on desktop */
   position: absolute;
   bottom: 20px;
   left: 20px;
@@ -152,12 +168,16 @@
   z-index: 50;
   justify-content: space-between;
   align-items: flex-end;
-  pointer-events: none; /* allow clicking through empty space */
-  direction: ltr; /* Force LTR so D-pad is always on the left, Fire always on the right */
+  pointer-events: none;
+  /* allow clicking through empty space */
+  direction: ltr;
+  /* Force LTR so D-pad is always on the left, Fire always on the right */
 }
 
-.d-pad-vertical, .action-fire-btn {
-  pointer-events: auto; /* re-enable clicking on buttons */
+.d-pad-vertical,
+.action-fire-btn {
+  pointer-events: auto;
+  /* re-enable clicking on buttons */
 }
 
 /* D-PAD Styling */
@@ -168,14 +188,14 @@
   background: rgba(15, 23, 42, 0.4);
   padding: 10px;
   border-radius: 40px;
-  box-shadow: inset 0 0 10px rgba(255,255,255,0.1), 0 10px 20px rgba(0,0,0,0.3);
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.1), 0 10px 20px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .d-pad-btn {
-  background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
-  border: 1px solid rgba(255,255,255,0.3);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+  border: 1px solid rgba(255, 255, 255, 0.3);
   color: white;
   width: 55px;
   height: 55px;
@@ -183,20 +203,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
   transition: all 0.1s ease;
 }
 
 .d-pad-btn svg {
   width: 28px;
   height: 28px;
-  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5));
 }
 
 .d-pad-btn:active {
   transform: scale(0.9) translateY(2px);
-  background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
-  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 /* Action Fire Button Styling */
@@ -205,13 +225,13 @@
   border: none;
   padding: 4px;
   border-radius: 50px;
-  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4), inset 0 2px 2px rgba(255,255,255,0.4);
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4), inset 0 2px 2px rgba(255, 255, 255, 0.4);
   transition: all 0.1s ease;
 }
 
 .fire-btn-inner {
   background: linear-gradient(135deg, #f87171, #dc2626);
-  border: 2px solid rgba(255,255,255,0.2);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 46px;
   padding: 12px 25px;
   display: flex;
@@ -221,7 +241,7 @@
 
 .fire-icon {
   font-size: 24px;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .fire-text {
@@ -230,15 +250,16 @@
   font-size: 18px;
   font-weight: 900;
   letter-spacing: 1px;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 .action-fire-btn:active {
   transform: scale(0.92) translateY(4px);
-  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.4), inset 0 2px 2px rgba(255,255,255,0.1);
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.4), inset 0 2px 2px rgba(255, 255, 255, 0.1);
 }
 
-.d-pad-btn:disabled, .action-fire-btn:disabled {
+.d-pad-btn:disabled,
+.action-fire-btn:disabled {
   opacity: 0.5;
   pointer-events: none;
   filter: grayscale(100%);
@@ -248,16 +269,21 @@
   .mobile-controls-overlay {
     display: flex;
   }
+
   .monster-img {
-    width: 120px; /* Base size on mobile */
+    width: 120px;
+    /* Base size on mobile */
   }
+
   .monster-speech-bubble {
     padding: 10px 15px;
     max-width: 200px;
   }
+
   .monster-speech-bubble .sky-question-text {
     font-size: 14px;
   }
+
   .lane-target-btn {
     min-width: 180px;
     padding: 8px 15px;
@@ -293,11 +319,11 @@
 
 /* Airplane Damage Charring */
 .charred-1 {
-  filter: brightness(0.6) sepia(0.4) hue-rotate(-20deg) saturate(1.5) drop-shadow(0 10px 15px rgba(0,0,0,0.4));
+  filter: brightness(0.6) sepia(0.4) hue-rotate(-20deg) saturate(1.5) drop-shadow(0 10px 15px rgba(0, 0, 0, 0.4));
 }
 
 .charred-2 {
-  filter: brightness(0.3) sepia(0.6) hue-rotate(-30deg) saturate(2) drop-shadow(0 10px 20px rgba(0,0,0,0.6));
+  filter: brightness(0.3) sepia(0.6) hue-rotate(-30deg) saturate(2) drop-shadow(0 10px 20px rgba(0, 0, 0, 0.6));
 }
 
 /* Inertia / Pitch Tilting */
@@ -317,7 +343,8 @@
   gap: 5px;
   opacity: 0.5;
   transition: opacity 0.2s;
-  pointer-events: auto; /* Ensure it receives touches */
+  pointer-events: auto;
+  /* Ensure it receives touches */
 }
 
 .dpad-container:active,
@@ -349,7 +376,8 @@
   box-shadow: 0 4px 0 #94a3b8;
   cursor: pointer;
   user-select: none;
-  touch-action: none; /* Prevent browser scrolling on drag */
+  touch-action: none;
+  /* Prevent browser scrolling on drag */
   padding: 0;
   margin: 0;
   outline: none;
@@ -368,7 +396,7 @@
   height: 125px;
   z-index: 15;
   pointer-events: none;
-  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
 }
 
 .scrolling-obstacle img {
@@ -379,8 +407,15 @@
 
 /* --- Invincibility Flashing --- */
 @keyframes plane-flash {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
 }
 
 .invincible-flash {
@@ -388,13 +423,23 @@
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); }
-  100% { transform: scale(1.2); }
+  0% {
+    transform: scale(1);
+  }
+
+  100% {
+    transform: scale(1.2);
+  }
 }
 
 @keyframes pulse-centered {
-  0% { transform: translate(-50%, -50%) scale(1); }
-  100% { transform: translate(-50%, -50%) scale(1.1); }
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(1.1);
+  }
 }
 
 /* --- Boss Defeat Crash Animation --- */
@@ -402,9 +447,11 @@
   0% {
     transform: translate(0, 0) rotate(0deg);
   }
+
   20% {
     transform: translate(-20px, -30px) rotate(-15deg);
   }
+
   100% {
     transform: translate(-150px, 600px) rotate(-220deg);
     opacity: 0.3;
@@ -446,7 +493,8 @@
   width: 25%;
   max-width: 340px;
   text-align: center;
-  border: 3.5px solid #8f94fb; /* --primary-light */
+  border: 3.5px solid #8f94fb;
+  /* --primary-light */
   animation: float-question 3s infinite ease-in-out !important;
 }
 
@@ -459,8 +507,15 @@
 }
 
 @keyframes float-question {
-  0%, 100% { transform: translateY(-50%) translateY(0px); }
-  50% { transform: translateY(-50%) translateY(-8px); }
+
+  0%,
+  100% {
+    transform: translateY(-50%) translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-50%) translateY(-8px);
+  }
 }
 
 @media (max-width: 920px) {
@@ -476,7 +531,7 @@
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2) !important;
     animation: float-question-mobile 3s infinite ease-in-out !important;
   }
-  
+
   .general-question-banner .sky-question-text {
     font-size: 15px !important;
     line-height: 1.4 !important;
@@ -484,8 +539,15 @@
 }
 
 @keyframes float-question-mobile {
-  0%, 100% { transform: translateX(-50%) translateY(0px) !important; }
-  50% { transform: translateX(-50%) translateY(-6px) !important; }
+
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0px) !important;
+  }
+
+  50% {
+    transform: translateX(-50%) translateY(-6px) !important;
+  }
 }
 
 /* --- Obstacle Projectiles/Bullets Styles --- */
@@ -532,8 +594,15 @@
 }
 
 @keyframes slide-down-bar {
-  from { transform: translateY(-50px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .top-question-bar .question-content {
@@ -568,9 +637,11 @@
     left: 2%;
     right: 2%;
   }
+
   .top-question-bar .question-text {
     font-size: 14px;
   }
+
   .top-question-bar .question-badge {
     font-size: 11px;
     padding: 4px 8px;
@@ -644,6 +715,7 @@
   border-color: #80ed99;
   box-shadow: 0 0 25px rgba(46, 196, 182, 0.8);
 }
+
 .cloud-option-btn.correct .cloud-bubble::before,
 .cloud-option-btn.correct .cloud-bubble::after {
   background: rgba(46, 196, 182, 0.95);
@@ -655,6 +727,7 @@
   border-color: #ff85a1;
   box-shadow: 0 0 25px rgba(231, 29, 54, 0.8);
 }
+
 .cloud-option-btn.incorrect .cloud-bubble::before,
 .cloud-option-btn.incorrect .cloud-bubble::after {
   background: rgba(231, 29, 54, 0.95);
@@ -688,18 +761,21 @@
     padding: 8px 16px;
     font-size: 20px;
   }
+
   .cloud-bubble::before {
     width: 30px;
     height: 30px;
     top: -12px;
     left: 12px;
   }
+
   .cloud-bubble::after {
     width: 22px;
     height: 22px;
     top: -9px;
     right: 18px;
   }
+
   .cloud-badge {
     width: 22px;
     height: 22px;
@@ -739,4 +815,178 @@
 .hit-flash {
   filter: brightness(0.5) sepia(1) hue-rotate(-50deg) saturate(5) drop-shadow(0 0 12px #ff0000) !important;
   transition: filter 0.05s ease-in-out;
+}
+
+/* New Welcome Screen Styles */
+.welcome-screen-new {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  /* Deep space cyan-navy background that complements #12C1D8 perfectly */
+  background: radial-gradient(circle at center, #113645, #08171d);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  gap: 30px;
+  direction: rtl; /* Ensure the whole screen handles RTL properly */
+}
+
+.welcome-header-new {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+}
+
+.welcome-stats-bg {
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 25px;
+  min-width: 250px;
+  height: 60px;
+  gap: 15px;
+  direction: ltr; /* Force LTR so Question Coin is Left, DaddCoin is Right */
+}
+
+.welcome-q-coin,
+.welcome-dadd-coin {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.welcome-stat-text {
+  font-size: 24px;
+  font-weight: 900;
+  font-family: 'Arial Black', Impact, sans-serif;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  margin-top: 2px;
+}
+
+.q-count {
+  color: white;
+}
+
+.xp-count {
+  color: #ffcc00;
+}
+
+.welcome-stat-arrow {
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.welcome-body-new {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 800px;
+  margin-top: 50px; /* Push down to avoid header */
+}
+
+.welcome-description-img {
+  width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+}
+
+.welcome-footer-new {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 20px;
+}
+
+.welcome-start-btn-new {
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: transparent;
+  border: none;
+  width: 260px;
+  height: 85px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-weight: 900;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.2s;
+  padding-bottom: 12px; /* Offset text to center properly on the graphic */
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.welcome-start-btn-new:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+
+.welcome-start-btn-new:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.welcome-loading,
+.welcome-error-new p {
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+  .welcome-screen-new {
+    justify-content: center;
+    gap: 15px;
+  }
+
+  .welcome-header-new {
+    position: relative;
+    top: 0;
+    right: 0;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .welcome-body-new {
+    margin-top: 0;
+  }
+
+  .welcome-stats-bg {
+    min-width: 220px;
+    height: 50px;
+    padding: 2px 20px;
+  }
+
+  .welcome-q-coin,
+  .welcome-dadd-coin {
+    width: 25px;
+    height: 25px;
+  }
+
+  .welcome-stat-text {
+    font-size: 18px;
+  }
+
+  .welcome-start-btn-new {
+    width: 180px;
+    height: 55px;
+    font-size: 22px;
+    padding-bottom: 5px;
+  }
+
+  .welcome-description-img {
+    max-height: 45vh;
+  }
 }

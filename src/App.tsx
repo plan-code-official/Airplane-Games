@@ -2,8 +2,11 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { type Question } from './data/questions';
 import { audio } from './utils/audio';
 import { getGameQuestions, startGameSession, submitGameAnswers, completeGameSession } from './utils/gameApi';
-import daadCoins from "./assets/daddcoin.webp"
-
+import daadCoins from "./assets/daddcoin.webp";
+import questionCoinImg from "./assets/QuestionCoin.png";
+import questionNumberBg from "./assets/QuestionNumber.png";
+import descriptionImg from "./assets/description.png";
+import startButtonBg from "./assets/startButton.png";
 interface Particle {
   id: number;
   left: number;
@@ -1275,29 +1278,43 @@ function App() {
         </button>
       )}
 
-      {/* ================= WELCOME SCREEN ================= */}
+      {/* ================= NEW WELCOME SCREEN ================= */}
       {gameState === 'welcome' && (
-        <div className="welcome-screen">
-          <div className="welcome-content">
-            <div className="welcome-logo-container">
-              <img src="/cartoon_airplane.png" className="welcome-plane" alt="طائرة كرتونية" />
+        <div className="welcome-screen-new">
+          <div className="welcome-header-new">
+            <div className="welcome-stats-bg" style={{ backgroundImage: `url(${questionNumberBg})` }}>
+              <img src={questionCoinImg} alt="Q" className="welcome-q-coin" />
+              <span className="welcome-stat-text q-count">{apiQuestions.length || 10}</span>
+              <span className="welcome-stat-arrow">{'>'}</span>
+              <span className="welcome-stat-text xp-count">+{apiQuestions.length ? apiQuestions.length * 10 : 100}</span>
+              <img src={daadCoins} alt="Coin" className="welcome-dadd-coin" />
             </div>
-            <h1 className="welcome-title"> الطَّائِرَةُ </h1>
+          </div>
 
+          <div className="welcome-body-new">
+            <img src={descriptionImg} alt="How to play" className="welcome-description-img" />
+          </div>
 
+          <div className="welcome-footer-new">
             {isLoadingQuestions ? (
-              <p style={{ textAlign: 'center', fontSize: '1.2rem', color: '#fff', margin: '1rem 0' }}>جاري تحميل الأسئلة...</p>
+              <p className="welcome-loading">جاري تحميل الأسئلة...</p>
             ) : apiQuestions.length > 0 ? (
-              <button className="start-btn" onClick={() => startGame('all')} disabled={isStartingSession}>
-                {isStartingSession ? ' ...جَارِي بَدأْ اللعِبْ' : 'إِِبْدَأْ '}
+              <button 
+                className="welcome-start-btn-new" 
+                onClick={() => startGame('all')} 
+                disabled={isStartingSession}
+                style={{ backgroundImage: `url(${startButtonBg})` }}
+              >
+                {isStartingSession ? '...' : 'ابدَأ!'}
               </button>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', marginTop: '1rem' }}>
-                <p style={{ fontSize: '1.2rem', color: '#fff', textAlign: 'center', fontWeight: 'bold' }}>
-                  عذراً، لا يوجد أسئلة متاحة أو حدث خطأ في الاتصال.
-                </p>
-                <button className="start-btn" onClick={() => window.location.reload()} style={{ background: '#ef4444', fontSize: '1.2rem' }}>
-                  إعادة المحاولة 🔄
+              <div className="welcome-error-new">
+                <p>عذراً، لا يوجد أسئلة متاحة أو حدث خطأ في الاتصال.</p>
+                <button 
+                  className="start-btn" 
+                  onClick={() => window.location.reload()}
+                >
+                  إعادة تحميل الصفحة
                 </button>
               </div>
             )}
