@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { type Question } from './data/questions';
 import { audio } from './utils/audio';
 import { getGameQuestions, startGameSession, submitGameAnswers, completeGameSession } from './utils/gameApi';
@@ -7,6 +7,9 @@ import questionCoinImg from "./assets/QuestionCoin.png";
 import questionNumberBg from "./assets/QuestionNumber.png";
 import descriptionImg from "./assets/description.png";
 import startButtonBg from "./assets/startButton.png";
+import ResultsPanel from './ResultsPanel/ResultsPanel';
+import Celebration from './Celebration/Celebration';
+
 interface Particle {
   id: number;
   left: number;
@@ -96,10 +99,15 @@ function App() {
   const questionStartTimeRef = useRef<number>(0);
 
   // Game Configuration & Play State
-  const [gameState, setGameState] = useState<'welcome' | 'playing' | 'gameover'>('welcome');
+  const [gameState, setGameState] = useState<'welcome' | 'playing' | 'celebration' | 'gameover'>('welcome');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [apiQuestions, setApiQuestions] = useState<Question[]>([]);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
+
+  // Joystick state
+  const [joystickPos, setJoystickPos] = useState({ x: 0, y: 0 });
+  const joystickRef = useRef({ active: false, startX: 0, startY: 0, dx: 0, dy: 0 });
+  const mouseTargetRef = useRef<{ x: number, y: number } | null>(null);
 
   useEffect(() => {
     if (!lessonId) {
@@ -192,6 +200,8 @@ function App() {
 
   const [isFlyingOver, setIsFlyingOver] = useState<boolean>(false); // Victory animation
   const [movementDir, setMovementDir] = useState<'up' | 'down' | 'none'>('none');
+  
+  const [isPhonePortrait, setIsPhonePortrait] = useState<boolean>(false);
 
   // Styling and Animation Effects
   const [planeEffect, setPlaneEffect] = useState<'normal' | 'boost' | 'shake'>('normal');
@@ -271,6 +281,27 @@ function App() {
       speed: 0.08 + Math.random() * 0.04, // Smooth slow speed so player has time to read
       isActive: true
     }));
+  };
+
+  useEffect(() => {
+    const checkOrientation = () => {
+      // Reliable phone detection (excluding tablets like iPad)
+      const isPhone = /iPhone|Android.*Mobile|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isPortrait = window.matchMedia("(orientation: portrait)").matches;
+      setIsPhonePortrait(isPhone && isPortrait);
+    };
+
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+    return () => {
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', checkOrientation);
+    };
+  }, []);
+
+  const handleStartClick = (category: string) => {
+    startGame(category);
   };
 
   const startGame = async (category: string) => {
@@ -398,15 +429,49 @@ function App() {
     };
   }, [gameState]);
 
-  // D-Pad Event Handlers
-  const handleDpadTouchStart = (key: string, e: React.TouchEvent | React.MouseEvent) => {
+  // Joystick Event Handlers
+  const handleJoystickStart = (e: React.PointerEvent) => {
     e.preventDefault();
-    keysPressedRef.current[key] = true;
+    const startX = e.clientX;
+    const startY = e.clientY;
+    joystickRef.current = { active: true, startX, startY, dx: 0, dy: 0 };
+    setJoystickPos({ x: 0, y: 0 });
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
 
-  const handleDpadTouchEnd = (key: string, e: React.TouchEvent | React.MouseEvent) => {
+  const handleJoystickMove = (e: React.PointerEvent) => {
     e.preventDefault();
-    keysPressedRef.current[key] = false;
+    if (!joystickRef.current.active) return;
+    
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    const dx = e.clientX - centerX;
+    const dy = e.clientY - centerY;
+    
+    // limit visual knob
+    const maxDist = 45;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    let clampedX = dx;
+    let clampedY = dy;
+    if (dist > maxDist) {
+      clampedX = (dx / dist) * maxDist;
+      clampedY = (dy / dist) * maxDist;
+    }
+    
+    joystickRef.current.dx = clampedX;
+    joystickRef.current.dy = clampedY;
+    setJoystickPos({ x: clampedX, y: clampedY });
+  };
+
+  const handleJoystickEnd = (e: React.PointerEvent) => {
+    e.preventDefault();
+    joystickRef.current = { active: false, startX: 0, startY: 0, dx: 0, dy: 0 };
+    setJoystickPos({ x: 0, y: 0 });
+    try {
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch(err){}
   };
 
   // Gameplay / Obstacles Loop & Invincibility Checking
@@ -438,17 +503,38 @@ function App() {
       const speed = 0.38;
       let dx = 0;
       let dy = 0;
+      let usedKeyboard = false;
       if (keysPressedRef.current['ArrowUp'] || keysPressedRef.current['w'] || keysPressedRef.current['W']) {
-        dy += speed;
+        dy += speed; usedKeyboard = true;
       }
       if (keysPressedRef.current['ArrowDown'] || keysPressedRef.current['s'] || keysPressedRef.current['S']) {
-        dy -= speed;
+        dy -= speed; usedKeyboard = true;
       }
       if (keysPressedRef.current['ArrowLeft'] || keysPressedRef.current['a'] || keysPressedRef.current['A']) {
-        dx -= speed;
+        dx -= speed; usedKeyboard = true;
       }
       if (keysPressedRef.current['ArrowRight'] || keysPressedRef.current['d'] || keysPressedRef.current['D']) {
-        dx += speed;
+        dx += speed; usedKeyboard = true;
+      }
+
+      if (usedKeyboard) {
+        mouseTargetRef.current = null;
+      } else if (mouseTargetRef.current) {
+        const targetX = mouseTargetRef.current.x;
+        const targetY = mouseTargetRef.current.y;
+        const diffX = targetX - planeXRef.current;
+        const diffY = targetY - planeYRef.current;
+        if (Math.abs(diffX) > 0.5) dx += diffX * 0.1;
+        if (Math.abs(diffY) > 0.5) dy += diffY * 0.1;
+      }
+
+      if (joystickRef.current.active) {
+        const maxDist = 45;
+        const jx = Math.max(-maxDist, Math.min(maxDist, joystickRef.current.dx)) / maxDist;
+        const jy = Math.max(-maxDist, Math.min(maxDist, joystickRef.current.dy)) / maxDist;
+        dx += jx * speed * 2.5;
+        dy -= jy * speed * 2.5;
+        mouseTargetRef.current = null;
       }
 
       planeXRef.current = Math.max(5, Math.min(55, planeXRef.current + dx));
@@ -734,7 +820,7 @@ function App() {
         }
 
         // check collision with plane
-        if (!isInvincibleRef.current && !isFlyingOver && planeRef.current) {
+        if (!isFlyingOver && planeRef.current) {
           const planeRect = planeRef.current.getBoundingClientRect();
           const heartEl = document.getElementById(`heart-${heart.id}`);
           if (heartEl) {
@@ -780,7 +866,7 @@ function App() {
         }
 
         // check collision with plane
-        if (!isInvincibleRef.current && !isFlyingOver && planeRef.current) {
+        if (!isFlyingOver && planeRef.current) {
           const planeRect = planeRef.current.getBoundingClientRect();
           const weaponEl = document.getElementById(`weapon-${weapon.id}`);
           if (weaponEl) {
@@ -824,7 +910,7 @@ function App() {
         }
 
         // check collision with plane
-        if (!isInvincibleRef.current && !isFlyingOver && planeRef.current) {
+        if (!isFlyingOver && planeRef.current) {
           const planeRect = planeRef.current.getBoundingClientRect();
           const shieldEl = document.getElementById(`shield-${shield.id}`);
           if (shieldEl) {
@@ -1117,6 +1203,31 @@ function App() {
     }
   };
 
+  const proceedAfterAnswer = () => {
+    if (autoAdvanceTimerRef.current) {
+      clearTimeout(autoAdvanceTimerRef.current);
+      autoAdvanceTimerRef.current = null;
+    }
+
+    const currentQIdx = currentQuestionIndexRef.current;
+    const isLastQuestion = currentQIdx >= questionsRef.current.length - 1;
+
+    if (isLastQuestion) {
+      setIsFlyingOver(true);
+      audio.playWin();
+      setTimeout(() => handleEndGame(true), 2500);
+    } else {
+      setTimeout(() => {
+        const nextIndex = currentQIdx + 1;
+        setCurrentQuestionIndex(nextIndex);
+        initClouds(questionsRef.current[nextIndex]);
+        setIsAnswerChecked(false);
+        setSelectedAnswer(null);
+        questionStartTimeRef.current = Date.now();
+      }, 1200);
+    }
+  };
+
   const handleDamagePlane = () => {
     setPlaneEffect('shake');
 
@@ -1130,7 +1241,6 @@ function App() {
         setTimeout(() => handleEndGame(false), 1500);
       } else {
         audio.playFailure();
-        // audio.speakText removed
         setTimeout(() => {
           setPlaneEffect('normal');
         }, 1000);
@@ -1138,70 +1248,29 @@ function App() {
       return newLives;
     });
 
-    if (autoAdvanceTimerRef.current) {
-      clearTimeout(autoAdvanceTimerRef.current);
-    }
     if (livesRef.current > 0) {
-      autoAdvanceTimerRef.current = setTimeout(() => {
-        handleNextQuestion();
-      }, 1200);
+      proceedAfterAnswer();
     }
   };
 
   const handleCheckAnswer = (correct: boolean) => {
-
     setIsAnswerChecked(true);
 
     if (correct) {
       setStarsSync(starsRef.current + 1);
       setPlaneEffect('boost');
-
       audio.playSuccess();
-      // audio.speakText removed
     }
 
     setTimeout(() => {
       setPlaneEffect('normal');
     }, 1000);
 
-    if (autoAdvanceTimerRef.current) {
-      clearTimeout(autoAdvanceTimerRef.current);
-    }
-    autoAdvanceTimerRef.current = setTimeout(() => {
-      handleNextQuestion();
-    }, 1200);
-  };
-
-  const handleNextQuestion = () => {
-    if (autoAdvanceTimerRef.current) {
-      clearTimeout(autoAdvanceTimerRef.current);
-      autoAdvanceTimerRef.current = null;
-    }
-
-    setSelectedAnswer(null);
-    setIsAnswerChecked(false);
-    questionStartTimeRef.current = Date.now();
-
-
-    const currentQIdx = currentQuestionIndexRef.current;
-    if (currentQIdx + 1 < questionsRef.current.length) {
-      const nextIndex = currentQIdx + 1;
-      setCurrentQuestionIndex(nextIndex);
-      initClouds(questionsRef.current[nextIndex]);
-      setTimeout(() => {
-        // Auto-speech removed per request
-      }, 1000);
-    } else {
-      setIsFlyingOver(true);
-      audio.playWin();
-      setTimeout(() => handleEndGame(true), 2500);
-    }
+    proceedAfterAnswer();
   };
 
   const handleEndGame = async (won: boolean) => {
     stopAutoFire();
-    setGameState('gameover');
-    setIsFlyingOver(false);
     audio.stopEngine();
 
     if (currentSessionId) {
@@ -1229,13 +1298,19 @@ function App() {
       }
     }
 
-    if (won) {
-      // audio.speakText removed
+    const allQuestionsCompleted = currentQuestionIndexRef.current >= questionsRef.current.length - 1;
+    const isAlive = livesRef.current > 0;
+
+    if (won && allQuestionsCompleted && isAlive && starsRef.current > 0) {
+      setGameState('celebration');
     } else {
       audio.playLose();
-      // audio.speakText removed
+      setGameState('gameover');
     }
   };
+
+  const handleCelebrationComplete = useCallback(() => setGameState('gameover'), []);
+
 
   const handleBackToMenu = () => {
     window.location.href = "https://frontend-six-xi-37.vercel.app/";
@@ -1280,7 +1355,8 @@ function App() {
 
       {/* ================= NEW WELCOME SCREEN ================= */}
       {gameState === 'welcome' && (
-        <div className="welcome-screen-new">
+        <div className="sky-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="welcome-screen-new" style={{ background: 'transparent' }}>
           <div className="welcome-header-new">
             <div className="welcome-stats-bg" style={{ backgroundImage: `url(${questionNumberBg})` }}>
               <img src={questionCoinImg} alt="Q" className="welcome-q-coin" />
@@ -1301,7 +1377,7 @@ function App() {
             ) : apiQuestions.length > 0 ? (
               <button 
                 className="welcome-start-btn-new" 
-                onClick={() => startGame('all')} 
+                onClick={() => handleStartClick('all')} 
                 disabled={isStartingSession}
                 style={{ backgroundImage: `url(${startButtonBg})` }}
               >
@@ -1319,6 +1395,36 @@ function App() {
               </div>
             )}
           </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= LANDSCAPE ROTATION SCREEN ================= */}
+      {isPhonePortrait && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 9999,
+          background: 'rgba(15, 23, 42, 0.85)', /* Low opacity dark overlay based on game theme */
+          backdropFilter: 'blur(5px)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#84ebff', /* Cyan color from theme */
+          fontFamily: 'Lateef, var(--font-arabic)'
+        }}>
+          <svg width="120" height="120" viewBox="0 0 24 24" fill="currentColor" stroke="none" style={{ animation: 'rotatePhone 1.5s ease-in-out infinite alternate', dropShadow: '0 0 15px rgba(132,235,255,0.4)' }}>
+            <path d="M17 1H7C5.9 1 5 1.9 5 3V21C5 22.1 5.9 23 7 23H17C18.1 23 19 22.1 19 21V3C19 1.9 18.1 1 17 1ZM12 21C11.45 21 11 20.55 11 20C11 19.45 11.45 19 12 19C12.55 19 13 19.45 13 20C13 20.55 12.55 21 12 21ZM17 17H7V4H17V17Z" />
+          </svg>
+          <h2 style={{ marginTop: '40px', fontSize: '42px', textAlign: 'center', fontWeight: 'bold', textShadow: '0 4px 15px rgba(0,0,0,0.6)' }}>قم بتدوير الشاشة</h2>
+          <p style={{ marginTop: '10px', fontSize: '26px', textAlign: 'center', color: '#fff', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>يرجى تدوير الهاتف للعب</p>
+          <style>{`
+            @keyframes rotatePhone {
+              0%, 20% { transform: rotate(0deg); }
+              80%, 100% { transform: rotate(-90deg); }
+            }
+          `}</style>
         </div>
       )}
 
@@ -1327,13 +1433,24 @@ function App() {
         <div
           className="sky-container"
           ref={skyRef}
+          onPointerMove={(e) => {
+            if (e.pointerType !== 'mouse') return;
+            if (skyRef.current) {
+              const rect = skyRef.current.getBoundingClientRect();
+              let px = ((e.clientX - rect.left) / rect.width) * 100;
+              let py = 100 - (((e.clientY - rect.top) / rect.height) * 100);
+              px = Math.max(5, Math.min(55, px));
+              py = Math.max(10, Math.min(85, py));
+              mouseTargetRef.current = { x: px, y: py };
+            }
+          }}
         >
 
 
           {/* Top HUD Header */}
           <div className="sky-hud-header">
             <div className="hud-left">
-              <button className="hud-back-btn" onClick={handleBackToMenu}>🏠 القائمة الرئيسية</button>
+              <button className="hud-back-btn" onClick={handleBackToMenu} style={{ background: '#ef4444', color: 'white', padding: '8px 12px', fontSize: '24px' }} title="خروج">🚪</button>
               <span className="hud-category">{currentQuestion?.categoryName}</span>
             </div>
             <div className="hud-center" style={{ fontSize: '30px', fontWeight: '900' }}>
@@ -1374,10 +1491,6 @@ function App() {
                 {Array.from({ length: 3 }).map((_, i) => (
                   <span key={i} className={`heart-icon ${i >= lives ? 'lost' : ''}`}>❤️</span>
                 ))}
-              </div>
-              <div className="hud-stars">
-                <span className="stars-score">⭐ {stars}/{questions.length}</span>
-                <span style={{ marginRight: '4px' }}>نجوم</span>
               </div>
               <span className="hud-question-number">السؤال {currentQuestionIndex + 1}</span>
             </div>
@@ -1656,169 +1769,112 @@ function App() {
           <div className="buildings-layer-fg" />
 
           {/* Styled Mobile Overlay Controls */}
-          <div className="mobile-controls-overlay">
-            {/* Mobile D-Pad UI */}
+          {typeof window !== 'undefined' && window.matchMedia("(pointer: coarse)").matches && (
+            <div className="mobile-controls-overlay">
+              {/* Mobile Joystick UI */}
             {gameState === 'playing' && (
-              <div className="dpad-container">
-                <div className="dpad-row">
-                  <button
-                    className="dpad-btn up"
-                    onPointerDown={(e) => handleDpadTouchStart('ArrowUp', e)}
-                    onPointerUp={(e) => handleDpadTouchEnd('ArrowUp', e)}
-                    onPointerCancel={(e) => handleDpadTouchEnd('ArrowUp', e)}
-                    onContextMenu={(e) => e.preventDefault()}
-                  >
-                    ▲
-                  </button>
-                </div>
-                <div className="dpad-row">
-                  <button
-                    className="dpad-btn left"
-                    onPointerDown={(e) => handleDpadTouchStart('ArrowLeft', e)}
-                    onPointerUp={(e) => handleDpadTouchEnd('ArrowLeft', e)}
-                    onPointerCancel={(e) => handleDpadTouchEnd('ArrowLeft', e)}
-                    onContextMenu={(e) => e.preventDefault()}
-                  >
-                    ◀
-                  </button>
-                  <div className="dpad-center"></div>
-                  <button
-                    className="dpad-btn right"
-                    onPointerDown={(e) => handleDpadTouchStart('ArrowRight', e)}
-                    onPointerUp={(e) => handleDpadTouchEnd('ArrowRight', e)}
-                    onPointerCancel={(e) => handleDpadTouchEnd('ArrowRight', e)}
-                    onContextMenu={(e) => e.preventDefault()}
-                  >
-                    ▶
-                  </button>
-                </div>
-                <div className="dpad-row">
-                  <button
-                    className="dpad-btn down"
-                    onPointerDown={(e) => handleDpadTouchStart('ArrowDown', e)}
-                    onPointerUp={(e) => handleDpadTouchEnd('ArrowDown', e)}
-                    onPointerCancel={(e) => handleDpadTouchEnd('ArrowDown', e)}
-                    onContextMenu={(e) => e.preventDefault()}
-                  >
-                    ▼
-                  </button>
-                </div>
+              <div
+                className="joystick-zone"
+                onPointerDown={handleJoystickStart}
+                onPointerMove={handleJoystickMove}
+                onPointerUp={handleJoystickEnd}
+                onPointerCancel={handleJoystickEnd}
+                onContextMenu={(e) => e.preventDefault()}
+                style={{
+                  position: 'absolute',
+                  bottom: '30px',
+                  left: '30px',
+                  width: '140px',
+                  height: '140px',
+                  background: 'rgba(255,255,255,0.2)',
+                  border: '2px solid rgba(255,255,255,0.4)',
+                  borderRadius: '50%',
+                  touchAction: 'none',
+                  zIndex: 100
+                }}
+              >
+                <div
+                  className="joystick-knob"
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    width: '60px',
+                    height: '60px',
+                    background: 'rgba(255,255,255,0.8)',
+                    borderRadius: '50%',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+                    transform: `translate(calc(-50% + ${joystickPos.x}px), calc(-50% + ${joystickPos.y}px))`,
+                    pointerEvents: 'none'
+                  }}
+                />
               </div>
             )}
 
-            <button
-              className="action-fire-btn"
-              disabled={isFlyingOver}
-              onMouseDown={startAutoFire}
-              onMouseUp={stopAutoFire}
-              onMouseLeave={stopAutoFire}
-              onTouchStart={startAutoFire}
-              onTouchEnd={stopAutoFire}
-            >
-              <div className="fire-btn-inner">
-                <span className="fire-icon">☄️</span>
-                <span className="fire-text">إطلاق</span>
-              </div>
-            </button>
+            {gameState === 'playing' && (
+              <button
+                className="action-fire-btn"
+                disabled={isFlyingOver}
+                onPointerDown={(e) => { e.preventDefault(); startAutoFire(e); }}
+                onPointerUp={(e) => { e.preventDefault(); stopAutoFire(); }}
+                onPointerCancel={(e) => { e.preventDefault(); stopAutoFire(); }}
+                onMouseLeave={stopAutoFire}
+                onContextMenu={(e) => e.preventDefault()}
+                style={{
+                  position: 'absolute',
+                  bottom: '40px',
+                  right: '40px',
+                  width: '90px',
+                  height: '90px',
+                  borderRadius: '50%',
+                  background: 'radial-gradient(circle, #ef4444 0%, #b91c1c 100%)',
+                  color: 'white',
+                  border: '4px solid rgba(255,255,255,0.6)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                  touchAction: 'none',
+                  zIndex: 100,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 0
+                }}
+              >
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '4px' }}>
+                  <line x1="12" y1="2" x2="12" y2="22"></line>
+                  <line x1="2" y1="12" x2="22" y2="12"></line>
+                  <circle cx="12" cy="12" r="5"></circle>
+                </svg>
+                <span className="fire-text" style={{ fontSize: '14px', fontWeight: 'bold' }}>إطلاق</span>
+              </button>
+            )}
           </div>
-
-
+          )}
         </div>
       )}
 
-      {/* ================= GAME OVER SCREEN ================= */}
-      {gameState === 'gameover' && (
-        <div className="game-over-screen">
-          <div className="result-card">
-            {isSubmittingStats ? (
-              <div style={{ padding: '2rem', textAlign: 'center', color: '#fff' }}>
-                <h2 style={{ fontSize: '1.8rem', marginBottom: '1rem' }}>جاري حفظ النتائج... ⏳</h2>
-                <div className="loading-spinner" style={{ width: '40px', height: '40px', border: '4px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto' }}></div>
-              </div>
-            ) : submitStatsError ? (
-              <div style={{ padding: '2rem', textAlign: 'center', color: '#fff' }}>
-                <h2 style={{ fontSize: '2rem', marginBottom: '1rem', color: '#ef4444' }}>⚠️ خطأ</h2>
-                <p>{submitStatsError}</p>
-                <button className="retry-btn" onClick={handleBackToMenu} style={{ background: '#64748b', boxShadow: 'none', marginTop: '1rem' }}>
-                  العودة للشاشة الرئيسية 🏠
-                </button>
-              </div>
-            ) : (
-              <>
-                {lives > 0 ? (
-                  <>
-                    <span className="result-badge">🏆✈️✨</span>
-                    <h2 className="result-title win">أَنتَ بَطَلٌ</h2>
-                    <p className="result-desc" style={{ fontSize: "30px" }} >
-                      مَبْرُوكْ
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <span className="result-badge">🔥💥🥺</span>
-                    <h2 className="result-title lose">الطائرة تفحمت!</h2>
-                    {/* <p className="result-desc">
-                      أصيبت طائرتك بالعقبات الفضائية ونفذت محاولاتك. حاول مرة أخرى!
-                    </p> */}
-                  </>
-                )}
-
-                <div className="result-stats">
-                  <div className="stat-item base-stat">
-                    <span className="stat-val">⭐ {stars}/{questions.length}</span>
-                    <span className="stat-lbl">الإجابات الصحيحة</span>
-                  </div>
-                  <div className="stat-item base-stat">
-                    <span className="stat-val">❤️ {lives}/3</span>
-                    <span className="stat-lbl">القُلُوبُ</span>
-                  </div>
-
-                  {gameOverStats && gameOverStats.score !== undefined && (
-                    <div className="stat-item score-stat">
-                      <span className="stat-val">🎯 {gameOverStats.score}</span>
-                      <span className="stat-lbl "> النّقَاطُ</span>
-                    </div>
-                  )}
-                  {gameOverStats && gameOverStats.percentage !== undefined && (
-                    <div className="stat-item percentage-stat">
-                      <span className="stat-val">📊 %{gameOverStats.percentage}</span>
-                      <span className="stat-lbl">الدَّرَجَةُ</span>
-                    </div>
-                  )}
-
-                  {gameOverStats && gameOverStats.coins !== undefined && (
-                    <div className="stat-item coins-stat">
-                      <span className="stat-val" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        {gameOverStats.coins}
-                        <img src={daadCoins} alt="Daddcoin" style={{ width: '38px', height: '38px' }} />
-                      </span>
-                      <span className="stat-lbl">فِلُوس </span>
-                    </div>
-                  )}
-                  {gameOverStats && gameOverStats.stars !== undefined && gameOverStats.stars > 0 && (
-                    <div className="stat-item stars-stat">
-                      <span className="stat-val">🌟 +{gameOverStats.stars}</span>
-                      <span className="stat-lbl">نجوم إضافية</span>
-                    </div>
-                  )}
-
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
-                  <button className="retry-btn" onClick={() => startGame(selectedCategory)}>
-                    إِلعَبْ ثَانِيةً 🔄
-                  </button>
-                  <button className="retry-btn" onClick={handleBackToMenu} style={{ background: '#64748b', boxShadow: 'none' }}>
-                    ارْجِع🏠
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+      {/* ================= CELEBRATION SCREEN ================= */}
+      {gameState === 'celebration' && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 1000 }}>
+           <Celebration isVisible={true} onComplete={handleCelebrationComplete} />
         </div>
-      )
-      }
-    </div >
+      )}
+
+      {/* ================= GAME OVER SCREEN (RESULTS PANEL) ================= */}
+      {gameState === 'gameover' && (
+        <div className="sky-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <ResultsPanel 
+             score={gameOverStats?.score || stars} 
+             totalScore={questions.length} 
+             correctAnswers={stars} 
+             wrongAnswers={questions.length - stars} 
+             coins={gameOverStats?.coins || 0}
+             onRetry={() => startGame(selectedCategory)}
+             onBack={handleBackToMenu}
+          />
+        </div>
+      )}
+    </div>
   );
 }
 

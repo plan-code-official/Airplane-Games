@@ -1,0 +1,116 @@
+.celebration {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  background: rgba(21, 64, 83, 0.77);
+  border: 1px solid #F9FCFC;
+  box-shadow: inset 0px 4px 20.8px 5px #009BB4, 0 0 34px rgba(0, 217, 255, 0.32);
+  animation: celebrationOverlayIn 360ms ease-out both;
+}
+
+.celebration--leaving {
+  pointer-events: none;
+  animation: celebrationOverlayOut 760ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.celebration-fireworks {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.celebration-aurora {
+  position: absolute;
+  width: min(95vw, 1250px);
+  height: min(75vh, 680px);
+  border-radius: 50%;
+  background: conic-gradient(from 160deg, transparent, rgba(0, 214, 255, 0.1), transparent 36%, rgba(99, 255, 93, 0.1), transparent 71%);
+  filter: blur(28px);
+  animation: celebrationGlow 4s ease-in-out infinite alternate;
+}
+
+.celebration-content {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  width: min(100%, 1320px);
+  padding: 2vh 3vw 4vh;
+  box-sizing: border-box;
+}
+
+.celebration-robots {
+  display: block;
+  width: min(91vw, 1050px);
+  max-height: 67vh;
+  object-fit: contain;
+  transform-origin: center bottom;
+  filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.36));
+  animation:
+    celebrationRobotEntrance 1180ms cubic-bezier(0.16, 1.18, 0.35, 1) both,
+    celebrationRobotFloat 3.8s ease-in-out 1180ms infinite;
+}
+
+.celebration-word {
+  margin-top: clamp(-24px, -2vh, -10px);
+  padding: 0 0.25em;
+  color: #f8ffff;
+  font-family: "Lateef", serif;
+  font-size: clamp(4.5rem, 12vw, 10.5rem);
+  font-weight: 900;
+  letter-spacing: 0.035em;
+  line-height: 0.95;
+  text-shadow: 0 0 10px #2ceaff, 0 0 26px rgba(30, 211, 255, 0.9), 0 0 55px rgba(51, 234, 99, 0.62), 0 6px 0 rgba(0, 52, 73, 0.65);
+  opacity: 0;
+  transform: translateY(30px) scale(0.58);
+  animation: celebrationWordIn 830ms 1050ms cubic-bezier(0.18, 1.35, 0.38, 1) forwards;
+}
+
+@keyframes celebrationOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes celebrationOverlayOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(1.025); }
+}
+
+@keyframes celebrationRobotEntrance {
+  0% { opacity: 0; transform: translateY(52vh) scale(0.72) rotate(-3deg); }
+  62% { opacity: 1; transform: translateY(-2.8vh) scale(1.035) rotate(1.1deg); }
+  80% { transform: translateY(1.2vh) scale(0.985) rotate(-0.7deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+
+@keyframes celebrationRobotFloat {
+  0%, 100% { transform: translateY(0) rotate(-0.6deg); }
+  50% { transform: translateY(-12px) rotate(0.8deg); }
+}
+
+@keyframes celebrationWordIn {
+  0% { opacity: 0; transform: translateY(30px) scale(0.58); }
+  68% { opacity: 1; transform: translateY(-5px) scale(1.1); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes celebrationGlow {
+  from { transform: scale(0.92) rotate(-8deg); opacity: 0.58; }
+  to { transform: scale(1.08) rotate(9deg); opacity: 1; }
+}
+
+@media (max-width: 620px) {
+  .celebration-content { padding-bottom: 7vh; }
+  .celebration-robots { width: 97vw; max-height: 58vh; }
+  .celebration-word { margin-top: -6px; font-size: clamp(4rem, 17vw, 6.5rem); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celebration, .celebration-robots, .celebration-word, .celebration-aurora { animation-duration: 1ms !important; animation-iteration-count: 1 !important; }
+  .celebration-fireworks { display: none; }
+}

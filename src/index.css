@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Outfit:wght@400;600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Outfit:wght@400;600;800&family=Lateef:wght@400;500;600;700;800&display=swap');
 
 @font-face {
   font-family: 'FontGame';
@@ -8,7 +8,7 @@
 }
 
 :root {
-  --font-arabic: 'FontGame', 'Cairo', sans-serif;
+  --font-arabic: 'Lateef', 'FontGame', 'Cairo', sans-serif;
   --font-english: 'FontGame', 'Outfit', sans-serif;
   --primary: #4e54c8;
   --primary-light: #8f94fb;
