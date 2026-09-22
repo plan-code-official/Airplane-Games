@@ -9,7 +9,7 @@ import descriptionImg from "./assets/description.png";
 import startButtonBg from "./assets/startButton.png";
 import ResultsPanel from './ResultsPanel/ResultsPanel';
 import Celebration from './Celebration/Celebration';
-
+ 
 interface Particle {
   id: number;
   left: number;
