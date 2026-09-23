@@ -272,8 +272,8 @@
   }
 
   .monster-img {
-    width: 45px;
-    /* 50% smaller size on mobile */
+    width: 65px;
+    /* Slightly smaller size on mobile */
   }
 
   .monster-speech-bubble {
@@ -286,9 +286,9 @@
   }
 
   .lane-target-btn {
-    min-width: 90px;
-    padding: 4px 8px;
-    font-size: 10px;
+    min-width: 120px;
+    padding: 6px 10px;
+    font-size: 12px;
   }
 }
 
@@ -759,22 +759,22 @@
 
 @media (max-width: 950px) {
   .cloud-bubble {
-    padding: 3px 6px;
-    font-size: 10px;
+    padding: 5px 10px;
+    font-size: 12px;
   }
 
   .cloud-bubble::before {
-    width: 12px;
-    height: 12px;
-    top: -5px;
-    left: 5px;
+    width: 16px;
+    height: 16px;
+    top: -6px;
+    left: 6px;
   }
 
   .cloud-bubble::after {
-    width: 11px;
-    height: 11px;
-    top: -4px;
-    right: 9px;
+    width: 14px;
+    height: 14px;
+    top: -5px;
+    right: 12px;
   }
 
   .cloud-badge {
@@ -1099,15 +1099,16 @@
   }
 }
 
-@media (pointer: coarse), (max-width: 950px) {
+@media (pointer: coarse),
+(max-width: 950px) {
   .scrolling-obstacle {
-    width: 45px !important;
-    height: 45px !important;
+    width: 65px !important;
+    height: 65px !important;
   }
 
   .obstacle-bullet,
   .player-bullet {
-    width: 8px !important;
-    height: 3px !important;
+    width: 12px !important;
+    height: 4px !important;
   }
 }

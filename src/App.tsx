@@ -272,7 +272,7 @@ function App() {
 
   const initClouds = (question: Question) => {
     if (!question) return;
-    const lanePositionsNum = [75, 55, 35, 15];
+    const lanePositionsNum = [65, 48, 31, 14];
     cloudsRef.current = question.options.map((option, idx) => ({
       idx,
       text: option,
@@ -1320,8 +1320,8 @@ function App() {
   const currentQuestion = questions[currentQuestionIndex];
   const isMobilePortrait = typeof window !== 'undefined' && window.matchMedia("(max-width: 768px) and (orientation: portrait)").matches;
   const lanePositions = isMobilePortrait
-    ? ['72%', '53%', '34%', '15%']
-    : ['75%', '55%', '35%', '15%'];
+    ? ['63%', '47%', '31%', '15%']
+    : ['65%', '48%', '31%', '14%'];
 
   const getPlaneClass = () => {
     let classes = ['airplane-wrapper'];
