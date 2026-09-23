@@ -174,7 +174,7 @@
   /* Force LTR so D-pad is always on the left, Fire always on the right */
 }
 
-.d-pad-vertical,
+.joystick-zone,
 .action-fire-btn {
   pointer-events: auto;
   /* re-enable clicking on buttons */
