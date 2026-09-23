@@ -265,7 +265,8 @@
   filter: grayscale(100%);
 }
 
-@media (pointer: coarse), (max-width: 950px) {
+@media (pointer: coarse),
+(max-width: 950px) {
   .mobile-controls-overlay {
     display: flex;
   }
@@ -833,7 +834,8 @@
   align-items: center;
   padding: 20px;
   gap: 30px;
-  direction: rtl; /* Ensure the whole screen handles RTL properly */
+  direction: rtl;
+  /* Ensure the whole screen handles RTL properly */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -856,7 +858,8 @@
   min-width: 250px;
   height: 60px;
   gap: 15px;
-  direction: ltr; /* Force LTR so Question Coin is Left, DaddCoin is Right */
+  direction: ltr;
+  /* Force LTR so Question Coin is Left, DaddCoin is Right */
 }
 
 .welcome-q-coin,
@@ -894,7 +897,8 @@
   align-items: center;
   width: 100%;
   max-width: 800px;
-  margin-top: auto; /* Allow centering naturally */
+  margin-top: auto;
+  /* Allow centering naturally */
   margin-bottom: auto;
 }
 
@@ -927,8 +931,9 @@
   color: white;
   cursor: pointer;
   transition: transform 0.2s;
-  padding-bottom: 12px; /* Offset text to center properly on the graphic */
-  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  padding-bottom: 12px;
+  /* Offset text to center properly on the graphic */
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .welcome-start-btn-new:hover:not(:disabled) {
@@ -1001,24 +1006,29 @@
     padding: 10px;
     gap: 10px;
   }
+
   .welcome-header-new {
     position: static;
     margin-bottom: 5px;
   }
+
   .welcome-stats-bg {
     min-width: 180px;
     height: 40px;
     padding: 2px 15px;
   }
+
   .welcome-stat-text {
     font-size: 14px;
   }
+
   .welcome-start-btn-new {
     width: 140px;
     height: 45px;
     font-size: 16px;
     padding-bottom: 2px;
   }
+
   .welcome-description-img {
     max-width: 300px;
   }
@@ -1070,7 +1080,7 @@
   }
 
   /* Hide main content visually to prevent weird squished rendering */
-  .app-container > *:not(.rotate-overlay) {
+  .app-container>*:not(.rotate-overlay) {
     display: none !important;
   }
 }
@@ -1079,19 +1089,22 @@
   0% {
     transform: rotate(0deg);
   }
+
   50% {
     transform: rotate(90deg);
   }
+
   100% {
     transform: rotate(90deg);
   }
 }
 
-@media screen and (max-width: 950px) {
+@media (pointer: coarse), (max-width: 950px) {
   .scrolling-obstacle {
     width: 45px !important;
     height: 45px !important;
   }
+
   .obstacle-bullet,
   .player-bullet {
     width: 8px !important;
