@@ -1776,9 +1776,8 @@ function App() {
           <div className="buildings-layer-fg" />
 
           {/* Styled Mobile Overlay Controls */}
-          {typeof window !== 'undefined' && window.matchMedia("(pointer: coarse)").matches && (
-            <div className="mobile-controls-overlay">
-              {/* Compact Analog Joystick */}
+          <div className="mobile-controls-overlay">
+            {/* Compact Analog Joystick */}
             {gameState === 'playing' && (
               <div
                 className="joystick-zone"
@@ -1788,9 +1787,6 @@ function App() {
                 onPointerCancel={handleJoystickEnd}
                 onContextMenu={(e) => e.preventDefault()}
                 style={{
-                  position: 'absolute',
-                  bottom: '20px',
-                  left: '20px',
                   width: '90px',
                   height: '90px',
                   background: 'rgba(255,255,255,0.12)',
@@ -1830,9 +1826,6 @@ function App() {
                 onMouseLeave={stopAutoFire}
                 onContextMenu={(e) => e.preventDefault()}
                 style={{
-                  position: 'absolute',
-                  bottom: '25px',
-                  right: '25px',
                   width: '70px',
                   height: '70px',
                   borderRadius: '50%',
@@ -1858,7 +1851,6 @@ function App() {
               </button>
             )}
           </div>
-          )}
         </div>
       )}
 
