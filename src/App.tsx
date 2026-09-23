@@ -1363,7 +1363,7 @@ function App() {
       {/* ================= NEW WELCOME SCREEN ================= */}
       {gameState === 'welcome' && (
         <div className="sky-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="welcome-screen-new" style={{ background: 'transparent' }}>
+        <div className="welcome-screen-new">
           <div className="welcome-header-new">
             <div className="welcome-stats-bg" style={{ backgroundImage: `url(${questionNumberBg})` }}>
               <img src={questionCoinImg} alt="Q" className="welcome-q-coin" />
@@ -1460,7 +1460,7 @@ function App() {
               <button className="hud-back-btn" onClick={handleBackToMenu} style={{ background: '#ef4444', color: 'white', padding: '8px 12px', fontSize: '24px' }} title="خروج">🚪</button>
               <span className="hud-category">{currentQuestion?.categoryName}</span>
             </div>
-            <div className="hud-center" style={{ fontSize: '30px', fontWeight: '900' }}>
+            <div className="hud-center">
               {currentQuestion && !isFlyingOver && (
                 <div className="hud-question-text-inline" style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center' }}>
                   {currentQuestion.audioUrl && (
@@ -1486,7 +1486,7 @@ function App() {
                       ▶️
                     </button>
                   )}
-                  <span style={{ fontSize: '30px', fontWeight: '900' }}>{currentQuestion.question}</span>
+                  <span className="hud-question-main-text">{currentQuestion.question}</span>
                 </div>
               )}
             </div>

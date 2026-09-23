@@ -2253,3 +2253,47 @@ body {
   transform: scale(1.05);
   box-shadow: 0 12px 25px rgba(2, 128, 144, 0.6);
 }
+
+/* Sky HUD Header Responsiveness */
+.hud-question-main-text {
+  font-size: 30px;
+  font-weight: 900;
+}
+
+@media (max-width: 900px), (max-height: 500px) {
+  .sky-hud-header {
+    padding: 8px 12px;
+  }
+  .hud-question-main-text {
+    font-size: 18px;
+  }
+  .hud-back-btn {
+    padding: 4px 8px !important;
+    font-size: 18px !important;
+  }
+  .hud-category {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+  .hud-lives {
+    padding: 4px 8px;
+    gap: 4px;
+  }
+  .heart-icon {
+    font-size: 16px;
+  }
+  .sound-toggle-inline {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  .hud-question-text-inline {
+    padding: 4px 12px;
+    gap: 8px !important;
+  }
+  .play-audio-btn {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 16px !important;
+  }
+}

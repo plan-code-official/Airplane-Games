@@ -824,16 +824,18 @@
   left: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   /* Deep space cyan-navy background that complements #12C1D8 perfectly */
   background: radial-gradient(circle at center, #113645, #08171d);
   z-index: 100;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   padding: 20px;
   gap: 30px;
   direction: rtl; /* Ensure the whole screen handles RTL properly */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .welcome-header-new {
@@ -892,7 +894,8 @@
   align-items: center;
   width: 100%;
   max-width: 800px;
-  margin-top: 50px; /* Push down to avoid header */
+  margin-top: auto; /* Allow centering naturally */
+  margin-bottom: auto;
 }
 
 .welcome-description-img {
@@ -987,7 +990,37 @@
   }
 
   .welcome-description-img {
-    max-height: 45vh;
+    max-height: none;
+    width: 90%;
+    max-width: 400px;
+  }
+}
+
+@media (max-width: 900px) and (max-height: 500px) {
+  .welcome-screen-new {
+    padding: 10px;
+    gap: 10px;
+  }
+  .welcome-header-new {
+    position: static;
+    margin-bottom: 5px;
+  }
+  .welcome-stats-bg {
+    min-width: 180px;
+    height: 40px;
+    padding: 2px 15px;
+  }
+  .welcome-stat-text {
+    font-size: 14px;
+  }
+  .welcome-start-btn-new {
+    width: 140px;
+    height: 45px;
+    font-size: 16px;
+    padding-bottom: 2px;
+  }
+  .welcome-description-img {
+    max-width: 300px;
   }
 }
 
