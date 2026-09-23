@@ -39,6 +39,8 @@ body {
   height: 100dvh;
   width: 100vw;
   user-select: none;
+  touch-action: pan-x pan-y; /* Prevent pinch zoom but allow scrolling */
+  -webkit-text-size-adjust: 100%; /* Prevent font scaling in landscape */
 }
 
 #root {
@@ -777,13 +779,15 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 30px;
-  padding: 20px;
+  padding: 40px 20px;
   text-align: center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .welcome-content {
+  margin: auto; /* Fix for flexbox cutoff when content is taller than viewport */
   max-width: 600px;
   background: rgba(255, 255, 255, 0.05);
   border: 2px solid rgba(255, 255, 255, 0.1);
@@ -907,9 +911,10 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 20px;
+  padding: 40px 20px;
   animation: fadeIn 0.5s ease forwards;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 @keyframes fadeIn {
@@ -923,6 +928,7 @@ body {
 }
 
 .result-card {
+  margin: auto; /* Fix for flexbox cutoff when content is taller than viewport */
   max-width: 550px;
   width: 90%;
   max-height: 90vh;

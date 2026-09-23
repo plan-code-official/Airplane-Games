@@ -6,11 +6,11 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
   gap: clamp(6px, 1.4vw, 18px);
   padding: clamp(8px, 1.5vh, 16px) clamp(8px, 2.5vw, 24px);
-  overflow: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background: transparent;
 }
 
@@ -21,6 +21,7 @@
 }
 
 .results-panel {
+  margin-top: auto;
   width: min(90vw, 1180px, calc(75vh * 1.55));
   max-width: 1180px;
   aspect-ratio: 1496 / 965;
@@ -147,6 +148,7 @@
 .results-stat-card--coins { direction: rtl; }
 
 .results-actions {
+  margin-bottom: auto;
   width: min(84vw, 820px);
   display: flex;
   justify-content: center;
@@ -224,7 +226,6 @@
 
 @media (max-width: 620px), (max-height: 620px) {
   .results-screen {
-    justify-content: center;
     gap: clamp(3px, 0.8vh, 8px);
     padding: clamp(5px, 1vh, 10px) clamp(6px, 2vw, 14px);
   }
