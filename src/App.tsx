@@ -104,9 +104,9 @@ function App() {
   const [apiQuestions, setApiQuestions] = useState<Question[]>([]);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
 
-  // Joystick state
-  const [joystickPos, setJoystickPos] = useState({ x: 0, y: 0 });
+  // Joystick state — use refs only to avoid re-renders on every touch move
   const joystickRef = useRef({ active: false, startX: 0, startY: 0, dx: 0, dy: 0 });
+  const joystickKnobRef = useRef<HTMLDivElement>(null);
   const mouseTargetRef = useRef<{ x: number, y: number } | null>(null);
 
   useEffect(() => {
@@ -429,46 +429,47 @@ function App() {
     };
   }, [gameState]);
 
-  // Joystick Event Handlers
+  // Joystick Event Handlers — direct DOM updates, zero re-renders
   const handleJoystickStart = (e: React.PointerEvent) => {
     e.preventDefault();
-    const startX = e.clientX;
-    const startY = e.clientY;
-    joystickRef.current = { active: true, startX, startY, dx: 0, dy: 0 };
-    setJoystickPos({ x: 0, y: 0 });
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    joystickRef.current = { active: true, startX: e.clientX, startY: e.clientY, dx: 0, dy: 0 };
+    if (joystickKnobRef.current) {
+      joystickKnobRef.current.style.transform = 'translate(-50%, -50%)';
+    }
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   };
 
   const handleJoystickMove = (e: React.PointerEvent) => {
     e.preventDefault();
     if (!joystickRef.current.active) return;
-    
+
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
-    
+
     const dx = e.clientX - centerX;
     const dy = e.clientY - centerY;
-    
-    // limit visual knob
-    const maxDist = 45;
+
+    const maxDist = 30;
     const dist = Math.sqrt(dx * dx + dy * dy);
-    let clampedX = dx;
-    let clampedY = dy;
-    if (dist > maxDist) {
-      clampedX = (dx / dist) * maxDist;
-      clampedY = (dy / dist) * maxDist;
-    }
-    
+    const clampedX = dist > maxDist ? (dx / dist) * maxDist : dx;
+    const clampedY = dist > maxDist ? (dy / dist) * maxDist : dy;
+
     joystickRef.current.dx = clampedX;
     joystickRef.current.dy = clampedY;
-    setJoystickPos({ x: clampedX, y: clampedY });
+
+    // Direct DOM update — no React re-render
+    if (joystickKnobRef.current) {
+      joystickKnobRef.current.style.transform = `translate(calc(-50% + ${clampedX}px), calc(-50% + ${clampedY}px))`;
+    }
   };
 
   const handleJoystickEnd = (e: React.PointerEvent) => {
     e.preventDefault();
     joystickRef.current = { active: false, startX: 0, startY: 0, dx: 0, dy: 0 };
-    setJoystickPos({ x: 0, y: 0 });
+    if (joystickKnobRef.current) {
+      joystickKnobRef.current.style.transform = 'translate(-50%, -50%)';
+    }
     try {
       (e.target as HTMLElement).releasePointerCapture(e.pointerId);
     } catch(err){}
@@ -529,11 +530,11 @@ function App() {
       }
 
       if (joystickRef.current.active) {
-        const maxDist = 45;
+        const maxDist = 30;
         const jx = Math.max(-maxDist, Math.min(maxDist, joystickRef.current.dx)) / maxDist;
         const jy = Math.max(-maxDist, Math.min(maxDist, joystickRef.current.dy)) / maxDist;
-        dx += jx * speed * 2.5;
-        dy -= jy * speed * 2.5;
+        dx += jx * speed * 3.0;
+        dy -= jy * speed * 3.0;
         mouseTargetRef.current = null;
       }
 
@@ -1313,7 +1314,7 @@ function App() {
 
 
   const handleBackToMenu = () => {
-    window.location.href = "https://frontend-six-xi-37.vercel.app/";
+    window.history.back();
   };
 
   const currentQuestion = questions[currentQuestionIndex];
@@ -1341,6 +1342,12 @@ function App() {
 
   return (
     <div className="app-container">
+      <div className="rotate-overlay">
+        <div className="rotate-icon">📱</div>
+        <h2>يرجى تدوير الشاشة</h2>
+        <p>هذه اللعبة مصممة للعب في الوضع العرضي للحصول على أفضل تجربة.</p>
+      </div>
+
       {gameState !== 'playing' && (
         <button
           className="sound-toggle"
@@ -1414,7 +1421,7 @@ function App() {
           color: '#84ebff', /* Cyan color from theme */
           fontFamily: 'Lateef, var(--font-arabic)'
         }}>
-          <svg width="120" height="120" viewBox="0 0 24 24" fill="currentColor" stroke="none" style={{ animation: 'rotatePhone 1.5s ease-in-out infinite alternate', dropShadow: '0 0 15px rgba(132,235,255,0.4)' }}>
+          <svg width="120" height="120" viewBox="0 0 24 24" fill="currentColor" stroke="none" style={{ animation: 'rotatePhone 1.5s ease-in-out infinite alternate', filter: 'drop-shadow(0 0 15px rgba(132,235,255,0.4))' }}>
             <path d="M17 1H7C5.9 1 5 1.9 5 3V21C5 22.1 5.9 23 7 23H17C18.1 23 19 22.1 19 21V3C19 1.9 18.1 1 17 1ZM12 21C11.45 21 11 20.55 11 20C11 19.45 11.45 19 12 19C12.55 19 13 19.45 13 20C13 20.55 12.55 21 12 21ZM17 17H7V4H17V17Z" />
           </svg>
           <h2 style={{ marginTop: '40px', fontSize: '42px', textAlign: 'center', fontWeight: 'bold', textShadow: '0 4px 15px rgba(0,0,0,0.6)' }}>قم بتدوير الشاشة</h2>
@@ -1771,7 +1778,7 @@ function App() {
           {/* Styled Mobile Overlay Controls */}
           {typeof window !== 'undefined' && window.matchMedia("(pointer: coarse)").matches && (
             <div className="mobile-controls-overlay">
-              {/* Mobile Joystick UI */}
+              {/* Compact Analog Joystick */}
             {gameState === 'playing' && (
               <div
                 className="joystick-zone"
@@ -1782,29 +1789,31 @@ function App() {
                 onContextMenu={(e) => e.preventDefault()}
                 style={{
                   position: 'absolute',
-                  bottom: '30px',
-                  left: '30px',
-                  width: '140px',
-                  height: '140px',
-                  background: 'rgba(255,255,255,0.2)',
-                  border: '2px solid rgba(255,255,255,0.4)',
+                  bottom: '20px',
+                  left: '20px',
+                  width: '90px',
+                  height: '90px',
+                  background: 'rgba(255,255,255,0.12)',
+                  border: '2px solid rgba(255,255,255,0.25)',
                   borderRadius: '50%',
                   touchAction: 'none',
-                  zIndex: 100
+                  zIndex: 100,
+                  backdropFilter: 'blur(4px)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.2), inset 0 0 8px rgba(255,255,255,0.05)'
                 }}
               >
                 <div
-                  className="joystick-knob"
+                  ref={joystickKnobRef}
                   style={{
                     position: 'absolute',
                     top: '50%',
                     left: '50%',
-                    width: '60px',
-                    height: '60px',
-                    background: 'rgba(255,255,255,0.8)',
+                    width: '38px',
+                    height: '38px',
+                    background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(200,220,230,0.7) 100%)',
                     borderRadius: '50%',
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
-                    transform: `translate(calc(-50% + ${joystickPos.x}px), calc(-50% + ${joystickPos.y}px))`,
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                    transform: 'translate(-50%, -50%)',
                     pointerEvents: 'none'
                   }}
                 />
@@ -1822,15 +1831,15 @@ function App() {
                 onContextMenu={(e) => e.preventDefault()}
                 style={{
                   position: 'absolute',
-                  bottom: '40px',
-                  right: '40px',
-                  width: '90px',
-                  height: '90px',
+                  bottom: '25px',
+                  right: '25px',
+                  width: '70px',
+                  height: '70px',
                   borderRadius: '50%',
                   background: 'radial-gradient(circle, #ef4444 0%, #b91c1c 100%)',
                   color: 'white',
-                  border: '4px solid rgba(255,255,255,0.6)',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                  border: '3px solid rgba(255,255,255,0.5)',
+                  boxShadow: '0 4px 12px rgba(239,68,68,0.4)',
                   touchAction: 'none',
                   zIndex: 100,
                   display: 'flex',
@@ -1840,12 +1849,12 @@ function App() {
                   padding: 0
                 }}
               >
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '4px' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="2" x2="12" y2="22"></line>
                   <line x1="2" y1="12" x2="22" y2="12"></line>
                   <circle cx="12" cy="12" r="5"></circle>
                 </svg>
-                <span className="fire-text" style={{ fontSize: '14px', fontWeight: 'bold' }}>إطلاق</span>
+                <span className="fire-text" style={{ fontSize: '10px', fontWeight: 'bold' }}>إطلاق</span>
               </button>
             )}
           </div>

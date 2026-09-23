@@ -110,6 +110,16 @@
   .celebration-word { margin-top: -6px; font-size: clamp(4rem, 17vw, 6.5rem); }
 }
 
+@media (max-height: 500px) and (orientation: landscape) {
+  .celebration-robots {
+    max-height: 60vh;
+  }
+  .celebration-word {
+    font-size: clamp(3rem, 10vw, 5.5rem);
+    margin-top: -5px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .celebration, .celebration-robots, .celebration-word, .celebration-aurora { animation-duration: 1ms !important; animation-iteration-count: 1 !important; }
   .celebration-fireworks { display: none; }

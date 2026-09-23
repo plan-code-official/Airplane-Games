@@ -1754,17 +1754,12 @@ body {
 
   .sky-container {
     height: 100%;
-    width: 45%;
-    flex: none;
+    width: 100%;
+    flex: 1;
   }
 
   .panel-container {
-    width: 55%;
-    height: 100%;
-    border-top: none;
-    border-left: 2px solid rgba(255, 255, 255, 0.12);
-    padding: 8px 12px;
-    overflow-y: auto;
+    display: none;
   }
 
   .airplane-img {
@@ -2251,158 +2246,4 @@ body {
 .hud-next-btn:hover {
   transform: scale(1.05);
   box-shadow: 0 12px 25px rgba(2, 128, 144, 0.6);
-}
-
-/* ======================================== */
-/* Force Landscape on Mobile Portrait       */
-/* ======================================== */
-@media screen and (max-width: 768px) and (orientation: portrait) {
-  body {
-    position: fixed;
-    width: 100vw;
-    height: 100dvh;
-    overflow: hidden;
-  }
-
-  .app-container {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 100dvh !important;
-    height: 100vw !important;
-    margin-left: -50dvh;
-    margin-top: -50vw;
-    transform: rotate(90deg);
-    transform-origin: center center;
-    overflow: hidden;
-  }
-
-  .hud-feedback {
-    max-width: 80dvh;
-  }
-
-  /* Compact Header on forced landscape */
-  .sky-hud-header {
-    padding: 6px 15px;
-  }
-
-  .hud-back-btn,
-  .hud-category,
-  .hud-stars,
-  .hud-question-number {
-    font-size: 11px !important;
-    padding: 3px 8px !important;
-  }
-
-  .sound-toggle-inline {
-    width: 28px !important;
-    height: 28px !important;
-    font-size: 12px !important;
-  }
-
-  /* Compact Targets */
-  .sky-target-btn {
-    padding: 6px 12px !important;
-    font-size: 12px !important;
-  }
-
-  .target-badge {
-    width: 20px !important;
-    height: 20px !important;
-    font-size: 10px !important;
-  }
-
-  /* Question bubble overrides for tight height */
-  .sky-question-card {
-    padding: 6px 12px !important;
-  }
-
-  .sky-question-text {
-    font-size: 13px !important;
-  }
-
-  /* Game Over / Result screen in forced landscape */
-  .game-over-screen {
-    width: 100% !important;
-    height: 100% !important;
-    padding: 10px;
-  }
-
-  .result-card {
-    max-width: 90%;
-    padding: 16px 20px;
-    gap: 10px;
-    border-radius: 20px;
-    max-height: 95%;
-    overflow-y: auto;
-  }
-
-  .result-badge {
-    font-size: 40px;
-    margin-bottom: 0;
-  }
-
-  .result-title {
-    font-size: 18px !important;
-  }
-
-  .result-desc {
-    font-size: 13px;
-    line-height: 1.4;
-  }
-
-  .result-stats {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin: 4px 0;
-  }
-
-  .stat-item {
-    padding: 10px 8px;
-    border-radius: 12px;
-    gap: 4px;
-  }
-
-  .stat-val {
-    font-size: 30px;
-  }
-
-  .stat-lbl {
-    font-size: 15px;
-  }
-
-  .retry-btn {
-    padding: 10px 24px;
-    font-size: 15px;
-  }
-
-  /* Welcome screen in forced landscape */
-  .welcome-screen {
-    width: 100% !important;
-    height: 100% !important;
-    padding: 10px;
-    gap: 10px;
-  }
-
-  .welcome-content {
-    padding: 16px 20px;
-    border-radius: 20px;
-    gap: 8px;
-    max-height: 95%;
-    overflow-y: auto;
-  }
-
-  .welcome-plane {
-    width: 80px !important;
-    height: auto;
-  }
-
-  .welcome-title {
-    font-size: 18px !important;
-  }
-
-  .welcome-subtitle {
-    font-size: 12px !important;
-    line-height: 1.4;
-  }
 }

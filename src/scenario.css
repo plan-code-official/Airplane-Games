@@ -990,3 +990,73 @@
     max-height: 45vh;
   }
 }
+
+/* Portrait Rotate Overlay */
+.rotate-overlay {
+  display: none;
+}
+
+@media screen and (max-width: 900px) and (orientation: portrait) {
+  .rotate-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(15, 23, 42, 0.98);
+    backdrop-filter: blur(10px);
+    z-index: 999999;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: #fff;
+    padding: 20px;
+  }
+
+  .rotate-overlay .rotate-icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+    animation: rotatePhone 2s infinite ease-in-out;
+  }
+
+  .rotate-overlay h2 {
+    font-size: 32px;
+    font-weight: 900;
+    margin-bottom: 15px;
+    color: #fff;
+    font-family: 'Cairo', sans-serif;
+  }
+
+  .rotate-overlay p {
+    font-size: 20px;
+    color: #cbd5e1;
+    line-height: 1.6;
+    font-family: 'Cairo', sans-serif;
+  }
+
+  /* Hide main content visually to prevent weird squished rendering */
+  .app-container > *:not(.rotate-overlay) {
+    display: none !important;
+  }
+}
+
+@keyframes rotatePhone {
+  0% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(90deg);
+  }
+  100% {
+    transform: rotate(90deg);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .scrolling-obstacle {
+    width: 125px !important;
+    height: 125px !important;
+  }
+}
