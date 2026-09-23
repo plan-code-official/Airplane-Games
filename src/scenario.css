@@ -1087,9 +1087,14 @@
   }
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 950px) {
   .scrolling-obstacle {
-    width: 125px !important;
-    height: 125px !important;
+    width: 90px !important;
+    height: 90px !important;
+  }
+  .obstacle-bullet,
+  .player-bullet {
+    width: 15px !important;
+    height: 5px !important;
   }
 }

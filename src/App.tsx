@@ -490,7 +490,7 @@ function App() {
     obstaclesRef.current = [
       { id: 1, x: 110, y: 25, speed: 0.35, type: 1, hasShot: false, hp: 2 },
       { id: 2, x: 150, y: 55, speed: 0.4, type: 2, hasShot: false, hp: 2 },
-      { id: 3, x: 190, y: 75, speed: 0.3, type: 3, hasShot: false, hp: 2 }
+      { id: 3, x: 190, y: 60, speed: 0.3, type: 3, hasShot: false, hp: 2 }
     ];
 
     const loop = (_time: number) => {
@@ -573,7 +573,7 @@ function App() {
         obs.x -= obs.speed;
         if (obs.x < -15) {
           obs.x = 110 + Math.random() * 20;
-          obs.y = 15 + Math.random() * 65;
+          obs.y = 15 + Math.random() * 50;
           obs.speed = 0.3 + Math.random() * 0.2;
           obs.hasShot = false;
         }
