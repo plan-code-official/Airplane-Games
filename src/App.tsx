@@ -432,7 +432,10 @@ function App() {
   // Joystick Event Handlers — direct DOM updates, zero re-renders
   const handleJoystickStart = (e: React.PointerEvent) => {
     e.preventDefault();
-    joystickRef.current = { active: true, startX: e.clientX, startY: e.clientY, dx: 0, dy: 0 };
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    joystickRef.current = { active: true, startX: e.clientX, startY: e.clientY, dx: 0, dy: 0, centerX, centerY } as any;
     if (joystickKnobRef.current) {
       joystickKnobRef.current.style.transform = 'translate(-50%, -50%)';
     }
@@ -443,9 +446,16 @@ function App() {
     e.preventDefault();
     if (!joystickRef.current.active) return;
 
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
+    const jRef = joystickRef.current as any;
+    let centerX = jRef.centerX;
+    let centerY = jRef.centerY;
+    
+    // Fallback if missing
+    if (!centerX) {
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      centerX = rect.left + rect.width / 2;
+      centerY = rect.top + rect.height / 2;
+    }
 
     const dx = e.clientX - centerX;
     const dy = e.clientY - centerY;
@@ -466,7 +476,7 @@ function App() {
 
   const handleJoystickEnd = (e: React.PointerEvent) => {
     e.preventDefault();
-    joystickRef.current = { active: false, startX: 0, startY: 0, dx: 0, dy: 0 };
+    joystickRef.current = { active: false, startX: 0, startY: 0, dx: 0, dy: 0 } as any;
     if (joystickKnobRef.current) {
       joystickKnobRef.current.style.transform = 'translate(-50%, -50%)';
     }
@@ -599,6 +609,21 @@ function App() {
         }
       });
 
+      const skyW = window.innerWidth;
+      const skyH = window.innerHeight;
+      
+      const getPxDist = (x1Pct, y1Pct, x2Pct, y2Pct) => {
+        const px1 = (x1Pct / 100) * skyW;
+        const py1 = skyH - (y1Pct / 100) * skyH;
+        const px2 = (x2Pct / 100) * skyW;
+        const py2 = skyH - (y2Pct / 100) * skyH;
+        return Math.sqrt((px1 - px2)**2 + (py1 - py2)**2);
+      };
+      
+      const checkOverlapPct = (x1, y1, x2, y2, thresholdX, thresholdY) => {
+        return Math.abs(x1 - x2) < thresholdX && Math.abs(y1 - y2) < thresholdY;
+      };
+
       // 3b. Update obstacle bullets movement & collision
       const activeBullets = obstacleBulletsRef.current.filter(b => b.x > -10);
       activeBullets.forEach((bullet) => {
@@ -609,22 +634,13 @@ function App() {
         }
 
         // Check collision with player plane
-        if (!isInvincibleRef.current && planeRef.current && !isFlyingOver) {
-          const rect1 = planeRef.current.getBoundingClientRect();
-          const bulletRect = bulletEl ? bulletEl.getBoundingClientRect() : null;
-          if (bulletRect) {
-            const c1x = rect1.left + rect1.width / 2;
-            const c1y = rect1.top + rect1.height / 2;
-            const c2x = bulletRect.left + bulletRect.width / 2;
-            const c2y = bulletRect.top + bulletRect.height / 2;
-            const dist = Math.sqrt((c1x - c2x) ** 2 + (c1y - c2y) ** 2);
-            if (dist < 42) {
-              handleObstacleHit();
-              isInvincibleRef.current = true;
-              setIsInvincible(true);
-              invincibilityTimeRef.current = Date.now() + 1500;
-              bullet.x = -20; // Trigger removal
-            }
+        if (!isInvincibleRef.current && !isFlyingOver) {
+          if (getPxDist(planeXRef.current + 5, planeYRef.current + 5, bullet.x, bullet.y) < 42) {
+            handleObstacleHit();
+            isInvincibleRef.current = true;
+            setIsInvincible(true);
+            invincibilityTimeRef.current = Date.now() + 1500;
+            bullet.x = -20; // Trigger removal
           }
         }
       });
@@ -638,7 +654,6 @@ function App() {
       // 3c. Update clouds movement & collision
       cloudsRef.current.forEach((cloud) => {
         if (!isFlyingOver) {
-          // Always drift at regular speed as requested
           cloud.x -= cloud.speed;
           if (cloud.x < -35) {
             cloud.x = 105;
@@ -650,33 +665,18 @@ function App() {
           cloudEl.style.left = `${cloud.x}%`;
           cloudEl.style.bottom = `${cloud.y}%`;
 
-          // Only the chosen/hit cloud (isActive === false) disappears
           if (!cloud.isActive) {
             cloudEl.style.opacity = '0';
             cloudEl.style.pointerEvents = 'none';
           } else {
             cloudEl.style.opacity = '1';
-            if (isAnswerChecked) {
-              cloudEl.style.pointerEvents = 'none';
-            } else {
-              cloudEl.style.pointerEvents = 'auto';
-            }
+            cloudEl.style.pointerEvents = isAnswerChecked ? 'none' : 'auto';
           }
         }
 
         // Check collision with player plane
-        if (!isAnswerCheckedRef.current && !isFlyingOver && cloud.isActive && planeRef.current && cloudEl) {
-          const planeRect = planeRef.current.getBoundingClientRect();
-          const cloudRect = cloudEl.getBoundingClientRect();
-
-          const overlap = !(
-            planeRect.right < cloudRect.left ||
-            planeRect.left > cloudRect.right ||
-            planeRect.bottom < cloudRect.top ||
-            planeRect.top > cloudRect.bottom
-          );
-
-          if (overlap) {
+        if (!isAnswerCheckedRef.current && !isFlyingOver && cloud.isActive) {
+          if (checkOverlapPct(planeXRef.current, planeYRef.current, cloud.x, cloud.y, 14, 15)) {
             cloud.isActive = false;
             handleCloudCollision(cloud);
           }
@@ -693,70 +693,50 @@ function App() {
         }
 
         obstaclesRef.current.forEach((obs) => {
-          const obsEl = document.getElementById(`obstacle-${obs.id}`);
-          if (obsEl && obs.x < 110 && bullet.x < 110) {
-            const obsRect = obsEl.getBoundingClientRect();
-            const bulletRect = bulletEl ? bulletEl.getBoundingClientRect() : null;
-            if (bulletRect) {
-              const c1x = obsRect.left + obsRect.width / 2;
-              const c1y = obsRect.top + obsRect.height / 2;
-              const c2x = bulletRect.left + bulletRect.width / 2;
-              const c2y = bulletRect.top + bulletRect.height / 2;
-              const dist = Math.sqrt((c1x - c2x) ** 2 + (c1y - c2y) ** 2);
+          if (obs.x < 110 && bullet.x < 110) {
+            if (getPxDist(bullet.x, bullet.y, obs.x, obs.y) < 45) {
+              // Decrement monster health
+              obs.hp = (obs.hp || 2) - 1;
+              bullet.x = 200; // Trigger bullet removal
+              
+              const ptX = (obs.x / 100) * skyW;
+              const ptY = skyH - (obs.y / 100) * skyH;
+              fireExplosion(ptX, ptY, 'red');
 
-              if (dist < 45) {
-                // Decrement monster health
-                obs.hp = (obs.hp || 2) - 1;
-                bullet.x = 200; // Trigger bullet removal
+              if (obs.hp <= 0) {
+                audio.playExplosion();
+                const obsEl = document.getElementById(`obstacle-${obs.id}`);
+                if (obsEl) obsEl.style.display = 'none';
 
-                if (skyRef.current) {
-                  const skyRect = skyRef.current.getBoundingClientRect();
-                  const isMobilePortrait = window.matchMedia("(max-width: 768px) and (orientation: portrait)").matches;
-                  const pt = getLocalPoint(
-                    obsRect.left + obsRect.width * 0.5,
-                    obsRect.top + obsRect.height * 0.5,
-                    skyRect,
-                    isMobilePortrait
-                  );
-                  fireExplosion(pt.x, pt.y, 'red');
+                // Handle drops
+                monstersKilledRef.current += 1;
+                if (monstersKilledRef.current >= nextUpgradeKillsRef.current) {
+                  const wId = ++weaponDropIdCounterRef.current;
+                  weaponDropsRef.current.push({ id: wId, x: obs.x, y: obs.y });
+                  setWeaponDropIds(prev => [...prev, wId]);
+                  monstersKilledRef.current = 0;
+                  nextUpgradeKillsRef.current = 3 + Math.floor(Math.random() * 4);
+                } else if (Math.random() < 0.15) {
+                  const sId = ++shieldDropIdCounterRef.current;
+                  shieldDropsRef.current.push({ id: sId, x: obs.x, y: obs.y });
+                  setShieldDropIds(prev => [...prev, sId]);
+                } else if (livesRef.current < 3 && Math.random() < 0.3) {
+                  const hId = ++heartIdCounterRef.current;
+                  heartsRef.current.push({ id: hId, x: obs.x, y: obs.y });
+                  setHeartIds(prev => [...prev, hId]);
                 }
 
-                if (obs.hp <= 0) {
-                  audio.playExplosion();
-                  obsEl.style.display = 'none';
-
-                  // Handle drops (Heart or Weapon)
-                  monstersKilledRef.current += 1;
-                  if (monstersKilledRef.current >= nextUpgradeKillsRef.current) {
-                    const wId = ++weaponDropIdCounterRef.current;
-                    weaponDropsRef.current.push({ id: wId, x: obs.x, y: obs.y });
-                    setWeaponDropIds(prev => [...prev, wId]);
-
-                    monstersKilledRef.current = 0;
-                    nextUpgradeKillsRef.current = 3 + Math.floor(Math.random() * 4); // next drop after 3 to 6 kills
-                  } else if (Math.random() < 0.15) {
-                    // Spawn a shield with 15% chance
-                    const sId = ++shieldDropIdCounterRef.current;
-                    shieldDropsRef.current.push({ id: sId, x: obs.x, y: obs.y });
-                    setShieldDropIds(prev => [...prev, sId]);
-                  } else if (livesRef.current < 3 && Math.random() < 0.3) {
-                    // Spawn a heart with 30% chance if lives < 3 and weapon/shield didn't spawn
-                    const hId = ++heartIdCounterRef.current;
-                    heartsRef.current.push({ id: hId, x: obs.x, y: obs.y });
-                    setHeartIds(prev => [...prev, hId]);
-                  }
-
-                  // Reset/respawn the monster
-                  obs.x = 115 + Math.random() * 20;
-                  obs.y = 15 + Math.random() * 65;
-                  obs.speed = 0.3 + Math.random() * 0.2;
-                  obs.hasShot = false;
-                  obs.hp = 2;
-                } else {
+                // Reset/respawn
+                obs.x = 115 + Math.random() * 20;
+                obs.y = 15 + Math.random() * 65;
+                obs.speed = 0.3 + Math.random() * 0.2;
+                obs.hasShot = false;
+                obs.hp = 2;
+              } else {
+                const obsEl = document.getElementById(`obstacle-${obs.id}`);
+                if (obsEl) {
                   obsEl.classList.add('hit-flash');
-                  setTimeout(() => {
-                    obsEl.classList.remove('hit-flash');
-                  }, 100);
+                  setTimeout(() => obsEl.classList.remove('hit-flash'), 100);
                 }
               }
             }
@@ -786,24 +766,13 @@ function App() {
       }
 
       // 5. Check minion collisions
-      if (!isInvincibleRef.current && planeRef.current && !isFlyingOver) {
+      if (!isInvincibleRef.current && !isFlyingOver) {
         obstaclesRef.current.forEach((obs) => {
-          const obsEl = document.getElementById(`obstacle-${obs.id}`);
-          if (obsEl) {
-            const rect1 = planeRef.current!.getBoundingClientRect();
-            const rect2 = obsEl.getBoundingClientRect();
-            const c1x = rect1.left + rect1.width / 2;
-            const c1y = rect1.top + rect1.height / 2;
-            const c2x = rect2.left + rect2.width / 2;
-            const c2y = rect2.top + rect2.height / 2;
-            const dist = Math.sqrt((c1x - c2x) ** 2 + (c1y - c2y) ** 2);
-            const collide = dist < 60;
-            if (collide) {
-              handleObstacleHit();
-              isInvincibleRef.current = true;
-              setIsInvincible(true);
-              invincibilityTimeRef.current = Date.now() + 1500;
-            }
+          if (getPxDist(planeXRef.current, planeYRef.current, obs.x, obs.y) < 60) {
+            handleObstacleHit();
+            isInvincibleRef.current = true;
+            setIsInvincible(true);
+            invincibilityTimeRef.current = Date.now() + 1500;
           }
         });
       }
@@ -811,40 +780,19 @@ function App() {
       // 6. Update and check collectible hearts
       let activeHearts = heartsRef.current;
       let heartsChanged = false;
-      const uncollectedHearts: DropHeart[] = [];
+      const uncollectedHearts = [];
 
       activeHearts.forEach(heart => {
-        heart.x -= 0.35; // move left
-        if (heart.x < -10) {
+        heart.x -= 0.35;
+        if (heart.x < -10) { heartsChanged = true; return; }
+
+        if (!isFlyingOver && checkOverlapPct(planeXRef.current, planeYRef.current, heart.x, heart.y, 8, 12)) {
           heartsChanged = true;
+          audio.playSuccess();
+          setLives(prev => prev < 3 ? prev + 1 : prev);
+          setPlaneEffect('boost');
+          setTimeout(() => setPlaneEffect('normal'), 500);
           return;
-        }
-
-        // check collision with plane
-        if (!isFlyingOver && planeRef.current) {
-          const planeRect = planeRef.current.getBoundingClientRect();
-          const heartEl = document.getElementById(`heart-${heart.id}`);
-          if (heartEl) {
-            const heartRect = heartEl.getBoundingClientRect();
-            const overlap = !(
-              planeRect.right < heartRect.left ||
-              planeRect.left > heartRect.right ||
-              planeRect.bottom < heartRect.top ||
-              planeRect.top > heartRect.bottom
-            );
-
-            if (overlap) {
-              heartsChanged = true;
-              audio.playSuccess();
-              setLives(prev => {
-                if (prev < 3) return prev + 1;
-                return prev;
-              });
-              setPlaneEffect('boost');
-              setTimeout(() => setPlaneEffect('normal'), 500);
-              return; // skip adding to uncollectedHearts
-            }
-          }
         }
         uncollectedHearts.push(heart);
       });
@@ -857,38 +805,20 @@ function App() {
       // 7. Update and check collectible weapons
       let activeWeapons = weaponDropsRef.current;
       let weaponsChanged = false;
-      const uncollectedWeapons: WeaponDrop[] = [];
+      const uncollectedWeapons = [];
 
       activeWeapons.forEach(weapon => {
-        weapon.x -= 0.35; // move left
-        if (weapon.x < -10) {
+        weapon.x -= 0.35;
+        if (weapon.x < -10) { weaponsChanged = true; return; }
+
+        if (!isFlyingOver && checkOverlapPct(planeXRef.current, planeYRef.current, weapon.x, weapon.y, 8, 12)) {
           weaponsChanged = true;
+          audio.playSuccess();
+          weaponLevelRef.current = Math.min(3, weaponLevelRef.current + 1);
+          weaponUpgradeTimeRef.current = Date.now() + 10000;
+          setPlaneEffect('boost');
+          setTimeout(() => setPlaneEffect('normal'), 500);
           return;
-        }
-
-        // check collision with plane
-        if (!isFlyingOver && planeRef.current) {
-          const planeRect = planeRef.current.getBoundingClientRect();
-          const weaponEl = document.getElementById(`weapon-${weapon.id}`);
-          if (weaponEl) {
-            const weaponRect = weaponEl.getBoundingClientRect();
-            const overlap = !(
-              planeRect.right < weaponRect.left ||
-              planeRect.left > weaponRect.right ||
-              planeRect.bottom < weaponRect.top ||
-              planeRect.top > weaponRect.bottom
-            );
-
-            if (overlap) {
-              weaponsChanged = true;
-              audio.playSuccess();
-              weaponLevelRef.current = Math.min(3, weaponLevelRef.current + 1);
-              weaponUpgradeTimeRef.current = Date.now() + 10000; // 10 seconds of upgraded weapon
-              setPlaneEffect('boost');
-              setTimeout(() => setPlaneEffect('normal'), 500);
-              return; // skip adding to uncollectedWeapons
-            }
-          }
         }
         uncollectedWeapons.push(weapon);
       });
@@ -901,41 +831,23 @@ function App() {
       // 8. Update and check collectible shields
       let activeShields = shieldDropsRef.current;
       let shieldsChanged = false;
-      const uncollectedShields: ShieldDrop[] = [];
+      const uncollectedShields = [];
 
       activeShields.forEach(shield => {
-        shield.x -= 0.35; // move left
-        if (shield.x < -10) {
+        shield.x -= 0.35;
+        if (shield.x < -10) { shieldsChanged = true; return; }
+
+        if (!isFlyingOver && checkOverlapPct(planeXRef.current, planeYRef.current, shield.x, shield.y, 8, 12)) {
           shieldsChanged = true;
+          audio.playSuccess();
+          isInvincibleRef.current = true;
+          setIsInvincible(true);
+          hasShieldRef.current = true;
+          setHasActiveShield(true);
+          invincibilityTimeRef.current = Date.now() + 5000;
+          setPlaneEffect('boost');
+          setTimeout(() => setPlaneEffect('normal'), 500);
           return;
-        }
-
-        // check collision with plane
-        if (!isFlyingOver && planeRef.current) {
-          const planeRect = planeRef.current.getBoundingClientRect();
-          const shieldEl = document.getElementById(`shield-${shield.id}`);
-          if (shieldEl) {
-            const shieldRect = shieldEl.getBoundingClientRect();
-            const overlap = !(
-              planeRect.right < shieldRect.left ||
-              planeRect.left > shieldRect.right ||
-              planeRect.bottom < shieldRect.top ||
-              planeRect.top > shieldRect.bottom
-            );
-
-            if (overlap) {
-              shieldsChanged = true;
-              audio.playSuccess();
-              isInvincibleRef.current = true;
-              setIsInvincible(true);
-              hasShieldRef.current = true;
-              setHasActiveShield(true);
-              invincibilityTimeRef.current = Date.now() + 5000; // 5 seconds of invincibility
-              setPlaneEffect('boost');
-              setTimeout(() => setPlaneEffect('normal'), 500);
-              return; // skip adding to uncollectedShields
-            }
-          }
         }
         uncollectedShields.push(shield);
       });
@@ -1030,7 +942,7 @@ function App() {
           ...p,
           x: p.x + Math.cos(p.angle) * p.speed * dt,
           y: p.y + Math.sin(p.angle) * p.speed * dt,
-          size: p.size * 0.95
+          size: p.size * 0.85
         }));
         return next.filter(p => p.size > 0.5);
       });

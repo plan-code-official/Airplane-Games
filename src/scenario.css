@@ -1112,3 +1112,18 @@
     height: 4px !important;
   }
 }
+/* MOBILE PERFORMANCE OPTIMIZATIONS */
+@media (max-width: 900px) {
+  .cloud-bubble,
+  .rotate-overlay,
+  .sky-container,
+  .welcome-screen-new,
+  .app-container {
+    backdrop-filter: none !important;
+    filter: none !important;
+    box-shadow: none !important;
+  }
+  .airplane-img {
+    filter: none !important;
+  }
+}
