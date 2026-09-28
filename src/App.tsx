@@ -9,6 +9,9 @@ import descriptionImg from "./assets/description.png";
 import startButtonBg from "./assets/startButton.png";
 import ResultsPanel from './ResultsPanel/ResultsPanel';
 import Celebration from './Celebration/Celebration';
+import GameWelcomeScreen from './components/GameWelcomeScreen/GameWelcomeScreen';
+import exitButtonBg from './assets/exit_transparent.png';
+import startButtonBgNew from './assets/start_transparent.png';
  
 interface Particle {
   id: number;
@@ -1275,47 +1278,24 @@ function App() {
       {/* ================= NEW WELCOME SCREEN ================= */}
       {gameState === 'welcome' && (
         <div className="sky-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="welcome-screen-new">
-          <div className="welcome-header-new">
-            <div className="welcome-stats-bg" style={{ backgroundImage: `url(${questionNumberBg})` }}>
-              <img src={questionCoinImg} alt="Q" className="welcome-q-coin" />
-              <span className="welcome-stat-text q-count">{apiQuestions.length || 10}</span>
-              <span className="welcome-stat-arrow">{'>'}</span>
-              <span className="welcome-stat-text xp-count">+{apiQuestions.length ? apiQuestions.length * 10 : 100}</span>
-              <img src={daadCoins} alt="Coin" className="welcome-dadd-coin" />
-            </div>
-          </div>
+        <GameWelcomeScreen
+        statsBgImage={questionNumberBg}
+        statLeftIcon={questionCoinImg}
+        statLeftAlt="Q"
+        statLeftValue={apiQuestions.length || 10}
+        statRightValue={apiQuestions.length ? apiQuestions.length * 10 : 100}
+        statRightIcon={daadCoins}
+        statRightAlt="Coin"
+        heroImage={descriptionImg}
+        heroAlt="How to play"
+        startButtonImage={startButtonBgNew}
+        exitButtonImage={exitButtonBg}
+        onStart={() => handleStartClick('all')}
+        isLoading={isLoadingQuestions || isStartingSession}
+        isReady={apiQuestions.length > 0}
+      />
+      </div>
 
-          <div className="welcome-body-new">
-            <img src={descriptionImg} alt="How to play" className="welcome-description-img" />
-          </div>
-
-          <div className="welcome-footer-new">
-            {isLoadingQuestions ? (
-              <p className="welcome-loading">جاري تحميل الأسئلة...</p>
-            ) : apiQuestions.length > 0 ? (
-              <button 
-                className="welcome-start-btn-new" 
-                onClick={() => handleStartClick('all')} 
-                disabled={isStartingSession}
-                style={{ backgroundImage: `url(${startButtonBg})` }}
-              >
-                {isStartingSession ? '...' : 'ابدَأ!'}
-              </button>
-            ) : (
-              <div className="welcome-error-new">
-                <p>عذراً، لا يوجد أسئلة متاحة أو حدث خطأ في الاتصال.</p>
-                <button 
-                  className="start-btn" 
-                  onClick={() => window.location.reload()}
-                >
-                  إعادة تحميل الصفحة
-                </button>
-              </div>
-            )}
-          </div>
-          </div>
-        </div>
       )}
 
       {/* ================= LANDSCAPE ROTATION SCREEN ================= */}
