@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { DoorOpen, Flame, Heart, Play, Shield, Smartphone, Volume2, VolumeX, Zap } from 'lucide-react';
 import { type Question } from './data/questions';
 import { audio } from './utils/audio';
 import { getGameQuestions, startGameSession, submitGameAnswers, completeGameSession } from './utils/gameApi';
@@ -29,6 +30,7 @@ interface ExplosionParticle {
   angle: number;
   speed: number;
   size: number;
+  color: 'cyan' | 'red';
 }
 
 interface LaserPath {
@@ -209,7 +211,6 @@ function App() {
   // Styling and Animation Effects
   const [planeEffect, setPlaneEffect] = useState<'normal' | 'boost' | 'shake'>('normal');
   const [smokeParticles, setSmokeParticles] = useState<Particle[]>([]);
-  const [explosionParticles, setExplosionParticles] = useState<ExplosionParticle[]>([]);
   const [laser, setLaser] = useState<LaserPath>({ x1: 0, y1: 0, x2: 0, y2: 0, color: 'cyan', visible: false });
   const [isMuted, setIsMuted] = useState<boolean>(false);
 
@@ -218,6 +219,11 @@ function App() {
 
   const skyRef = useRef<HTMLDivElement>(null);
   const planeRef = useRef<HTMLImageElement>(null);
+  const playerBulletLayerRef = useRef<HTMLDivElement>(null);
+  const explosionCanvasRef = useRef<HTMLCanvasElement>(null);
+  const explosionParticlesRef = useRef<ExplosionParticle[]>([]);
+  const explosionFrameRef = useRef<number | null>(null);
+  const drawExplosionsRef = useRef<(time: number) => void>(() => {});
 
   const monsterRef = useRef<HTMLImageElement>(null);
 
@@ -243,7 +249,6 @@ function App() {
   const bulletIdCounterRef = useRef<number>(0);
 
   // Player bullets state & refs
-  const [playerBulletIds, setPlayerBulletIds] = useState<number[]>([]);
   const playerBulletsRef = useRef<PlayerBullet[]>([]);
   const playerBulletIdCounterRef = useRef<number>(0);
 
@@ -339,8 +344,8 @@ function App() {
     setBulletIds([]);
     bulletIdCounterRef.current = 0;
 
+    playerBulletLayerRef.current?.replaceChildren();
     playerBulletsRef.current = [];
-    setPlayerBulletIds([]);
     playerBulletIdCounterRef.current = 0;
 
     planeXRef.current = 20;
@@ -591,29 +596,39 @@ function App() {
           obs.hasShot = false;
         }
 
-        // Spawn horizontal bullet when spaceship crosses screen edge from right
-        if (!obs.hasShot && obs.x < 98) {
-          obs.hasShot = true;
-          const newId = ++bulletIdCounterRef.current;
-          obstacleBulletsRef.current.push({
-            id: newId,
-            x: obs.x - 3,
-            y: obs.y + 4,
-            speed: 0.65
-          });
-          setBulletIds(prev => [...prev, newId]);
-        }
-
         const obsEl = document.getElementById(`obstacle-${obs.id}`);
         if (obsEl) {
           obsEl.style.left = `${obs.x}%`;
           obsEl.style.bottom = `${obs.y}%`;
           obsEl.style.display = 'block';
         }
+
+        // Spawn from the monster's lower edge after its DOM position is current.
+        if (!obs.hasShot && obs.x < 98) {
+          obs.hasShot = true;
+          const newId = ++bulletIdCounterRef.current;
+          const shotPosition = getProjectilePosition(
+            document.querySelector(`#obstacle-${obs.id} img`),
+            'left'
+          );
+          obstacleBulletsRef.current.push({
+            id: newId,
+            x: shotPosition?.x ?? obs.x - 3,
+            y: shotPosition?.y ?? obs.y + 4,
+            speed: 0.65
+          });
+          setBulletIds(prev => [...prev, newId]);
+        }
       });
 
       const skyW = window.innerWidth;
       const skyH = window.innerHeight;
+      const planeColliderRect = planeRef.current?.getBoundingClientRect();
+      const obstacleColliderRects = new Map<number, DOMRect>();
+      obstaclesRef.current.forEach(obs => {
+        const obstacleSprite = document.querySelector(`#obstacle-${obs.id} img`);
+        if (obstacleSprite) obstacleColliderRects.set(obs.id, obstacleSprite.getBoundingClientRect());
+      });
       
       const getPxDist = (x1Pct, y1Pct, x2Pct, y2Pct) => {
         const px1 = (x1Pct / 100) * skyW;
@@ -638,7 +653,8 @@ function App() {
 
         // Check collision with player plane
         if (!isInvincibleRef.current && !isFlyingOver) {
-          if (getPxDist(planeXRef.current + 5, planeYRef.current + 5, bullet.x, bullet.y) < 42) {
+          const bulletRect = bulletEl?.getBoundingClientRect();
+          if (planeColliderRect && bulletRect && rectsOverlap(planeColliderRect, bulletRect)) {
             handleObstacleHit();
             isInvincibleRef.current = true;
             setIsInvincible(true);
@@ -697,13 +713,16 @@ function App() {
 
         obstaclesRef.current.forEach((obs) => {
           if (obs.x < 110 && bullet.x < 110) {
-            if (getPxDist(bullet.x, bullet.y, obs.x, obs.y) < 45) {
+            const bulletRect = bulletEl?.getBoundingClientRect();
+            const obstacleRect = obstacleColliderRects.get(obs.id);
+            if (bulletRect && obstacleRect && rectsOverlap(bulletRect, obstacleRect)) {
               // Decrement monster health
               obs.hp = (obs.hp || 2) - 1;
               bullet.x = 200; // Trigger bullet removal
               
-              const ptX = (obs.x / 100) * skyW;
-              const ptY = skyH - (obs.y / 100) * skyH;
+              const skyRect = skyRef.current?.getBoundingClientRect();
+              const ptX = obstacleRect.left + obstacleRect.width / 2 - (skyRect?.left ?? 0);
+              const ptY = obstacleRect.top + obstacleRect.height / 2 - (skyRect?.top ?? 0);
               fireExplosion(ptX, ptY, 'red');
 
               if (obs.hp <= 0) {
@@ -747,11 +766,11 @@ function App() {
         });
       });
 
-      const cleanPlayerBullets = playerBulletsRef.current.filter(b => b.x < 110);
-      if (cleanPlayerBullets.length !== playerBulletsRef.current.length) {
-        playerBulletsRef.current = cleanPlayerBullets;
-        setPlayerBulletIds(cleanPlayerBullets.map(b => b.id));
-      }
+      playerBulletsRef.current = activePlayerBullets.filter(bullet => {
+        if (bullet.x < 110) return true;
+        document.getElementById(`player-bullet-${bullet.id}`)?.remove();
+        return false;
+      });
 
       // 4. Invincibility cooldown check
       if (isInvincibleRef.current && Date.now() > invincibilityTimeRef.current) {
@@ -932,38 +951,82 @@ function App() {
     }, 1000);
   };
 
-  // Explosion particles animation
+  // Keep fast projectile and explosion animation off React's render loop.
   useEffect(() => {
-    if (explosionParticles.length === 0) return;
-    let animationFrameId: number;
-    let lastTime = performance.now();
-    const updateParticles = (time: number) => {
-      const dt = (time - lastTime) / 1000;
-      lastTime = time;
-      setExplosionParticles(prev => {
-        const next = prev.map(p => ({
-          ...p,
-          x: p.x + Math.cos(p.angle) * p.speed * dt,
-          y: p.y + Math.sin(p.angle) * p.speed * dt,
-          size: p.size * 0.85
-        }));
-        return next.filter(p => p.size > 0.5);
-      });
-      animationFrameId = requestAnimationFrame(updateParticles);
-    };
-    animationFrameId = requestAnimationFrame(updateParticles);
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [explosionParticles.length]);
+    const canvas = explosionCanvasRef.current;
+    const context = canvas?.getContext('2d');
+    if (!canvas || !context || gameState !== 'playing') {
+      explosionParticlesRef.current = [];
+      return;
+    }
 
-  const fireExplosion = (x: number, y: number, _color?: 'cyan' | 'red') => {
-    const newParticles: ExplosionParticle[] = Array.from({ length: 20 }).map((_, i) => ({
-      id: Date.now() + i,
-      x, y,
-      angle: Math.random() * Math.PI * 2,
-      speed: Math.random() * 300 + 100,
-      size: Math.random() * 8 + 4
-    }));
-    setExplosionParticles(newParticles);
+    let previousTime = 0;
+    const resizeCanvas = () => {
+      const rect = canvas.getBoundingClientRect();
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+      canvas.width = Math.round(rect.width * pixelRatio);
+      canvas.height = Math.round(rect.height * pixelRatio);
+      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    };
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const drawFrame = (time: number) => {
+      explosionFrameRef.current = null;
+      const rect = canvas.getBoundingClientRect();
+      const dt = Math.min((time - (previousTime || time)) / 1000, 0.04);
+      previousTime = time;
+      context.clearRect(0, 0, rect.width, rect.height);
+      const particles = explosionParticlesRef.current;
+      for (let i = particles.length - 1; i >= 0; i -= 1) {
+        const particle = particles[i];
+        particle.x += Math.cos(particle.angle) * particle.speed * dt;
+        particle.y += Math.sin(particle.angle) * particle.speed * dt;
+        particle.size -= 18 * dt;
+        if (particle.size <= 0.5) {
+          particles.splice(i, 1);
+          continue;
+        }
+        context.globalAlpha = Math.min(1, particle.size / 5);
+        context.fillStyle = particle.color === 'cyan' ? '#00e5ff' : '#ef4444';
+        context.beginPath();
+        context.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        context.fill();
+      }
+      context.globalAlpha = 1;
+      if (particles.length > 0) {
+        explosionFrameRef.current = requestAnimationFrame(drawFrame);
+      }
+    };
+    drawExplosionsRef.current = drawFrame;
+    return () => {
+      if (explosionFrameRef.current !== null) cancelAnimationFrame(explosionFrameRef.current);
+      explosionFrameRef.current = null;
+      drawExplosionsRef.current = () => {};
+      window.removeEventListener('resize', resizeCanvas);
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      explosionParticlesRef.current = [];
+    };
+  }, [gameState]);
+
+  const fireExplosion = (x: number, y: number, color: 'cyan' | 'red' = 'red') => {
+    const particles = explosionParticlesRef.current;
+    const particleCount = window.matchMedia('(pointer: coarse)').matches ? 7 : 12;
+    for (let i = 0; i < particleCount; i += 1) {
+      particles.push({
+        id: ++particleIdRef.current,
+        x,
+        y,
+        angle: Math.random() * Math.PI * 2,
+        speed: Math.random() * 220 + 70,
+        size: Math.random() * 3 + 2,
+        color
+      });
+    }
+    if (particles.length > 72) particles.splice(0, particles.length - 72);
+    if (explosionFrameRef.current === null) {
+      explosionFrameRef.current = requestAnimationFrame(drawExplosionsRef.current);
+    }
   };
 
   const getLocalPoint = (clientX: number, clientY: number, skyRect: DOMRect, isMobilePortrait: boolean) => {
@@ -980,6 +1043,25 @@ function App() {
     }
   };
 
+  const getProjectilePosition = (sprite: Element | null, direction: 'left' | 'right') => {
+    const sceneRect = skyRef.current?.getBoundingClientRect();
+    const spriteRect = sprite?.getBoundingClientRect();
+    if (!sceneRect || !spriteRect || sceneRect.width === 0 || sceneRect.height === 0) return null;
+
+    const fireX = direction === 'right'
+      ? spriteRect.right - spriteRect.width * 0.02
+      : spriteRect.left + spriteRect.width * 0.02;
+    const fireY = spriteRect.top + spriteRect.height * 0.78;
+    return {
+      x: ((fireX - sceneRect.left) / sceneRect.width) * 100,
+      y: ((sceneRect.bottom - fireY) / sceneRect.height) * 100
+    };
+  };
+
+  const rectsOverlap = (first: DOMRect, second: DOMRect) =>
+    first.left < second.right && first.right > second.left &&
+    first.top < second.bottom && first.bottom > second.top;
+
   const lastFiredRef = useRef<number>(0);
   const firePlayerBullet = () => {
     if (gameState !== 'playing' || isFlyingOver) return;
@@ -989,29 +1071,36 @@ function App() {
     lastFiredRef.current = now;
 
     const level = weaponLevelRef.current;
-    const newBulletIds: number[] = [];
+    const spawn = getProjectilePosition(planeRef.current, 'right');
+    const spawnX = spawn?.x ?? planeXRef.current + 8.2;
+    const spawnY = spawn?.y ?? planeYRef.current + 7.2;
+    const addBullet = (id: number, x: number, y: number) => {
+      playerBulletsRef.current.push({ id, x, y, speed: 1.5 });
+      const bullet = document.createElement('div');
+      bullet.id = `player-bullet-${id}`;
+      bullet.className = 'player-bullet';
+      bullet.style.left = `${x}%`;
+      bullet.style.bottom = `${y}%`;
+      playerBulletLayerRef.current?.appendChild(bullet);
+    };
 
     if (level === 1) {
       const bulletId = ++playerBulletIdCounterRef.current;
-      playerBulletsRef.current.push({ id: bulletId, x: planeXRef.current + 8.2, y: planeYRef.current + 7.2, speed: 1.5 });
-      newBulletIds.push(bulletId);
+      addBullet(bulletId, spawnX, spawnY);
     } else if (level === 2) {
       const b1 = ++playerBulletIdCounterRef.current;
       const b2 = ++playerBulletIdCounterRef.current;
-      playerBulletsRef.current.push({ id: b1, x: planeXRef.current + 8.2, y: planeYRef.current + 9.2, speed: 1.5 });
-      playerBulletsRef.current.push({ id: b2, x: planeXRef.current + 8.2, y: planeYRef.current + 5.2, speed: 1.5 });
-      newBulletIds.push(b1, b2);
+      addBullet(b1, spawnX, spawnY + 1.5);
+      addBullet(b2, spawnX, spawnY - 1.5);
     } else {
       const b1 = ++playerBulletIdCounterRef.current;
       const b2 = ++playerBulletIdCounterRef.current;
       const b3 = ++playerBulletIdCounterRef.current;
-      playerBulletsRef.current.push({ id: b1, x: planeXRef.current + 8.2, y: planeYRef.current + 7.2, speed: 1.5 });
-      playerBulletsRef.current.push({ id: b2, x: planeXRef.current + 8.2, y: planeYRef.current + 11.2, speed: 1.5 });
-      playerBulletsRef.current.push({ id: b3, x: planeXRef.current + 8.2, y: planeYRef.current + 3.2, speed: 1.5 });
-      newBulletIds.push(b1, b2, b3);
+      addBullet(b1, spawnX, spawnY);
+      addBullet(b2, spawnX, spawnY + 2.5);
+      addBullet(b3, spawnX, spawnY - 2.5);
     }
 
-    setPlayerBulletIds(prev => [...prev, ...newBulletIds]);
     audio.playLaser();
   };
 
@@ -1152,7 +1241,13 @@ function App() {
       livesRef.current = newLives;
       if (newLives <= 0) {
         setIsBossCrashing(true);
-        fireExplosion(planeXRef.current + 5, planeYRef.current + 5, 'red');
+        const planeRect = planeRef.current?.getBoundingClientRect();
+        const skyRect = skyRef.current?.getBoundingClientRect();
+        fireExplosion(
+          planeRect && skyRect ? planeRect.left + planeRect.width / 2 - skyRect.left : 0,
+          planeRect && skyRect ? planeRect.top + planeRect.height / 2 - skyRect.top : 0,
+          'red'
+        );
         audio.playExplosion();
         setTimeout(() => handleEndGame(false), 1500);
       } else {
@@ -1258,7 +1353,7 @@ function App() {
   return (
     <div className="app-container">
       <div className="rotate-overlay">
-        <div className="rotate-icon">📱</div>
+        <div className="rotate-icon"><Smartphone aria-hidden="true" /></div>
         <h2>يرجى تدوير الشاشة</h2>
         <p>هذه اللعبة مصممة للعب في الوضع العرضي للحصول على أفضل تجربة.</p>
       </div>
@@ -1271,7 +1366,7 @@ function App() {
           aria-label={isMuted ? "تشغيل الصوت" : "كتم الصوت"}
           style={{ zIndex: 100 }}
         >
-          {isMuted ? "🔇" : "🔊"}
+          {isMuted ? <VolumeX aria-hidden="true" /> : <Volume2 aria-hidden="true" />}
         </button>
       )}
 
@@ -1279,21 +1374,21 @@ function App() {
       {gameState === 'welcome' && (
         <div className="sky-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <GameWelcomeScreen
-        statsBgImage={questionNumberBg}
-        statLeftIcon={questionCoinImg}
-        statLeftAlt="Q"
-        statLeftValue={apiQuestions.length || 10}
-        statRightValue={apiQuestions.length ? apiQuestions.length * 10 : 100}
-        statRightIcon={daadCoins}
-        statRightAlt="Coin"
-        heroImage={descriptionImg}
-        heroAlt="How to play"
-        startButtonImage={startButtonBgNew}
-        exitButtonImage={exitButtonBg}
-        onStart={() => handleStartClick('all')}
-        isLoading={isLoadingQuestions || isStartingSession}
-        isReady={apiQuestions.length > 0}
-      />
+          statsBgImage={questionNumberBg}
+          statLeftIcon={questionCoinImg}
+          statLeftAlt="Q"
+          statLeftValue={apiQuestions.length || 10}
+          statRightValue={apiQuestions.length ? apiQuestions.length * 10 : 100}
+          statRightIcon={daadCoins}
+          statRightAlt="Coin"
+          heroImage={descriptionImg}
+          heroAlt="How to play"
+          startButtonImage={startButtonBgNew}
+          exitButtonImage={exitButtonBg}
+          onStart={() => handleStartClick('all')}
+          isLoading={isLoadingQuestions || isStartingSession}
+          isReady={apiQuestions.length > 0}
+        />
       </div>
 
       )}
@@ -1349,7 +1444,7 @@ function App() {
           {/* Top HUD Header */}
           <div className="sky-hud-header">
             <div className="hud-left">
-              <button className="hud-back-btn" onClick={handleBackToMenu} style={{ background: '#ef4444', color: 'white', padding: '8px 12px', fontSize: '24px' }} title="خروج">🚪</button>
+              <button className="hud-back-btn" onClick={handleBackToMenu} style={{ background: '#ef4444', color: 'white', padding: '8px 12px', fontSize: '24px' }} title="خروج" aria-label="خروج"><DoorOpen aria-hidden="true" /></button>
               <span className="hud-category">{currentQuestion?.categoryName}</span>
             </div>
             <div className="hud-center">
@@ -1375,7 +1470,7 @@ function App() {
                       }}
                       title="استمع للسؤال"
                     >
-                      ▶️
+                      <Play aria-hidden="true" size={18} />
                     </button>
                   )}
                   <span className="hud-question-main-text">{currentQuestion.question}</span>
@@ -1384,11 +1479,11 @@ function App() {
             </div>
             <div className="hud-right">
               <button className="sound-toggle-inline" onClick={toggleMute}>
-                {isMuted ? "🔇" : "🔊"}
+                {isMuted ? <VolumeX aria-hidden="true" /> : <Volume2 aria-hidden="true" />}
               </button>
               <div className="hud-lives">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <span key={i} className={`heart-icon ${i >= lives ? 'lost' : ''}`}>❤️</span>
+                  <span key={i} className={`heart-icon ${i >= lives ? 'lost' : ''}`}><Heart aria-hidden="true" fill="currentColor" /></span>
                 ))}
               </div>
               <span className="hud-question-number">السؤال {currentQuestionIndex + 1}</span>
@@ -1452,7 +1547,7 @@ function App() {
                   animation: 'pulse 1s infinite alternate'
                 }}
               >
-                ❤️
+                <Heart aria-hidden="true" fill="currentColor" />
               </div>
             );
           })}
@@ -1476,7 +1571,7 @@ function App() {
                   animation: 'pulse 1s infinite alternate'
                 }}
               >
-                ⚡
+                <Zap aria-hidden="true" fill="currentColor" />
               </div>
             );
           })}
@@ -1500,31 +1595,10 @@ function App() {
                   animation: 'pulse 1s infinite alternate'
                 }}
               >
-                🛡️
+                <Shield aria-hidden="true" fill="currentColor" />
               </div>
             );
           })}
-
-          {/* Player bullets */}
-          {playerBulletIds.map(id => {
-            const bullet = playerBulletsRef.current.find(b => b.id === id);
-            if (!bullet) return null;
-            return (
-              <div
-                key={id}
-                id={`player-bullet-${id}`}
-                className="player-bullet"
-                style={{
-                  bottom: `${bullet.y}%`,
-                  left: `${bullet.x}%`,
-                  position: 'absolute',
-                  zIndex: 14
-                }}
-              />
-            );
-          })}
-
-
 
           {/* Airplane Sprite Wrapper */}
           <div
@@ -1648,22 +1722,8 @@ function App() {
             </svg>
           )}
 
-          {/* Explosion Particles Layer */}
-          {explosionParticles.length > 0 && (
-            <div className="explosion-layer">
-              {explosionParticles.map((p) => (
-                <div
-                  key={p.id}
-                  className="laser-explosion-particle"
-                  style={{
-                    left: p.x, top: p.y, width: p.size, height: p.size,
-                    background: laser.color === "cyan" ? "#00E5FF" : "#EF4444",
-                    boxShadow: `0 0 10px ${laser.color === "cyan" ? "#00E5FF" : "#EF4444"}`,
-                  }}
-                />
-              ))}
-            </div>
-          )}
+          <canvas ref={explosionCanvasRef} className="explosion-canvas" aria-hidden="true" />
+          <div ref={playerBulletLayerRef} className="player-bullet-layer" aria-hidden="true" />
 
           <div className="buildings-layer-fg" />
 
@@ -1734,11 +1794,7 @@ function App() {
                   padding: 0
                 }}
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="2" x2="12" y2="22"></line>
-                  <line x1="2" y1="12" x2="22" y2="12"></line>
-                  <circle cx="12" cy="12" r="5"></circle>
-                </svg>
+                <Flame aria-hidden="true" size={24} />
                 <span className="fire-text" style={{ fontSize: '10px', fontWeight: 'bold' }}>إطلاق</span>
               </button>
             )}
