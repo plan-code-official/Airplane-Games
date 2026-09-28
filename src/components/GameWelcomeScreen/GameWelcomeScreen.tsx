@@ -92,7 +92,7 @@ export default function GameWelcomeScreen({
         <div className="gws-footer-buttons">
 
           {/* Exit button */}
-          <button className="gws-img-btn" onClick={handleExit}>
+          <button className="gws-img-btn" onClick={handleExit} aria-label="خروج">
             <img src={exitButtonImage} alt="Exit" />
           </button>
 
@@ -102,6 +102,7 @@ export default function GameWelcomeScreen({
             style={{ backgroundImage: `url(${startButtonImage})` }}
             onClick={onStart}
             disabled={startDisabled}
+            aria-label={isLoading ? 'جارٍ التحميل' : 'ابدأ اللعبة'}
           />
 
         </div>
