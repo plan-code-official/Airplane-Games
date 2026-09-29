@@ -323,9 +323,11 @@
   contain: layout paint;
 }
 
-.player-bullet-layer {
+.projectile-canvas {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
   z-index: 14;
   pointer-events: none;
   contain: layout paint;
@@ -1159,6 +1161,10 @@
 
   .airplane-wrapper {
     animation: none;
+  }
+
+  .scrolling-obstacle {
+    filter: none;
   }
 
   .airplane-wrapper.shake-drop {
