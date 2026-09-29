@@ -14,15 +14,6 @@ import GameWelcomeScreen from './components/GameWelcomeScreen/GameWelcomeScreen'
 import exitButtonBg from './assets/exit_transparent.png';
 import startButtonBgNew from './assets/start_transparent.png';
  
-interface Particle {
-  id: number;
-  left: number;
-  top: number;
-  size: number;
-  opacity: number;
-  isBlack?: boolean;
-}
-
 interface ExplosionParticle {
   id: number;
   x: number;
@@ -211,7 +202,6 @@ function App() {
 
   // Styling and Animation Effects
   const [planeEffect, setPlaneEffect] = useState<'normal' | 'boost' | 'shake'>('normal');
-  const [smokeParticles, setSmokeParticles] = useState<Particle[]>([]);
   const [laser, setLaser] = useState<LaserPath>({ x1: 0, y1: 0, x2: 0, y2: 0, color: 'cyan', visible: false });
   const [isMuted, setIsMuted] = useState<boolean>(false);
 
@@ -876,54 +866,6 @@ function App() {
     return () => cancelAnimationFrame(animId);
   }, [gameState, isBossCrashing, isFlyingOver]);
 
-  // Active damage smoke effect on the player's plane
-  useEffect(() => {
-    if (gameState !== 'playing') {
-      setSmokeParticles([]);
-      return;
-    }
-    const interval = setInterval(() => {
-      setSmokeParticles(prev => {
-        const newParticles: Particle[] = [];
-
-        // Engine tail smoke
-        newParticles.push({
-          id: particleIdRef.current++,
-          left: -15,
-          top: 35 + Math.random() * 25,
-          size: 15 + Math.random() * 15,
-          opacity: 0.8,
-          isBlack: false
-        });
-
-        // Black smoke for plane damage
-        const damageLevel = 3 - lives;
-        if (damageLevel > 0) {
-          for (let i = 0; i < damageLevel; i++) {
-            if (Math.random() > 0.3) {
-              newParticles.push({
-                id: particleIdRef.current++,
-                left: Math.random() * 80 + 20,
-                top: Math.random() * 40 + 20,
-                size: 20 + Math.random() * 20 * damageLevel,
-                opacity: 0.6 + (damageLevel * 0.1),
-                isBlack: true
-              });
-            }
-          }
-        }
-
-        const updated = prev
-          .map(p => ({
-            ...p, left: p.left - 12, size: p.size + 1.2, opacity: p.opacity - 0.07
-          }))
-          .filter(p => p.opacity > 0);
-        return [...newParticles, ...updated];
-      });
-    }, 120);
-    return () => clearInterval(interval);
-  }, [gameState, lives]);
-
   const handleObstacleHit = () => {
     audio.playExplosion();
     setPlaneEffect('shake');
@@ -1342,6 +1284,7 @@ function App() {
 
     // Add charring effect based on damage level
     const damageLevel = 3 - lives;
+    if (damageLevel > 0) classes.push('damage-smoke');
     if (damageLevel === 1) classes.push('charred-1');
     if (damageLevel >= 2) classes.push('charred-2');
 
@@ -1631,20 +1574,6 @@ function App() {
               />
             )}
 
-            {smokeParticles.map(p => (
-              <div
-                key={p.id}
-                className="smoke-particle"
-                style={{
-                  left: `${p.left}px`,
-                  top: `${p.top}px`,
-                  width: `${p.size}px`,
-                  height: `${p.size}px`,
-                  opacity: p.opacity,
-                  backgroundColor: p.isBlack ? `rgba(20, 20, 20, ${p.opacity})` : `rgba(255, 255, 255, ${p.opacity})`
-                }}
-              />
-            ))}
           </div>
 
           {/* Floating Answer Cloud Targets aligned with lanes */}
