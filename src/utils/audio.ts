@@ -2,6 +2,9 @@ class AudioSystem {
   private ctx: AudioContext | null = null;
   private engineOsc: OscillatorNode | null = null;
   private engineGain: GainNode | null = null;
+  private explosionBuffer: AudioBuffer | null = null;
+  private lastLaserAt = 0;
+  private lastExplosionAt = 0;
   private isMuted: boolean = false;
 
   private initCtx() {
@@ -220,6 +223,8 @@ class AudioSystem {
     if (!this.ctx) return;
     
     const now = this.ctx.currentTime;
+    if (now - this.lastLaserAt < 0.1) return;
+    this.lastLaserAt = now;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     
@@ -232,6 +237,11 @@ class AudioSystem {
     
     osc.connect(gain);
     gain.connect(this.ctx.destination);
+
+    osc.onended = () => {
+      osc.disconnect();
+      gain.disconnect();
+    };
     
     osc.start(now);
     osc.stop(now + 0.15);
@@ -243,15 +253,20 @@ class AudioSystem {
     if (!this.ctx) return;
     
     const now = this.ctx.currentTime;
-    const bufferSize = this.ctx.sampleRate * 0.4;
-    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
+    if (now - this.lastExplosionAt < 0.12) return;
+    this.lastExplosionAt = now;
+
+    if (!this.explosionBuffer) {
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.4);
+      this.explosionBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = this.explosionBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
     }
     
     const noise = this.ctx.createBufferSource();
-    noise.buffer = buffer;
+    noise.buffer = this.explosionBuffer;
     
     const filter = this.ctx.createBiquadFilter();
     filter.type = 'lowpass';
@@ -265,6 +280,12 @@ class AudioSystem {
     noise.connect(filter);
     filter.connect(gain);
     gain.connect(this.ctx.destination);
+
+    noise.onended = () => {
+      noise.disconnect();
+      filter.disconnect();
+      gain.disconnect();
+    };
     
     noise.start(now);
     noise.stop(now + 0.4);
