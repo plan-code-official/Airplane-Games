@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { memo, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { DoorOpen, Flame, Heart, Play, Shield, Smartphone, Volume2, VolumeX, Zap } from 'lucide-react';
 import { type Question } from './data/questions';
 import { audio } from './utils/audio';
@@ -45,7 +45,6 @@ interface PlayerBullet {
   x: number;
   y: number;
   speed: number;
-  element: HTMLDivElement;
 }
 
 interface CloudOption {
@@ -74,6 +73,45 @@ interface ShieldDrop {
   x: number;
   y: number;
 }
+
+interface Obstacle {
+  id: number;
+  x: number;
+  y: number;
+  speed: number;
+  type: number;
+  hasShot?: boolean;
+  hp?: number;
+}
+
+const ObstacleLayer = memo(function ObstacleLayer({
+  obstacles,
+  stageWidth,
+  stageHeight
+}: {
+  obstacles: Obstacle[];
+  stageWidth: number;
+  stageHeight: number;
+}) {
+  return (
+    <>
+      {obstacles.map((obs) => (
+        <div
+          key={obs.id}
+          id={`obstacle-${obs.id}`}
+          className="scrolling-obstacle"
+          style={{
+            left: 0,
+            bottom: 0,
+            translate: `${(obs.x / 100) * stageWidth}px ${(-obs.y / 100) * stageHeight}px`
+          }}
+        >
+          <img src="/monster.png?v=2" alt="عائق" style={{ transform: 'scaleX(-1)' }} />
+        </div>
+      ))}
+    </>
+  );
+});
 
 
 function App() {
@@ -209,8 +247,11 @@ function App() {
   const autoAdvanceTimerRef = useRef<any>(null);
 
   const skyRef = useRef<HTMLDivElement>(null);
+  const stageSizeRef = useRef({ width: 0, height: 0 });
+  const planeSizePctRef = useRef({ width: 0, height: 0 });
   const planeRef = useRef<HTMLImageElement>(null);
-  const playerBulletLayerRef = useRef<HTMLDivElement>(null);
+  const playerBulletLayerRef = useRef<HTMLCanvasElement>(null);
+  const drawPlayerBulletsRef = useRef<() => void>(() => {});
   const explosionCanvasRef = useRef<HTMLCanvasElement>(null);
   const explosionParticlesRef = useRef<ExplosionParticle[]>([]);
   const explosionFrameRef = useRef<number | null>(null);
@@ -229,13 +270,12 @@ function App() {
 
   const keysPressedRef = useRef<{ [key: string]: boolean }>({});
 
-  const obstaclesRef = useRef<{ id: number; x: number; y: number; speed: number; type: number; hasShot?: boolean; hp?: number }[]>([
+  const obstaclesRef = useRef<Obstacle[]>([
     { id: 1, x: 110, y: 25, speed: 0.35, type: 1, hasShot: false, hp: 2 },
     { id: 2, x: 150, y: 55, speed: 0.4, type: 2, hasShot: false, hp: 2 },
     { id: 3, x: 190, y: 75, speed: 0.3, type: 3, hasShot: false, hp: 2 }
   ]);
 
-  const [bulletIds, setBulletIds] = useState<number[]>([]);
   const obstacleBulletsRef = useRef<ObstacleBullet[]>([]);
   const bulletIdCounterRef = useRef<number>(0);
 
@@ -332,10 +372,8 @@ function App() {
     setIsBossCrashing(false);
 
     obstacleBulletsRef.current = [];
-    setBulletIds([]);
     bulletIdCounterRef.current = 0;
 
-    playerBulletLayerRef.current?.replaceChildren();
     playerBulletsRef.current = [];
     playerBulletIdCounterRef.current = 0;
 
@@ -489,6 +527,25 @@ function App() {
     if (gameState !== 'playing') return;
 
     let animId: number;
+    const isMobile = window.matchMedia('(pointer: coarse)').matches;
+    const minFrameDuration = isMobile ? 1000 / 30 : 0;
+    let previousFrameTime = 0;
+    let lastUpdateTime = 0;
+
+    const updateStageSize = () => {
+      const width = skyRef.current?.clientWidth || window.innerWidth;
+      const height = skyRef.current?.clientHeight || window.innerHeight;
+      stageSizeRef.current = {
+        width,
+        height
+      };
+      planeSizePctRef.current = {
+        width: ((planeRef.current?.offsetWidth || 115) / width) * 100,
+        height: ((planeRef.current?.offsetHeight || 60) / height) * 100
+      };
+    };
+    updateStageSize();
+    window.addEventListener('resize', updateStageSize);
 
     planeXRef.current = 20;
     planeYRef.current = 50;
@@ -502,7 +559,21 @@ function App() {
       { id: 3, x: 190, y: 60, speed: 0.3, type: 3, hasShot: false, hp: 2 }
     ];
 
-    const loop = (_time: number) => {
+    const stageWidth = stageSizeRef.current.width;
+    const stageHeight = stageSizeRef.current.height;
+    const planeWidthPct = planeSizePctRef.current.width;
+    const planeHeightPct = planeSizePctRef.current.height;
+    const enemyBulletWidthPct = ((isMobile ? 12 : 25) / stageWidth) * 100;
+    const enemyBulletHeightPct = ((isMobile ? 4 : 8) / stageHeight) * 100;
+
+    const loop = (time: number) => {
+      if (minFrameDuration && time - previousFrameTime < minFrameDuration) {
+        animId = requestAnimationFrame(loop);
+        return;
+      }
+      previousFrameTime = time;
+      const frameScale = Math.min((time - (lastUpdateTime || time - 1000 / 60)) / (1000 / 60), 2.5);
+      lastUpdateTime = time;
 
       if (isBossCrashing) {
         animId = requestAnimationFrame(loop);
@@ -510,7 +581,7 @@ function App() {
       }
 
       // 1. Keyboards movement
-      const speed = 0.38;
+      const speed = 0.38 * frameScale;
       let dx = 0;
       let dy = 0;
       let usedKeyboard = false;
@@ -534,16 +605,17 @@ function App() {
         const targetY = mouseTargetRef.current.y;
         const diffX = targetX - planeXRef.current;
         const diffY = targetY - planeYRef.current;
-        if (Math.abs(diffX) > 0.5) dx += diffX * 0.1;
-        if (Math.abs(diffY) > 0.5) dy += diffY * 0.1;
+        const followFactor = 1 - Math.pow(0.9, frameScale);
+        if (Math.abs(diffX) > 0.5) dx += diffX * followFactor;
+        if (Math.abs(diffY) > 0.5) dy += diffY * followFactor;
       }
 
       if (joystickRef.current.active) {
         const maxDist = 30;
         const jx = Math.max(-maxDist, Math.min(maxDist, joystickRef.current.dx)) / maxDist;
         const jy = Math.max(-maxDist, Math.min(maxDist, joystickRef.current.dy)) / maxDist;
-        dx += jx * speed * 3.0;
-        dy -= jy * speed * 3.0;
+        dx += jx * 0.38 * frameScale * 3.0;
+        dy -= jy * 0.38 * frameScale * 3.0;
         mouseTargetRef.current = null;
       }
 
@@ -557,8 +629,7 @@ function App() {
       // Update plane position directly on DOM
       const planeWrapper = planeRef.current?.parentElement;
       if (planeWrapper) {
-        planeWrapper.style.bottom = `${planeYRef.current}%`;
-        planeWrapper.style.left = `${planeXRef.current}%`;
+        planeWrapper.style.translate = `${(planeXRef.current / 100) * stageSizeRef.current.width}px ${(-planeYRef.current / 100) * stageSizeRef.current.height}px`;
       }
 
       // Track and highlight closest target lane
@@ -579,7 +650,7 @@ function App() {
 
       // 3. Minion obstacles movement
       obstaclesRef.current.forEach((obs) => {
-        obs.x -= obs.speed;
+        obs.x -= obs.speed * frameScale;
         if (obs.x < -15) {
           obs.x = 110 + Math.random() * 20;
           obs.y = 15 + Math.random() * 50;
@@ -589,8 +660,7 @@ function App() {
 
         const obsEl = document.getElementById(`obstacle-${obs.id}`);
         if (obsEl) {
-          obsEl.style.left = `${obs.x}%`;
-          obsEl.style.bottom = `${obs.y}%`;
+          obsEl.style.translate = `${(obs.x / 100) * stageSizeRef.current.width}px ${(-obs.y / 100) * stageSizeRef.current.height}px`;
           obsEl.style.display = 'block';
         }
 
@@ -608,14 +678,11 @@ function App() {
             y: shotPosition?.y ?? obs.y + 4,
             speed: 0.65
           });
-          setBulletIds(prev => [...prev, newId]);
         }
       });
 
       const skyW = window.innerWidth;
       const skyH = window.innerHeight;
-      const planeColliderRect = planeRef.current?.getBoundingClientRect();
-      
       const getPxDist = (x1Pct, y1Pct, x2Pct, y2Pct) => {
         const px1 = (x1Pct / 100) * skyW;
         const py1 = skyH - (y1Pct / 100) * skyH;
@@ -631,16 +698,16 @@ function App() {
       // 3b. Update obstacle bullets movement & collision
       const activeBullets = obstacleBulletsRef.current.filter(b => b.x > -10);
       activeBullets.forEach((bullet) => {
-        bullet.x -= bullet.speed;
-        const bulletEl = document.getElementById(`bullet-${bullet.id}`);
-        if (bulletEl) {
-          bulletEl.style.left = `${bullet.x}%`;
-        }
+        bullet.x -= bullet.speed * frameScale;
 
-        // Check collision with player plane
+        // Check collision in scene percentages without reading each bullet's
+        // DOM bounds (which forced layout once per active projectile).
         if (!isInvincibleRef.current && !isFlyingOver) {
-          const bulletRect = bulletEl?.getBoundingClientRect();
-          if (planeColliderRect && bulletRect && rectsOverlap(planeColliderRect, bulletRect)) {
+          const overlapsPlaneX = bullet.x < planeXRef.current + planeWidthPct &&
+            bullet.x + enemyBulletWidthPct > planeXRef.current;
+          const overlapsPlaneY = bullet.y < planeYRef.current + planeHeightPct &&
+            bullet.y + enemyBulletHeightPct > planeYRef.current;
+          if (overlapsPlaneX && overlapsPlaneY) {
             handleObstacleHit();
             isInvincibleRef.current = true;
             setIsInvincible(true);
@@ -653,13 +720,12 @@ function App() {
       const cleanBullets = obstacleBulletsRef.current.filter(b => b.x > -10);
       if (cleanBullets.length !== obstacleBulletsRef.current.length) {
         obstacleBulletsRef.current = cleanBullets;
-        setBulletIds(cleanBullets.map(b => b.id));
       }
 
       // 3c. Update clouds movement & collision
       cloudsRef.current.forEach((cloud) => {
         if (!isFlyingOver) {
-          cloud.x -= cloud.speed;
+          cloud.x -= cloud.speed * frameScale;
           if (cloud.x < -35) {
             cloud.x = 105;
           }
@@ -667,8 +733,7 @@ function App() {
 
         const cloudEl = document.getElementById(`cloud-option-${cloud.idx}`);
         if (cloudEl) {
-          cloudEl.style.left = `${cloud.x}%`;
-          cloudEl.style.bottom = `${cloud.y}%`;
+          cloudEl.style.translate = `${(cloud.x / 100) * stageSizeRef.current.width}px 0px`;
 
           if (!cloud.isActive) {
             cloudEl.style.opacity = '0';
@@ -691,8 +756,7 @@ function App() {
       // 3d. Update player bullets movement & collision with monsters
       const activePlayerBullets = playerBulletsRef.current.filter(b => b.x < 110);
       activePlayerBullets.forEach((bullet) => {
-        bullet.x += bullet.speed;
-        bullet.element.style.left = `${bullet.x}%`;
+        bullet.x += bullet.speed * frameScale;
 
         obstaclesRef.current.forEach((obs) => {
           if (obs.x < 110 && bullet.x < 110) {
@@ -748,7 +812,6 @@ function App() {
 
       playerBulletsRef.current = activePlayerBullets.filter(bullet => {
         if (bullet.x < 110) return true;
-        bullet.element.remove();
         return false;
       });
 
@@ -785,7 +848,7 @@ function App() {
       const uncollectedHearts = [];
 
       activeHearts.forEach(heart => {
-        heart.x -= 0.35;
+        heart.x -= 0.35 * frameScale;
         if (heart.x < -10) { heartsChanged = true; return; }
 
         if (!isFlyingOver && checkOverlapPct(planeXRef.current, planeYRef.current, heart.x, heart.y, 8, 12)) {
@@ -810,7 +873,7 @@ function App() {
       const uncollectedWeapons = [];
 
       activeWeapons.forEach(weapon => {
-        weapon.x -= 0.35;
+        weapon.x -= 0.35 * frameScale;
         if (weapon.x < -10) { weaponsChanged = true; return; }
 
         if (!isFlyingOver && checkOverlapPct(planeXRef.current, planeYRef.current, weapon.x, weapon.y, 8, 12)) {
@@ -836,7 +899,7 @@ function App() {
       const uncollectedShields = [];
 
       activeShields.forEach(shield => {
-        shield.x -= 0.35;
+        shield.x -= 0.35 * frameScale;
         if (shield.x < -10) { shieldsChanged = true; return; }
 
         if (!isFlyingOver && checkOverlapPct(planeXRef.current, planeYRef.current, shield.x, shield.y, 8, 12)) {
@@ -859,12 +922,75 @@ function App() {
         setShieldDropIds(uncollectedShields.map(s => s.id));
       }
 
+      drawPlayerBulletsRef.current();
+
       animId = requestAnimationFrame(loop);
     };
 
     animId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(animId);
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('resize', updateStageSize);
+    };
   }, [gameState, isBossCrashing, isFlyingOver]);
+
+  // Draw all player shots in one canvas pass instead of maintaining and
+  // repositioning a DOM node for every projectile on every frame.
+  useEffect(() => {
+    const canvas = playerBulletLayerRef.current;
+    const context = canvas?.getContext('2d', { alpha: true });
+    if (!canvas || !context || gameState !== 'playing') {
+      drawPlayerBulletsRef.current = () => {};
+      return;
+    }
+
+    const isMobile = window.matchMedia('(pointer: coarse)').matches;
+    let width = 0;
+    let height = 0;
+    const resizeCanvas = () => {
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 1.5);
+      width = canvas.clientWidth;
+      height = canvas.clientHeight;
+      canvas.width = Math.round(width * pixelRatio);
+      canvas.height = Math.round(height * pixelRatio);
+      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    };
+
+    const draw = () => {
+      context.clearRect(0, 0, width, height);
+      const drawBullet = (bullet: { x: number; y: number }, color: string, glow: string) => {
+        const bulletWidth = isMobile ? 12 : 25;
+        const bulletHeight = isMobile ? 4 : 8;
+        const x = (bullet.x / 100) * width;
+        const y = height - (bullet.y / 100) * height - bulletHeight / 2;
+        context.fillStyle = color;
+        context.shadowColor = isMobile ? 'transparent' : glow;
+        context.shadowBlur = isMobile ? 0 : 5;
+        context.beginPath();
+        const radius = bulletHeight / 2;
+        context.moveTo(x + radius, y);
+        context.arcTo(x + bulletWidth, y, x + bulletWidth, y + bulletHeight, radius);
+        context.arcTo(x + bulletWidth, y + bulletHeight, x, y + bulletHeight, radius);
+        context.arcTo(x, y + bulletHeight, x, y, radius);
+        context.arcTo(x, y, x + bulletWidth, y, radius);
+        context.closePath();
+        context.fill();
+      };
+
+      obstacleBulletsRef.current.forEach((bullet) => drawBullet(bullet, '#ff684b', '#ff4e50'));
+      playerBulletsRef.current.forEach((bullet) => drawBullet(bullet, '#00dff5', '#00e5ff'));
+      context.shadowBlur = 0;
+    };
+
+    resizeCanvas();
+    drawPlayerBulletsRef.current = draw;
+    window.addEventListener('resize', resizeCanvas);
+    return () => {
+      window.removeEventListener('resize', resizeCanvas);
+      drawPlayerBulletsRef.current = () => {};
+      context.clearRect(0, 0, width, height);
+    };
+  }, [gameState]);
 
   const handleObstacleHit = () => {
     audio.playExplosion();
@@ -893,13 +1019,15 @@ function App() {
     }
 
     let previousTime = 0;
+    let lastFrameTime = 0;
+    const isMobile = window.matchMedia('(pointer: coarse)').matches;
+    const minFrameDuration = isMobile ? 1000 / 30 : 0;
     let canvasSize = { width: 0, height: 0 };
     const resizeCanvas = () => {
-      const rect = canvas.getBoundingClientRect();
-      const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
-      canvasSize = { width: rect.width, height: rect.height };
-      canvas.width = Math.round(rect.width * pixelRatio);
-      canvas.height = Math.round(rect.height * pixelRatio);
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 1.5);
+      canvasSize = { width: canvas.clientWidth, height: canvas.clientHeight };
+      canvas.width = Math.round(canvasSize.width * pixelRatio);
+      canvas.height = Math.round(canvasSize.height * pixelRatio);
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
     };
     resizeCanvas();
@@ -907,6 +1035,11 @@ function App() {
 
     const drawFrame = (time: number) => {
       explosionFrameRef.current = null;
+      if (minFrameDuration && lastFrameTime && time - lastFrameTime < minFrameDuration) {
+        explosionFrameRef.current = requestAnimationFrame(drawFrame);
+        return;
+      }
+      lastFrameTime = time;
       const dt = Math.min((time - (previousTime || time)) / 1000, 0.04);
       previousTime = time;
       context.clearRect(0, 0, canvasSize.width, canvasSize.height);
@@ -991,10 +1124,6 @@ function App() {
     };
   };
 
-  const rectsOverlap = (first: DOMRect, second: DOMRect) =>
-    first.left < second.right && first.right > second.left &&
-    first.top < second.bottom && first.bottom > second.top;
-
   const lastFiredRef = useRef<number>(0);
   const firePlayerBullet = () => {
     if (gameState !== 'playing' || isFlyingOver) return;
@@ -1004,23 +1133,15 @@ function App() {
     lastFiredRef.current = now;
 
     const level = weaponLevelRef.current;
-    const spawn = getProjectilePosition(planeRef.current, 'right');
-    const spawnX = spawn?.x ?? planeXRef.current + 8.2;
-    const spawnY = spawn?.y ?? planeYRef.current + 7.2;
+    const spawnX = planeXRef.current + planeSizePctRef.current.width * 0.98;
+    const spawnY = planeYRef.current + planeSizePctRef.current.height * 0.22;
     const addBullet = (id: number, x: number, y: number) => {
-      const bullet = document.createElement('div');
-      bullet.id = `player-bullet-${id}`;
-      bullet.className = 'player-bullet';
-      bullet.style.left = `${x}%`;
-      bullet.style.bottom = `${y}%`;
-      playerBulletLayerRef.current?.appendChild(bullet);
-      playerBulletsRef.current.push({ id, x, y, speed: 1.5, element: bullet });
+      playerBulletsRef.current.push({ id, x, y, speed: 1.5 });
 
       // Keep projectile work bounded if a device pauses animation frames
       // while the player continues holding fire.
       while (playerBulletsRef.current.length > 36) {
-        const oldest = playerBulletsRef.current.shift();
-        oldest?.element.remove();
+        playerBulletsRef.current.shift();
       }
     };
 
@@ -1268,10 +1389,13 @@ function App() {
   };
 
   const currentQuestion = questions[currentQuestionIndex];
+  const renderStageWidth = stageSizeRef.current.width || (typeof window !== 'undefined' ? window.innerWidth : 0);
+  const renderStageHeight = stageSizeRef.current.height || (typeof window !== 'undefined' ? window.innerHeight : 0);
   const isMobilePortrait = typeof window !== 'undefined' && window.matchMedia("(max-width: 768px) and (orientation: portrait)").matches;
-  const lanePositions = isMobilePortrait
-    ? ['63%', '47%', '31%', '15%']
-    : ['65%', '48%', '31%', '14%'];
+  const lanePositions = useMemo(
+    () => isMobilePortrait ? ['63%', '47%', '31%', '15%'] : ['65%', '48%', '31%', '14%'],
+    [isMobilePortrait]
+  );
 
   const getPlaneClass = () => {
     let classes = ['airplane-wrapper'];
@@ -1439,35 +1563,12 @@ function App() {
           </div>
 
           {/* Scrolling obstacles */}
-          {obstaclesRef.current.map(obs => (
-            <div
-              key={obs.id}
-              id={`obstacle-${obs.id}`}
-              className="scrolling-obstacle"
-              style={{
-                left: `${obs.x}%`,
-                bottom: `${obs.y}%`
-              }}
-            >
-              <img src="/monster.png?v=2" alt="عائق" style={{ transform: 'scaleX(-1)' }} />
-            </div>
-          ))}
+          <ObstacleLayer
+            obstacles={obstaclesRef.current}
+            stageWidth={renderStageWidth}
+            stageHeight={renderStageHeight}
+          />
 
-          {/* Obstacle horizontal bullets */}
-          {bulletIds.map(id => {
-            const bullet = obstacleBulletsRef.current.find(b => b.id === id);
-            return (
-              <div
-                key={id}
-                id={`bullet-${id}`}
-                className="obstacle-bullet"
-                style={{
-                  bottom: `${bullet?.y || 0}%`,
-                  left: `${bullet?.x || 0}%`
-                }}
-              />
-            );
-          })}
 
           {/* Collectible hearts */}
           {heartIds.map(id => {
@@ -1545,8 +1646,9 @@ function App() {
           <div
             className={getPlaneClass()}
             style={{
-              bottom: `${planeYRef.current}%`,
-              left: `${planeXRef.current}%`,
+              bottom: 0,
+              left: 0,
+              translate: `${(planeXRef.current / 100) * renderStageWidth}px ${(-planeYRef.current / 100) * renderStageHeight}px`,
               position: 'absolute',
               transition: isFlyingOver ? 'all 2.5s ease-in-out' : 'none'
             }}
@@ -1600,8 +1702,9 @@ function App() {
                     className={cloudClass}
                     style={{
                       position: 'absolute',
-                      bottom: lanePositions[idx],
-                      left: '110%', // updated by game loop
+                      bottom: `${cloudsRef.current[idx]?.y ?? Number.parseFloat(lanePositions[idx])}%`,
+                      left: 0,
+                      translate: `${((cloudsRef.current[idx]?.x ?? 110 + (idx * 6)) / 100) * renderStageWidth}px 0px`,
                       zIndex: 25,
                     }}
                   >
@@ -1650,7 +1753,7 @@ function App() {
           )}
 
           <canvas ref={explosionCanvasRef} className="explosion-canvas" aria-hidden="true" />
-          <div ref={playerBulletLayerRef} className="player-bullet-layer" aria-hidden="true" />
+          <canvas ref={playerBulletLayerRef} className="projectile-canvas" aria-hidden="true" />
 
           <div className="buildings-layer-fg" />
 
