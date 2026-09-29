@@ -320,6 +320,7 @@
   height: 100%;
   pointer-events: none;
   z-index: 25;
+  contain: layout paint;
 }
 
 .player-bullet-layer {
@@ -327,6 +328,7 @@
   inset: 0;
   z-index: 14;
   pointer-events: none;
+  contain: layout paint;
 }
 
 .laser-explosion-particle {
@@ -589,6 +591,7 @@
   box-shadow: 0 0 10px #00e5ff, 0 0 5px #8f94fb, 3px 5px 6px rgba(0, 0, 0, 0.7);
   z-index: 14;
   pointer-events: none;
+  contain: layout paint;
 }
 
 /* --- Top Question Bar Style --- */
@@ -1126,6 +1129,14 @@
 .player-bullet {
     width: 12px !important;
     height: 4px !important;
+  }
+
+  .obstacle-bullet {
+    box-shadow: 0 0 4px #ff4e50 !important;
+  }
+
+  .player-bullet {
+    box-shadow: 0 0 4px #00e5ff !important;
   }
 }
 

@@ -54,6 +54,7 @@ interface PlayerBullet {
   x: number;
   y: number;
   speed: number;
+  element: HTMLDivElement;
 }
 
 interface CloudOption {
@@ -701,10 +702,7 @@ function App() {
       const activePlayerBullets = playerBulletsRef.current.filter(b => b.x < 110);
       activePlayerBullets.forEach((bullet) => {
         bullet.x += bullet.speed;
-        const bulletEl = document.getElementById(`player-bullet-${bullet.id}`);
-        if (bulletEl) {
-          bulletEl.style.left = `${bullet.x}%`;
-        }
+        bullet.element.style.left = `${bullet.x}%`;
 
         obstaclesRef.current.forEach((obs) => {
           if (obs.x < 110 && bullet.x < 110) {
@@ -760,7 +758,7 @@ function App() {
 
       playerBulletsRef.current = activePlayerBullets.filter(bullet => {
         if (bullet.x < 110) return true;
-        document.getElementById(`player-bullet-${bullet.id}`)?.remove();
+        bullet.element.remove();
         return false;
       });
 
@@ -953,9 +951,11 @@ function App() {
     }
 
     let previousTime = 0;
+    let canvasSize = { width: 0, height: 0 };
     const resizeCanvas = () => {
       const rect = canvas.getBoundingClientRect();
       const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+      canvasSize = { width: rect.width, height: rect.height };
       canvas.width = Math.round(rect.width * pixelRatio);
       canvas.height = Math.round(rect.height * pixelRatio);
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
@@ -965,10 +965,9 @@ function App() {
 
     const drawFrame = (time: number) => {
       explosionFrameRef.current = null;
-      const rect = canvas.getBoundingClientRect();
       const dt = Math.min((time - (previousTime || time)) / 1000, 0.04);
       previousTime = time;
-      context.clearRect(0, 0, rect.width, rect.height);
+      context.clearRect(0, 0, canvasSize.width, canvasSize.height);
       const particles = explosionParticlesRef.current;
       for (let i = particles.length - 1; i >= 0; i -= 1) {
         const particle = particles[i];
@@ -1067,19 +1066,19 @@ function App() {
     const spawnX = spawn?.x ?? planeXRef.current + 8.2;
     const spawnY = spawn?.y ?? planeYRef.current + 7.2;
     const addBullet = (id: number, x: number, y: number) => {
-      playerBulletsRef.current.push({ id, x, y, speed: 1.5 });
       const bullet = document.createElement('div');
       bullet.id = `player-bullet-${id}`;
       bullet.className = 'player-bullet';
       bullet.style.left = `${x}%`;
       bullet.style.bottom = `${y}%`;
       playerBulletLayerRef.current?.appendChild(bullet);
+      playerBulletsRef.current.push({ id, x, y, speed: 1.5, element: bullet });
 
       // Keep projectile work bounded if a device pauses animation frames
       // while the player continues holding fire.
       while (playerBulletsRef.current.length > 36) {
         const oldest = playerBulletsRef.current.shift();
-        if (oldest) document.getElementById(`player-bullet-${oldest.id}`)?.remove();
+        oldest?.element.remove();
       }
     };
 
