@@ -242,6 +242,14 @@ function App() {
   const [planeEffect, setPlaneEffect] = useState<'normal' | 'boost' | 'shake'>('normal');
   const [laser, setLaser] = useState<LaserPath>({ x1: 0, y1: 0, x2: 0, y2: 0, color: 'cyan', visible: false });
   const [isMuted, setIsMuted] = useState<boolean>(false);
+  const abilityVisualsRef = useRef({ shield: false, boost: false, invincible: false });
+  useEffect(() => {
+    abilityVisualsRef.current = {
+      shield: hasActiveShield,
+      boost: planeEffect === 'boost',
+      invincible: isInvincible
+    };
+  }, [hasActiveShield, planeEffect, isInvincible]);
 
   const particleIdRef = useRef<number>(0);
   const autoAdvanceTimerRef = useRef<any>(null);
@@ -980,6 +988,63 @@ function App() {
       obstacleBulletsRef.current.forEach((bullet) => drawBullet(bullet, '#ff684b', '#ff4e50'));
       playerBulletsRef.current.forEach((bullet) => drawBullet(bullet, '#00dff5', '#00e5ff'));
       context.shadowBlur = 0;
+
+      const abilities = abilityVisualsRef.current;
+      if (abilities.shield || abilities.boost || abilities.invincible || weaponLevelRef.current > 1) {
+        const planeWidth = (planeSizePctRef.current.width / 100) * width;
+        const planeHeight = (planeSizePctRef.current.height / 100) * height;
+        const planeLeft = (planeXRef.current / 100) * width;
+        const planeBottom = (planeYRef.current / 100) * height;
+        const centerX = planeLeft + planeWidth / 2;
+        const centerY = height - planeBottom - planeHeight / 2;
+        const pulse = 0.65 + (Math.sin(performance.now() / 180) + 1) * 0.15;
+
+        if (abilities.boost || weaponLevelRef.current > 1) {
+          const trailWidth = planeWidth * (isMobile ? 0.75 : 1.05);
+          if (isMobile) {
+            context.fillStyle = '#00dff5';
+          } else {
+            const trail = context.createLinearGradient(planeLeft - trailWidth, centerY, planeLeft, centerY);
+            trail.addColorStop(0, 'rgba(0, 229, 255, 0)');
+            trail.addColorStop(0.72, 'rgba(0, 229, 255, 0.22)');
+            trail.addColorStop(1, 'rgba(255, 196, 0, 0.8)');
+            context.fillStyle = trail;
+          }
+          context.beginPath();
+          context.ellipse(planeLeft - trailWidth * 0.35, centerY, trailWidth * 0.65, Math.max(3, planeHeight * 0.12), 0, 0, Math.PI * 2);
+          context.fill();
+        }
+
+        if (abilities.shield) {
+          const radius = Math.max(planeWidth, planeHeight) * 0.82;
+          if (isMobile) {
+            context.fillStyle = `rgba(0, 205, 255, ${0.08 * pulse})`;
+          } else {
+            const shieldGradient = context.createRadialGradient(centerX, centerY, radius * 0.58, centerX, centerY, radius);
+            shieldGradient.addColorStop(0, 'rgba(0, 229, 255, 0)');
+            shieldGradient.addColorStop(0.76, `rgba(0, 229, 255, ${0.06 * pulse})`);
+            shieldGradient.addColorStop(1, `rgba(70, 120, 255, ${0.2 * pulse})`);
+            context.fillStyle = shieldGradient;
+          }
+          context.beginPath();
+          context.ellipse(centerX, centerY, radius, radius * 0.7, 0, 0, Math.PI * 2);
+          context.fill();
+          context.strokeStyle = `rgba(85, 235, 255, ${0.55 * pulse})`;
+          context.lineWidth = isMobile ? 1.5 : 2;
+          context.beginPath();
+          context.ellipse(centerX, centerY, radius * 0.92, radius * 0.65, 0, 0, Math.PI * 2);
+          context.stroke();
+        }
+
+        if (abilities.invincible && !abilities.shield) {
+          context.strokeStyle = `rgba(255, 228, 92, ${0.35 + pulse * 0.4})`;
+          context.lineWidth = isMobile ? 1.5 : 2.5;
+          context.beginPath();
+          context.ellipse(centerX, centerY, planeWidth * 0.72, planeHeight * 0.72, 0, 0, Math.PI * 2);
+          context.stroke();
+        }
+      }
+      context.shadowBlur = 0;
     };
 
     resizeCanvas();
@@ -1400,11 +1465,9 @@ function App() {
   const getPlaneClass = () => {
     let classes = ['airplane-wrapper'];
     if (isFlyingOver) classes.push('plane-flyover');
-    if (planeEffect === 'boost') classes.push('engine-boost');
     if (planeEffect === 'shake') classes.push('shake-drop');
     if (movementDir === 'up') classes.push('tilt-up');
     if (movementDir === 'down') classes.push('tilt-down');
-    if (isInvincible) classes.push('invincible-flash');
 
     // Add charring effect based on damage level
     const damageLevel = 3 - lives;
@@ -1654,27 +1717,6 @@ function App() {
             }}
           >
             <img ref={planeRef} src="/cartoon_airplane.png" className="airplane-img" alt="طائرة" />
-
-            {/* Glowing 3D Glass Sphere Shield Effect */}
-            {hasActiveShield && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  width: '150%',
-                  aspectRatio: '1 / 1',
-                  borderRadius: '50%',
-                  background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.6) 0%, rgba(0,255,255,0.2) 30%, rgba(0,150,255,0.4) 80%, rgba(0,50,255,0.6) 100%)',
-                  boxShadow: '0 0 30px rgba(0,255,255,0.6), inset 0 0 30px rgba(255,255,255,0.8), inset -20px -20px 40px rgba(0,100,255,0.5)',
-                  border: '2px solid rgba(255, 255, 255, 0.6)',
-                  backdropFilter: 'blur(2px)',
-                  zIndex: 2,
-                  animation: 'pulse-centered 1s infinite alternate',
-                  pointerEvents: 'none'
-                }}
-              />
-            )}
 
           </div>
 

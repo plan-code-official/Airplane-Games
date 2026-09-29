@@ -103,20 +103,6 @@ body {
   }
 }
 
-@keyframes engine-glow {
-
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-
-  50% {
-    transform: scale(1.2);
-    opacity: 1;
-  }
-}
-
 @keyframes pulse-btn {
   0% {
     box-shadow: 0 0 0 0 rgba(78, 84, 200, 0.7);
@@ -436,23 +422,6 @@ body {
   transform-origin: center;
   transition: bottom 1.2s ease-in-out, transform 0.8s ease-in-out, filter 0.5s ease;
   animation: float 4s infinite ease-in-out;
-}
-
-.airplane-wrapper.engine-boost {
-  transform: scale(1.15);
-}
-
-.airplane-wrapper.engine-boost::after {
-  content: '';
-  position: absolute;
-  left: -30px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 40px;
-  height: 20px;
-  background: radial-gradient(circle, #ff007f, transparent);
-  border-radius: 50%;
-  animation: engine-glow 0.2s infinite alternate;
 }
 
 .airplane-wrapper.shake-drop {
