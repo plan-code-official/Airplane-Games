@@ -624,11 +624,6 @@ function App() {
       const skyW = window.innerWidth;
       const skyH = window.innerHeight;
       const planeColliderRect = planeRef.current?.getBoundingClientRect();
-      const obstacleColliderRects = new Map<number, DOMRect>();
-      obstaclesRef.current.forEach(obs => {
-        const obstacleSprite = document.querySelector(`#obstacle-${obs.id} img`);
-        if (obstacleSprite) obstacleColliderRects.set(obs.id, obstacleSprite.getBoundingClientRect());
-      });
       
       const getPxDist = (x1Pct, y1Pct, x2Pct, y2Pct) => {
         const px1 = (x1Pct / 100) * skyW;
@@ -713,16 +708,13 @@ function App() {
 
         obstaclesRef.current.forEach((obs) => {
           if (obs.x < 110 && bullet.x < 110) {
-            const bulletRect = bulletEl?.getBoundingClientRect();
-            const obstacleRect = obstacleColliderRects.get(obs.id);
-            if (bulletRect && obstacleRect && rectsOverlap(bulletRect, obstacleRect)) {
+            if (getPxDist(bullet.x, bullet.y, obs.x, obs.y) < 45) {
               // Decrement monster health
               obs.hp = (obs.hp || 2) - 1;
               bullet.x = 200; // Trigger bullet removal
-              
-              const skyRect = skyRef.current?.getBoundingClientRect();
-              const ptX = obstacleRect.left + obstacleRect.width / 2 - (skyRect?.left ?? 0);
-              const ptY = obstacleRect.top + obstacleRect.height / 2 - (skyRect?.top ?? 0);
+
+              const ptX = (obs.x / 100) * skyW;
+              const ptY = skyH - (obs.y / 100) * skyH;
               fireExplosion(ptX, ptY, 'red');
 
               if (obs.hp <= 0) {
@@ -1082,6 +1074,13 @@ function App() {
       bullet.style.left = `${x}%`;
       bullet.style.bottom = `${y}%`;
       playerBulletLayerRef.current?.appendChild(bullet);
+
+      // Keep projectile work bounded if a device pauses animation frames
+      // while the player continues holding fire.
+      while (playerBulletsRef.current.length > 36) {
+        const oldest = playerBulletsRef.current.shift();
+        if (oldest) document.getElementById(`player-bullet-${oldest.id}`)?.remove();
+      }
     };
 
     if (level === 1) {
