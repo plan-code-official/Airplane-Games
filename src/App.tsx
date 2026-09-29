@@ -967,7 +967,13 @@ function App() {
         context.shadowColor = isMobile ? 'transparent' : glow;
         context.shadowBlur = isMobile ? 0 : 5;
         context.beginPath();
-        context.roundRect(x, y, bulletWidth, bulletHeight, bulletHeight / 2);
+        const radius = bulletHeight / 2;
+        context.moveTo(x + radius, y);
+        context.arcTo(x + bulletWidth, y, x + bulletWidth, y + bulletHeight, radius);
+        context.arcTo(x + bulletWidth, y + bulletHeight, x, y + bulletHeight, radius);
+        context.arcTo(x, y + bulletHeight, x, y, radius);
+        context.arcTo(x, y, x + bulletWidth, y, radius);
+        context.closePath();
         context.fill();
       };
 
