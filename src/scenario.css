@@ -345,6 +345,24 @@
   filter: brightness(0.3) sepia(0.6) hue-rotate(-30deg) saturate(2) drop-shadow(0 10px 20px rgba(0, 0, 0, 0.6));
 }
 
+.airplane-wrapper.damage-smoke::before {
+  content: '';
+  position: absolute;
+  left: -18px;
+  top: 45%;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(40, 40, 40, 0.75), rgba(20, 20, 20, 0));
+  pointer-events: none;
+  animation: damage-smoke 1.1s steps(3, end) infinite;
+}
+
+@keyframes damage-smoke {
+  0% { opacity: 0.15; transform: translate(0, 0) scale(0.65); }
+  100% { opacity: 0; transform: translate(-35px, -14px) scale(1.5); }
+}
+
 /* Inertia / Pitch Tilting */
 .tilt-up {
   transform: rotate(-8deg) scale(1.02);
@@ -1137,6 +1155,27 @@
 
   .player-bullet {
     box-shadow: 0 0 4px #00e5ff !important;
+  }
+
+  .airplane-wrapper {
+    animation: none;
+  }
+
+  .airplane-wrapper.shake-drop {
+    animation: shake-anim 0.28s ease-out;
+    will-change: transform;
+  }
+
+  .invincible-flash {
+    animation: plane-flash 0.5s steps(2, end) infinite;
+  }
+
+  .charred-1 {
+    filter: brightness(0.8) sepia(0.25);
+  }
+
+  .charred-2 {
+    filter: brightness(0.65) sepia(0.35);
   }
 }
 
