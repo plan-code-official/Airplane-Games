@@ -2290,3 +2290,234 @@ body {
     font-size: 16px !important;
   }
 }
+
+/* Gameplay HUD follows the supplied glass-card reference. */
+.sky-container {
+  font-family: 'Lateef', var(--font-arabic), sans-serif;
+}
+
+.sky-hud-header {
+  top: 10px;
+  left: 2%;
+  width: 96%;
+  height: 126px;
+  padding: 8px 22px;
+  display: grid;
+  grid-template-columns: 76px minmax(120px, 1fr) minmax(270px, 1fr);
+  gap: 20px;
+  direction: ltr;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 14px;
+  background: linear-gradient(105deg, rgba(43, 43, 43, 0.91), rgba(71, 71, 71, 0.88));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16), inset 0 1px rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  font-family: 'Lateef', var(--font-arabic), sans-serif;
+}
+
+.hud-exit-button {
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  border: 0;
+  border-radius: 22px;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.hud-exit-button:hover {
+  transform: scale(1.04);
+}
+
+.hud-exit-button img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.sky-hud-header .hud-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  color: #fff;
+  text-align: center;
+  text-shadow: none;
+  font-family: 'Lateef', var(--font-arabic), sans-serif;
+  line-height: 0.92;
+}
+
+.hud-question-label {
+  font-size: 38px;
+  font-weight: 700;
+}
+
+.sky-hud-header .hud-question-number {
+  padding: 0;
+  background: transparent;
+  color: #fff;
+  font-family: 'Lateef', var(--font-arabic), sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 0.95;
+  direction: ltr;
+}
+
+.sky-hud-header .hud-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 18px;
+  direction: ltr;
+}
+
+.sky-hud-header .hud-lives {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.hud-lives-label {
+  color: #fff;
+  font-family: 'Lateef', var(--font-arabic), sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 0.85;
+}
+
+.hud-heart-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sky-hud-header .heart-icon {
+  display: block;
+  width: 52px;
+  height: 46px;
+  filter: none;
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+.sky-hud-header .heart-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.sky-hud-header .heart-icon.lost {
+  filter: grayscale(1);
+  opacity: 0.32;
+  transform: none;
+}
+
+.hud-coins {
+  min-width: 158px;
+  height: 76px;
+  padding: 5px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 999px;
+  color: #fff;
+  font-family: 'Lateef', var(--font-arabic), sans-serif;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  direction: ltr;
+}
+
+.hud-coins img {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+}
+
+.hud-progress-track {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: -0.2%;
+  width: 100.4%;
+  height: 12px;
+  overflow: hidden;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #06445a;
+}
+
+.hud-progress-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #63d7f2;
+  transition: width 0.25s ease;
+}
+
+@media (max-width: 900px), (max-height: 500px) {
+  .sky-hud-header {
+    top: 6px;
+    height: 92px;
+    padding: 5px 10px;
+    grid-template-columns: 48px minmax(82px, 1fr) minmax(188px, 1.35fr);
+    gap: 6px;
+    border-radius: 10px;
+  }
+
+  .hud-exit-button {
+    width: 48px;
+    height: 46px;
+    border-radius: 14px;
+  }
+
+  .hud-question-label {
+    font-size: 25px;
+  }
+
+  .sky-hud-header .hud-question-number {
+    font-size: 34px;
+  }
+
+  .sky-hud-header .hud-right {
+    gap: 7px;
+  }
+
+  .hud-lives-label {
+    font-size: 21px;
+  }
+
+  .hud-heart-row {
+    gap: 2px;
+  }
+
+  .sky-hud-header .heart-icon {
+    width: 31px;
+    height: 27px;
+  }
+
+  .hud-coins {
+    min-width: 92px;
+    height: 56px;
+    padding: 3px 8px;
+    gap: 4px;
+    font-size: 30px;
+  }
+
+  .hud-coins img {
+    width: 42px;
+    height: 42px;
+  }
+
+  .hud-progress-track {
+    height: 9px;
+  }
+}
