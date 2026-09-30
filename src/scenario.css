@@ -333,6 +333,17 @@
   contain: layout paint;
 }
 
+.ability-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 24;
+  pointer-events: none;
+  contain: layout paint;
+  transform: translateZ(0);
+}
+
 .laser-explosion-particle {
   position: absolute;
   border-radius: 50%;

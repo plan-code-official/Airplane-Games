@@ -397,6 +397,8 @@ function App() {
   const planeRef = useRef<HTMLImageElement>(null);
   const playerBulletLayerRef = useRef<HTMLCanvasElement>(null);
   const drawPlayerBulletsRef = useRef<() => void>(() => {});
+  const abilityCanvasRef = useRef<HTMLCanvasElement>(null);
+  const drawAbilitiesRef = useRef<(time: number) => void>(() => {});
   const explosionCanvasRef = useRef<HTMLCanvasElement>(null);
   const explosionParticlesRef = useRef<ExplosionParticle[]>([]);
   const explosionFrameRef = useRef<number | null>(null);
@@ -429,12 +431,10 @@ function App() {
   const playerBulletIdCounterRef = useRef<number>(0);
 
   // Collectible hearts
-  const [heartIds, setHeartIds] = useState<number[]>([]);
   const heartsRef = useRef<DropHeart[]>([]);
   const heartIdCounterRef = useRef<number>(0);
 
   // Collectible weapon upgrades
-  const [weaponDropIds, setWeaponDropIds] = useState<number[]>([]);
   const weaponDropsRef = useRef<WeaponDrop[]>([]);
   const weaponDropIdCounterRef = useRef<number>(0);
   const monstersKilledRef = useRef<number>(0);
@@ -443,7 +443,6 @@ function App() {
   const weaponUpgradeTimeRef = useRef<number>(0);
 
   // Collectible shields
-  const [shieldDropIds, setShieldDropIds] = useState<number[]>([]);
   const shieldDropsRef = useRef<ShieldDrop[]>([]);
   const shieldDropIdCounterRef = useRef<number>(0);
 
@@ -553,11 +552,9 @@ function App() {
     setIsAnswerChecked(false);
 
     heartsRef.current = [];
-    setHeartIds([]);
     heartIdCounterRef.current = 0;
 
     weaponDropsRef.current = [];
-    setWeaponDropIds([]);
     weaponDropIdCounterRef.current = 0;
     monstersKilledRef.current = 0;
     nextUpgradeKillsRef.current = 4;
@@ -565,7 +562,6 @@ function App() {
     weaponUpgradeTimeRef.current = 0;
 
     shieldDropsRef.current = [];
-    setShieldDropIds([]);
     shieldDropIdCounterRef.current = 0;
 
     setIsFlyingOver(false);
@@ -845,6 +841,24 @@ function App() {
       const planeHitboxBottom = planeYRef.current - planeSizePctRef.current.spriteHeight * (boostScale - 1) / 2 + planeSizePctRef.current.bottom * boostScale;
       const planeCenterX = planeHitboxLeft + planeWidthPct / 2;
       const planeCenterY = planeHitboxBottom + planeHeightPct / 2;
+      const planeFallbackRect: SpriteRect = {
+        left: (planeHitboxLeft / 100) * stageSizeRef.current.width,
+        top: stageSizeRef.current.height - ((planeHitboxBottom + planeHeightPct) / 100) * stageSizeRef.current.height,
+        width: (planeWidthPct / 100) * stageSizeRef.current.width,
+        height: (planeHeightPct / 100) * stageSizeRef.current.height
+      };
+      const planeTouchesRect = (target: SpriteRect) => planeAlphaMaskRef.current
+        ? alphaMaskTouchesRect(planeAlphaMaskRef.current, planeSpriteRect, target)
+        : planeFallbackRect.left < target.left + target.width &&
+          planeFallbackRect.left + planeFallbackRect.width > target.left &&
+          planeFallbackRect.top < target.top + target.height &&
+          planeFallbackRect.top + planeFallbackRect.height > target.top;
+      const pickupRect = (x: number, y: number, size: number): SpriteRect => ({
+        left: (x / 100) * stageSizeRef.current.width,
+        top: stageSizeRef.current.height - (y / 100) * stageSizeRef.current.height - size,
+        width: size,
+        height: size
+      });
 
       if (keysPressedRef.current[' '] || keysPressedRef.current['Enter']) {
         firePlayerBullet();
@@ -1025,20 +1039,7 @@ function App() {
             width: optionSize.width,
             height: optionSize.height + 24
           };
-          const planeFallbackRect: SpriteRect = {
-            left: (planeHitboxLeft / 100) * stageSizeRef.current.width,
-            top: stageSizeRef.current.height - ((planeHitboxBottom + planeHeightPct) / 100) * stageSizeRef.current.height,
-            width: (planeWidthPct / 100) * stageSizeRef.current.width,
-            height: (planeHeightPct / 100) * stageSizeRef.current.height
-          };
-          const intersectsAnswer = planeAlphaMaskRef.current
-            ? alphaMaskTouchesRect(planeAlphaMaskRef.current, planeSpriteRect, answerRect)
-            : planeFallbackRect.left < answerRect.left + answerRect.width &&
-              planeFallbackRect.left + planeFallbackRect.width > answerRect.left &&
-              planeFallbackRect.top < answerRect.top + answerRect.height &&
-              planeFallbackRect.top + planeFallbackRect.height > answerRect.top;
-
-          if (intersectsAnswer) {
+          if (planeTouchesRect(answerRect)) {
             cloud.isActive = false;
             handleCloudCollision(cloud);
           }
@@ -1085,17 +1086,14 @@ function App() {
                 if (monstersKilledRef.current >= nextUpgradeKillsRef.current) {
                   const wId = ++weaponDropIdCounterRef.current;
                   weaponDropsRef.current.push({ id: wId, x: obs.x, y: obs.y });
-                  setWeaponDropIds(prev => [...prev, wId]);
                   monstersKilledRef.current = 0;
                   nextUpgradeKillsRef.current = 3 + Math.floor(Math.random() * 4);
                 } else if (Math.random() < 0.15) {
                   const sId = ++shieldDropIdCounterRef.current;
                   shieldDropsRef.current.push({ id: sId, x: obs.x, y: obs.y });
-                  setShieldDropIds(prev => [...prev, sId]);
                 } else if (livesRef.current < 3 && Math.random() < 0.3) {
                   const hId = ++heartIdCounterRef.current;
                   heartsRef.current.push({ id: hId, x: obs.x, y: obs.y });
-                  setHeartIds(prev => [...prev, hId]);
                 }
 
                 // Reset/respawn
@@ -1162,7 +1160,7 @@ function App() {
         heart.x -= 0.35 * frameScale;
         if (heart.x < -10) { heartsChanged = true; return; }
 
-        if (!isFlyingOver && checkOverlapPct(planeCenterX, planeCenterY, heart.x, heart.y, 8, 12)) {
+        if (!isFlyingOver && planeTouchesRect(pickupRect(heart.x, heart.y, 32))) {
           heartsChanged = true;
           audio.playSuccess();
           setLives(prev => prev < 3 ? prev + 1 : prev);
@@ -1175,7 +1173,6 @@ function App() {
 
       if (heartsChanged) {
         heartsRef.current = uncollectedHearts;
-        setHeartIds(uncollectedHearts.map(h => h.id));
       }
 
       // 7. Update and check collectible weapons
@@ -1187,7 +1184,7 @@ function App() {
         weapon.x -= 0.35 * frameScale;
         if (weapon.x < -10) { weaponsChanged = true; return; }
 
-        if (!isFlyingOver && checkOverlapPct(planeCenterX, planeCenterY, weapon.x, weapon.y, 8, 12)) {
+        if (!isFlyingOver && planeTouchesRect(pickupRect(weapon.x, weapon.y, 40))) {
           weaponsChanged = true;
           audio.playSuccess();
           weaponLevelRef.current = Math.min(3, weaponLevelRef.current + 1);
@@ -1201,7 +1198,6 @@ function App() {
 
       if (weaponsChanged) {
         weaponDropsRef.current = uncollectedWeapons;
-        setWeaponDropIds(uncollectedWeapons.map(w => w.id));
       }
 
       // 8. Update and check collectible shields
@@ -1213,7 +1209,7 @@ function App() {
         shield.x -= 0.35 * frameScale;
         if (shield.x < -10) { shieldsChanged = true; return; }
 
-        if (!isFlyingOver && checkOverlapPct(planeCenterX, planeCenterY, shield.x, shield.y, 8, 12)) {
+        if (!isFlyingOver && planeTouchesRect(pickupRect(shield.x, shield.y, 40))) {
           shieldsChanged = true;
           audio.playSuccess();
           isInvincibleRef.current = true;
@@ -1230,10 +1226,10 @@ function App() {
 
       if (shieldsChanged) {
         shieldDropsRef.current = uncollectedShields;
-        setShieldDropIds(uncollectedShields.map(s => s.id));
       }
 
       drawPlayerBulletsRef.current();
+      drawAbilitiesRef.current(time);
 
       animId = requestAnimationFrame(loop);
     };
@@ -1303,6 +1299,104 @@ function App() {
       window.removeEventListener('resize', resizeCanvas);
       drawPlayerBulletsRef.current = () => {};
       context.clearRect(0, 0, width, height);
+    };
+  }, [gameState]);
+
+  // Pickups use one canvas layer instead of React nodes and CSS animation.
+  // The gameplay loop advances their ref positions and redraws only those icons.
+  useEffect(() => {
+    const canvas = abilityCanvasRef.current;
+    const context = canvas?.getContext('2d', { alpha: true, desynchronized: true });
+    if (!canvas || !context || gameState !== 'playing') {
+      drawAbilitiesRef.current = () => {};
+      return;
+    }
+
+    const isMobile = window.matchMedia('(pointer: coarse), (max-width: 950px)').matches;
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 1.5);
+    let width = 0;
+    let height = 0;
+    let previousRects: SpriteRect[] = [];
+    const resizeCanvas = () => {
+      width = canvas.clientWidth;
+      height = canvas.clientHeight;
+      canvas.width = Math.round(width * pixelRatio);
+      canvas.height = Math.round(height * pixelRatio);
+      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      previousRects = [];
+    };
+
+    const drawIcon = (kind: 'heart' | 'weapon' | 'shield', x: number, y: number, size: number, color: string, time: number) => {
+      const pulse = 1 + Math.sin(time / 180 + x / 80) * 0.055;
+      const alpha = 0.86 + Math.sin(time / 180 + x / 80) * 0.14;
+      const left = (x / 100) * width;
+      const top = height - (y / 100) * height - size;
+
+      context.save();
+      context.globalAlpha = alpha;
+      context.translate(left + size / 2, top + size / 2);
+      context.scale((size / 24) * pulse, (size / 24) * pulse);
+      context.translate(-12, -12);
+      context.fillStyle = color;
+      context.strokeStyle = color;
+      context.lineWidth = 1.5;
+      context.lineJoin = 'round';
+      context.shadowColor = color;
+      context.shadowBlur = isMobile ? 3 : 9;
+      context.beginPath();
+
+      if (kind === 'heart') {
+        context.moveTo(12, 21);
+        context.bezierCurveTo(10.8, 19.9, 2, 13.8, 2, 8.4);
+        context.bezierCurveTo(2, 4.7, 4.7, 2, 8, 2);
+        context.bezierCurveTo(9.7, 2, 11, 3, 12, 4.6);
+        context.bezierCurveTo(13, 3, 14.3, 2, 16, 2);
+        context.bezierCurveTo(19.3, 2, 22, 4.7, 22, 8.4);
+        context.bezierCurveTo(22, 13.8, 13.2, 19.9, 12, 21);
+        context.closePath();
+      } else if (kind === 'shield') {
+        context.moveTo(12, 22);
+        context.bezierCurveTo(10.2, 21.2, 4, 17.8, 4, 11);
+        context.lineTo(4, 5.5);
+        context.lineTo(12, 2);
+        context.lineTo(20, 5.5);
+        context.lineTo(20, 11);
+        context.bezierCurveTo(20, 17.8, 13.8, 21.2, 12, 22);
+        context.closePath();
+      } else {
+        context.moveTo(13.5, 1.5);
+        context.lineTo(4.5, 13);
+        context.lineTo(11, 13);
+        context.lineTo(10.5, 22.5);
+        context.lineTo(19.5, 10);
+        context.lineTo(13, 10);
+        context.closePath();
+      }
+
+      context.fill();
+      context.stroke();
+      context.restore();
+      previousRects.push({ left, top, width: size, height: size });
+    };
+
+    const draw = (time: number) => {
+      previousRects.forEach(rect => {
+        context.clearRect(rect.left - 12, rect.top - 12, rect.width + 24, rect.height + 24);
+      });
+      previousRects = [];
+      heartsRef.current.forEach(drop => drawIcon('heart', drop.x, drop.y, 32, '#ff3b65', time));
+      weaponDropsRef.current.forEach(drop => drawIcon('weapon', drop.x, drop.y, 40, '#00d9ff', time));
+      shieldDropsRef.current.forEach(drop => drawIcon('shield', drop.x, drop.y, 40, '#35dc77', time));
+    };
+
+    resizeCanvas();
+    drawAbilitiesRef.current = draw;
+    window.addEventListener('resize', resizeCanvas);
+    return () => {
+      drawAbilitiesRef.current = () => {};
+      window.removeEventListener('resize', resizeCanvas);
+      context.clearRect(0, 0, width, height);
+      previousRects = [];
     };
   }, [gameState]);
 
@@ -1878,78 +1972,6 @@ function App() {
           />
 
 
-          {/* Collectible hearts */}
-          {heartIds.map(id => {
-            const heart = heartsRef.current.find(h => h.id === id);
-            if (!heart) return null;
-            return (
-              <div
-                key={id}
-                id={`heart-${id}`}
-                className="drop-heart"
-                style={{
-                  position: 'absolute',
-                  left: `${heart.x}%`,
-                  bottom: `${heart.y}%`,
-                  fontSize: '2rem',
-                  textShadow: '0 0 10px rgba(255, 0, 0, 0.8)',
-                  zIndex: 25,
-                  animation: 'pulse 1s infinite alternate'
-                }}
-              >
-                <Heart aria-hidden="true" fill="currentColor" />
-              </div>
-            );
-          })}
-
-          {/* Collectible Weapons */}
-          {weaponDropIds.map(id => {
-            const weapon = weaponDropsRef.current.find(w => w.id === id);
-            if (!weapon) return null;
-            return (
-              <div
-                key={id}
-                id={`weapon-${id}`}
-                className="drop-weapon"
-                style={{
-                  position: 'absolute',
-                  left: `${weapon.x}%`,
-                  bottom: `${weapon.y}%`,
-                  fontSize: '2.5rem',
-                  textShadow: '0 0 15px rgba(0, 255, 255, 0.9)',
-                  zIndex: 25,
-                  animation: 'pulse 1s infinite alternate'
-                }}
-              >
-                <Zap aria-hidden="true" fill="currentColor" />
-              </div>
-            );
-          })}
-
-          {/* Collectible Shields */}
-          {shieldDropIds.map(id => {
-            const shield = shieldDropsRef.current.find(s => s.id === id);
-            if (!shield) return null;
-            return (
-              <div
-                key={id}
-                id={`shield-${id}`}
-                className="drop-shield"
-                style={{
-                  position: 'absolute',
-                  left: `${shield.x}%`,
-                  bottom: `${shield.y}%`,
-                  fontSize: '2.5rem',
-                  textShadow: '0 0 15px rgba(0, 255, 0, 0.9)',
-                  zIndex: 25,
-                  animation: 'pulse 1s infinite alternate'
-                }}
-              >
-                <Shield aria-hidden="true" fill="currentColor" />
-              </div>
-            );
-          })}
-
           {/* Airplane Sprite Wrapper */}
           <div
             className={getPlaneClass()}
@@ -2049,6 +2071,7 @@ function App() {
 
           <canvas ref={explosionCanvasRef} className="explosion-canvas" aria-hidden="true" />
           <canvas ref={playerBulletLayerRef} className="projectile-canvas" aria-hidden="true" />
+          <canvas ref={abilityCanvasRef} className="ability-canvas" aria-hidden="true" />
 
           <div className="buildings-layer-fg" />
 
