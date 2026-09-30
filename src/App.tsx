@@ -7,12 +7,11 @@ import daadCoins from "./assets/daddcoin.webp";
 import questionCoinImg from "./assets/QuestionCoin.png";
 import questionNumberBg from "./assets/QuestionNumber.png";
 import descriptionImg from "./assets/description.png";
-import startButtonBg from "./assets/startButton.png";
+import welcomeExitButton from './assets/Exit1.png';
+import welcomeStartButton from './assets/Start.png';
 import ResultsPanel from './ResultsPanel/ResultsPanel';
 import Celebration from './Celebration/Celebration';
 import GameWelcomeScreen from './components/GameWelcomeScreen/GameWelcomeScreen';
-import exitButtonBg from './assets/exit_transparent.png';
-import startButtonBgNew from './assets/start_transparent.png';
 import exitHudIcon from './assets/ExitButton.svg';
 import heartHudIcon from './assets/heart.png';
  
@@ -1861,8 +1860,8 @@ function App() {
           statRightAlt="Coin"
           heroImage={descriptionImg}
           heroAlt="How to play"
-          startButtonImage={startButtonBgNew}
-          exitButtonImage={exitButtonBg}
+          startButtonImage={welcomeStartButton}
+          exitButtonImage={welcomeExitButton}
           onStart={() => handleStartClick('all')}
           isLoading={isLoadingQuestions || isStartingSession}
           isReady={apiQuestions.length > 0}
@@ -1926,6 +1925,10 @@ function App() {
             </div>
 
             <div className="hud-right">
+              <div className="hud-coins" aria-label={`العملات ${stars}`}>
+                <img src={daadCoins} alt="" aria-hidden="true" />
+                <span>{stars}</span>
+              </div>
               <div className="hud-lives" aria-label={`${lives} من 3 قلوب`}>
                 <span className="hud-lives-label">القلوب</span>
                 <div className="hud-heart-row">
@@ -1935,10 +1938,6 @@ function App() {
                     </span>
                   ))}
                 </div>
-              </div>
-              <div className="hud-coins" aria-label={`العملات ${stars}`}>
-                <img src={daadCoins} alt="" aria-hidden="true" />
-                <span>{stars}</span>
               </div>
             </div>
 
