@@ -240,23 +240,23 @@ function App() {
 
   // Styling and Animation Effects
   const [planeEffect, setPlaneEffect] = useState<'normal' | 'boost' | 'shake'>('normal');
+  const planeEffectRef = useRef(planeEffect);
+  useEffect(() => {
+    planeEffectRef.current = planeEffect;
+  }, [planeEffect]);
   const [laser, setLaser] = useState<LaserPath>({ x1: 0, y1: 0, x2: 0, y2: 0, color: 'cyan', visible: false });
   const [isMuted, setIsMuted] = useState<boolean>(false);
-  const abilityVisualsRef = useRef({ shield: false, boost: false, invincible: false });
-  useEffect(() => {
-    abilityVisualsRef.current = {
-      shield: hasActiveShield,
-      boost: planeEffect === 'boost',
-      invincible: isInvincible
-    };
-  }, [hasActiveShield, planeEffect, isInvincible]);
 
   const particleIdRef = useRef<number>(0);
   const autoAdvanceTimerRef = useRef<any>(null);
 
   const skyRef = useRef<HTMLDivElement>(null);
   const stageSizeRef = useRef({ width: 0, height: 0 });
-  const planeSizePctRef = useRef({ width: 0, height: 0 });
+  const planeSizePctRef = useRef({
+    width: 0, height: 0, left: 0, bottom: 0,
+    spriteWidth: 0, spriteHeight: 0
+  });
+  const updatePlaneMetricsRef = useRef<() => void>(() => {});
   const planeRef = useRef<HTMLImageElement>(null);
   const playerBulletLayerRef = useRef<HTMLCanvasElement>(null);
   const drawPlayerBulletsRef = useRef<() => void>(() => {});
@@ -536,6 +536,7 @@ function App() {
 
     let animId: number;
     const isMobile = window.matchMedia('(pointer: coarse)').matches;
+    const isCompactScreen = window.matchMedia('(pointer: coarse), (max-width: 950px)').matches;
     const minFrameDuration = isMobile ? 1000 / 30 : 0;
     let previousFrameTime = 0;
     let lastUpdateTime = 0;
@@ -547,11 +548,22 @@ function App() {
         width,
         height
       };
+      const spriteWidth = planeRef.current?.offsetWidth || 185;
+      const spriteHeight = planeRef.current?.offsetHeight || spriteWidth * 682 / 1024;
+      const alphaLeft = 103 / 1024;
+      const alphaTop = 111 / 682;
+      const alphaWidth = (891 - 103 + 1) / 1024;
+      const alphaHeight = (529 - 111 + 1) / 682;
       planeSizePctRef.current = {
-        width: ((planeRef.current?.offsetWidth || 115) / width) * 100,
-        height: ((planeRef.current?.offsetHeight || 60) / height) * 100
+        width: (spriteWidth * alphaWidth / width) * 100,
+        height: (spriteHeight * alphaHeight / height) * 100,
+        left: (spriteWidth * alphaLeft / width) * 100,
+        bottom: (spriteHeight * (1 - alphaTop - alphaHeight) / height) * 100,
+        spriteWidth: (spriteWidth / width) * 100,
+        spriteHeight: (spriteHeight / height) * 100
       };
     };
+    updatePlaneMetricsRef.current = updateStageSize;
     updateStageSize();
     window.addEventListener('resize', updateStageSize);
 
@@ -567,13 +579,6 @@ function App() {
       { id: 3, x: 190, y: 60, speed: 0.3, type: 3, hasShot: false, hp: 2 }
     ];
 
-    const stageWidth = stageSizeRef.current.width;
-    const stageHeight = stageSizeRef.current.height;
-    const planeWidthPct = planeSizePctRef.current.width;
-    const planeHeightPct = planeSizePctRef.current.height;
-    const enemyBulletWidthPct = ((isMobile ? 12 : 25) / stageWidth) * 100;
-    const enemyBulletHeightPct = ((isMobile ? 4 : 8) / stageHeight) * 100;
-
     const loop = (time: number) => {
       if (minFrameDuration && time - previousFrameTime < minFrameDuration) {
         animId = requestAnimationFrame(loop);
@@ -582,6 +587,11 @@ function App() {
       previousFrameTime = time;
       const frameScale = Math.min((time - (lastUpdateTime || time - 1000 / 60)) / (1000 / 60), 2.5);
       lastUpdateTime = time;
+      const boostScale = planeEffectRef.current === 'boost' ? 1.15 : 1;
+      const planeWidthPct = planeSizePctRef.current.width * boostScale;
+      const planeHeightPct = planeSizePctRef.current.height * boostScale;
+      const enemyBulletWidthPct = ((isCompactScreen ? 12 : 25) / stageSizeRef.current.width) * 100;
+      const enemyBulletHeightPct = ((isCompactScreen ? 4 : 8) / stageSizeRef.current.height) * 100;
 
       if (isBossCrashing) {
         animId = requestAnimationFrame(loop);
@@ -627,8 +637,15 @@ function App() {
         mouseTargetRef.current = null;
       }
 
+      if (isMobile && dx < 0) dx *= 0.65;
+
       planeXRef.current = Math.max(5, Math.min(55, planeXRef.current + dx));
       planeYRef.current = Math.max(10, Math.min(85, planeYRef.current + dy));
+
+      const planeHitboxLeft = planeXRef.current - planeSizePctRef.current.spriteWidth * (boostScale - 1) / 2 + planeSizePctRef.current.left * boostScale;
+      const planeHitboxBottom = planeYRef.current - planeSizePctRef.current.spriteHeight * (boostScale - 1) / 2 + planeSizePctRef.current.bottom * boostScale;
+      const planeCenterX = planeHitboxLeft + planeWidthPct / 2;
+      const planeCenterY = planeHitboxBottom + planeHeightPct / 2;
 
       if (keysPressedRef.current[' '] || keysPressedRef.current['Enter']) {
         firePlayerBullet();
@@ -676,14 +693,16 @@ function App() {
         if (!obs.hasShot && obs.x < 98) {
           obs.hasShot = true;
           const newId = ++bulletIdCounterRef.current;
-          const shotPosition = getProjectilePosition(
-            document.querySelector(`#obstacle-${obs.id} img`),
-            'left'
-          );
+          const monsterBoxSize = isCompactScreen ? 65 : 250;
+          const monsterImageHeight = monsterBoxSize / 1.5;
+          const monsterImageTop = (monsterBoxSize - monsterImageHeight) / 2;
+          const monsterVisibleLeft = monsterBoxSize * ((1536 - 1 - 1413) / 1536);
+          const monsterVisibleBottom = monsterBoxSize -
+            (monsterImageTop + (734 / 1024) * monsterImageHeight);
           obstacleBulletsRef.current.push({
             id: newId,
-            x: shotPosition?.x ?? obs.x - 3,
-            y: shotPosition?.y ?? obs.y + 4,
+            x: obs.x + (monsterVisibleLeft / stageSizeRef.current.width) * 100,
+            y: obs.y + (monsterVisibleBottom / stageSizeRef.current.height) * 100,
             speed: 0.65
           });
         }
@@ -711,10 +730,12 @@ function App() {
         // Check collision in scene percentages without reading each bullet's
         // DOM bounds (which forced layout once per active projectile).
         if (!isInvincibleRef.current && !isFlyingOver) {
-          const overlapsPlaneX = bullet.x < planeXRef.current + planeWidthPct &&
-            bullet.x + enemyBulletWidthPct > planeXRef.current;
-          const overlapsPlaneY = bullet.y < planeYRef.current + planeHeightPct &&
-            bullet.y + enemyBulletHeightPct > planeYRef.current;
+          const bulletBottom = bullet.y - enemyBulletHeightPct / 2;
+          const bulletTop = bullet.y + enemyBulletHeightPct / 2;
+          const overlapsPlaneX = bullet.x < planeHitboxLeft + planeWidthPct &&
+            bullet.x + enemyBulletWidthPct > planeHitboxLeft;
+          const overlapsPlaneY = bulletTop > planeHitboxBottom &&
+            bulletBottom < planeHitboxBottom + planeHeightPct;
           if (overlapsPlaneX && overlapsPlaneY) {
             handleObstacleHit();
             isInvincibleRef.current = true;
@@ -754,7 +775,7 @@ function App() {
 
         // Check collision with player plane
         if (!isAnswerCheckedRef.current && !isFlyingOver && cloud.isActive) {
-          if (checkOverlapPct(planeXRef.current, planeYRef.current, cloud.x, cloud.y, 14, 15)) {
+          if (checkOverlapPct(planeCenterX, planeCenterY, cloud.x, cloud.y, 14, 15)) {
             cloud.isActive = false;
             handleCloudCollision(cloud);
           }
@@ -841,7 +862,7 @@ function App() {
       // 5. Check minion collisions
       if (!isInvincibleRef.current && !isFlyingOver) {
         obstaclesRef.current.forEach((obs) => {
-          if (getPxDist(planeXRef.current, planeYRef.current, obs.x, obs.y) < 60) {
+          if (getPxDist(planeCenterX, planeCenterY, obs.x, obs.y) < 60) {
             handleObstacleHit();
             isInvincibleRef.current = true;
             setIsInvincible(true);
@@ -859,7 +880,7 @@ function App() {
         heart.x -= 0.35 * frameScale;
         if (heart.x < -10) { heartsChanged = true; return; }
 
-        if (!isFlyingOver && checkOverlapPct(planeXRef.current, planeYRef.current, heart.x, heart.y, 8, 12)) {
+        if (!isFlyingOver && checkOverlapPct(planeCenterX, planeCenterY, heart.x, heart.y, 8, 12)) {
           heartsChanged = true;
           audio.playSuccess();
           setLives(prev => prev < 3 ? prev + 1 : prev);
@@ -884,7 +905,7 @@ function App() {
         weapon.x -= 0.35 * frameScale;
         if (weapon.x < -10) { weaponsChanged = true; return; }
 
-        if (!isFlyingOver && checkOverlapPct(planeXRef.current, planeYRef.current, weapon.x, weapon.y, 8, 12)) {
+        if (!isFlyingOver && checkOverlapPct(planeCenterX, planeCenterY, weapon.x, weapon.y, 8, 12)) {
           weaponsChanged = true;
           audio.playSuccess();
           weaponLevelRef.current = Math.min(3, weaponLevelRef.current + 1);
@@ -910,7 +931,7 @@ function App() {
         shield.x -= 0.35 * frameScale;
         if (shield.x < -10) { shieldsChanged = true; return; }
 
-        if (!isFlyingOver && checkOverlapPct(planeXRef.current, planeYRef.current, shield.x, shield.y, 8, 12)) {
+        if (!isFlyingOver && checkOverlapPct(planeCenterX, planeCenterY, shield.x, shield.y, 8, 12)) {
           shieldsChanged = true;
           audio.playSuccess();
           isInvincibleRef.current = true;
@@ -939,6 +960,7 @@ function App() {
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', updateStageSize);
+      updatePlaneMetricsRef.current = () => {};
     };
   }, [gameState, isBossCrashing, isFlyingOver]);
 
@@ -952,7 +974,7 @@ function App() {
       return;
     }
 
-    const isMobile = window.matchMedia('(pointer: coarse)').matches;
+    const isMobile = window.matchMedia('(pointer: coarse), (max-width: 950px)').matches;
     let width = 0;
     let height = 0;
     const resizeCanvas = () => {
@@ -989,61 +1011,6 @@ function App() {
       playerBulletsRef.current.forEach((bullet) => drawBullet(bullet, '#00dff5', '#00e5ff'));
       context.shadowBlur = 0;
 
-      const abilities = abilityVisualsRef.current;
-      if (abilities.shield || abilities.boost || abilities.invincible || weaponLevelRef.current > 1) {
-        const planeWidth = (planeSizePctRef.current.width / 100) * width;
-        const planeHeight = (planeSizePctRef.current.height / 100) * height;
-        const planeLeft = (planeXRef.current / 100) * width;
-        const planeBottom = (planeYRef.current / 100) * height;
-        const centerX = planeLeft + planeWidth / 2;
-        const centerY = height - planeBottom - planeHeight / 2;
-        const pulse = 0.65 + (Math.sin(performance.now() / 180) + 1) * 0.15;
-
-        if (abilities.boost || weaponLevelRef.current > 1) {
-          const trailWidth = planeWidth * (isMobile ? 0.75 : 1.05);
-          if (isMobile) {
-            context.fillStyle = '#00dff5';
-          } else {
-            const trail = context.createLinearGradient(planeLeft - trailWidth, centerY, planeLeft, centerY);
-            trail.addColorStop(0, 'rgba(0, 229, 255, 0)');
-            trail.addColorStop(0.72, 'rgba(0, 229, 255, 0.22)');
-            trail.addColorStop(1, 'rgba(255, 196, 0, 0.8)');
-            context.fillStyle = trail;
-          }
-          context.beginPath();
-          context.ellipse(planeLeft - trailWidth * 0.35, centerY, trailWidth * 0.65, Math.max(3, planeHeight * 0.12), 0, 0, Math.PI * 2);
-          context.fill();
-        }
-
-        if (abilities.shield) {
-          const radius = Math.max(planeWidth, planeHeight) * 0.82;
-          if (isMobile) {
-            context.fillStyle = `rgba(0, 205, 255, ${0.08 * pulse})`;
-          } else {
-            const shieldGradient = context.createRadialGradient(centerX, centerY, radius * 0.58, centerX, centerY, radius);
-            shieldGradient.addColorStop(0, 'rgba(0, 229, 255, 0)');
-            shieldGradient.addColorStop(0.76, `rgba(0, 229, 255, ${0.06 * pulse})`);
-            shieldGradient.addColorStop(1, `rgba(70, 120, 255, ${0.2 * pulse})`);
-            context.fillStyle = shieldGradient;
-          }
-          context.beginPath();
-          context.ellipse(centerX, centerY, radius, radius * 0.7, 0, 0, Math.PI * 2);
-          context.fill();
-          context.strokeStyle = `rgba(85, 235, 255, ${0.55 * pulse})`;
-          context.lineWidth = isMobile ? 1.5 : 2;
-          context.beginPath();
-          context.ellipse(centerX, centerY, radius * 0.92, radius * 0.65, 0, 0, Math.PI * 2);
-          context.stroke();
-        }
-
-        if (abilities.invincible && !abilities.shield) {
-          context.strokeStyle = `rgba(255, 228, 92, ${0.35 + pulse * 0.4})`;
-          context.lineWidth = isMobile ? 1.5 : 2.5;
-          context.beginPath();
-          context.ellipse(centerX, centerY, planeWidth * 0.72, planeHeight * 0.72, 0, 0, Math.PI * 2);
-          context.stroke();
-        }
-      }
       context.shadowBlur = 0;
     };
 
@@ -1085,7 +1052,7 @@ function App() {
 
     let previousTime = 0;
     let lastFrameTime = 0;
-    const isMobile = window.matchMedia('(pointer: coarse)').matches;
+    const isMobile = window.matchMedia('(pointer: coarse), (max-width: 950px)').matches;
     const minFrameDuration = isMobile ? 1000 / 30 : 0;
     let canvasSize = { width: 0, height: 0 };
     const resizeCanvas = () => {
@@ -1174,21 +1141,6 @@ function App() {
     }
   };
 
-  const getProjectilePosition = (sprite: Element | null, direction: 'left' | 'right') => {
-    const sceneRect = skyRef.current?.getBoundingClientRect();
-    const spriteRect = sprite?.getBoundingClientRect();
-    if (!sceneRect || !spriteRect || sceneRect.width === 0 || sceneRect.height === 0) return null;
-
-    const fireX = direction === 'right'
-      ? spriteRect.right - spriteRect.width * 0.02
-      : spriteRect.left + spriteRect.width * 0.02;
-    const fireY = spriteRect.top + spriteRect.height * 0.78;
-    return {
-      x: ((fireX - sceneRect.left) / sceneRect.width) * 100,
-      y: ((sceneRect.bottom - fireY) / sceneRect.height) * 100
-    };
-  };
-
   const lastFiredRef = useRef<number>(0);
   const firePlayerBullet = () => {
     if (gameState !== 'playing' || isFlyingOver) return;
@@ -1198,8 +1150,11 @@ function App() {
     lastFiredRef.current = now;
 
     const level = weaponLevelRef.current;
-    const spawnX = planeXRef.current + planeSizePctRef.current.width * 0.98;
-    const spawnY = planeYRef.current + planeSizePctRef.current.height * 0.22;
+    const boostScale = planeEffectRef.current === 'boost' ? 1.15 : 1;
+    const spawnX = planeXRef.current - planeSizePctRef.current.spriteWidth * (boostScale - 1) / 2 +
+      (planeSizePctRef.current.left + planeSizePctRef.current.width) * boostScale;
+    const spawnY = planeYRef.current - planeSizePctRef.current.spriteHeight * (boostScale - 1) / 2 +
+      planeSizePctRef.current.bottom * boostScale;
     const addBullet = (id: number, x: number, y: number) => {
       playerBulletsRef.current.push({ id, x, y, speed: 1.5 });
 
@@ -1216,15 +1171,16 @@ function App() {
     } else if (level === 2) {
       const b1 = ++playerBulletIdCounterRef.current;
       const b2 = ++playerBulletIdCounterRef.current;
-      addBullet(b1, spawnX, spawnY + 1.5);
-      addBullet(b2, spawnX, spawnY - 1.5);
+      addBullet(b1, spawnX, spawnY);
+      addBullet(b2, spawnX, spawnY + Math.min(1.5, planeSizePctRef.current.height * 0.18));
     } else {
       const b1 = ++playerBulletIdCounterRef.current;
       const b2 = ++playerBulletIdCounterRef.current;
       const b3 = ++playerBulletIdCounterRef.current;
+      const spread = Math.min(2.5, planeSizePctRef.current.height * 0.18);
       addBullet(b1, spawnX, spawnY);
-      addBullet(b2, spawnX, spawnY + 2.5);
-      addBullet(b3, spawnX, spawnY - 2.5);
+      addBullet(b2, spawnX, spawnY + spread);
+      addBullet(b3, spawnX, spawnY + spread * 2);
     }
 
     audio.playLaser();
@@ -1465,9 +1421,11 @@ function App() {
   const getPlaneClass = () => {
     let classes = ['airplane-wrapper'];
     if (isFlyingOver) classes.push('plane-flyover');
+    if (planeEffect === 'boost') classes.push('engine-boost');
     if (planeEffect === 'shake') classes.push('shake-drop');
     if (movementDir === 'up') classes.push('tilt-up');
     if (movementDir === 'down') classes.push('tilt-down');
+    if (isInvincible) classes.push('invincible-flash');
 
     // Add charring effect based on damage level
     const damageLevel = 3 - lives;
@@ -1716,7 +1674,15 @@ function App() {
               transition: isFlyingOver ? 'all 2.5s ease-in-out' : 'none'
             }}
           >
-            <img ref={planeRef} src="/cartoon_airplane.png" className="airplane-img" alt="طائرة" />
+            <img
+              ref={planeRef}
+              src="/cartoon_airplane.png"
+              className="airplane-img"
+              alt="طائرة"
+              onLoad={() => updatePlaneMetricsRef.current()}
+            />
+
+            {hasActiveShield && <div className="plane-shield-aura" aria-hidden="true" />}
 
           </div>
 

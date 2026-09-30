@@ -103,6 +103,11 @@ body {
   }
 }
 
+@keyframes engine-glow {
+  from { transform: scale(0.9); opacity: 0.55; }
+  to { transform: scale(1.15); opacity: 1; }
+}
+
 @keyframes pulse-btn {
   0% {
     box-shadow: 0 0 0 0 rgba(78, 84, 200, 0.7);
@@ -421,7 +426,26 @@ body {
   z-index: 10;
   transform-origin: center;
   transition: bottom 1.2s ease-in-out, transform 0.8s ease-in-out, filter 0.5s ease;
-  animation: float 4s infinite ease-in-out;
+  /* Keep the rendered sprite on the same coordinates as its gameplay hitbox. */
+  animation: none;
+}
+
+.airplane-wrapper.engine-boost {
+  transform: scale(1.15);
+}
+
+.airplane-wrapper.engine-boost::after {
+  content: '';
+  position: absolute;
+  left: -30px;
+  top: 50%;
+  width: 40px;
+  height: 20px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 229, 255, 0.95), rgba(255, 196, 0, 0.25) 55%, transparent 75%);
+  animation: engine-glow 0.24s ease-in-out infinite alternate;
+  pointer-events: none;
 }
 
 .airplane-wrapper.shake-drop {

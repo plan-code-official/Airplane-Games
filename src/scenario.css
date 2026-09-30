@@ -347,6 +347,27 @@
   filter: sepia(0.3) saturate(1.4) brightness(0.96) drop-shadow(0 3px 6px rgba(255, 82, 0, 0.3));
 }
 
+.plane-shield-aura {
+  position: absolute;
+  left: 10.06%;
+  top: 16.27%;
+  width: 77.05%;
+  height: 61.45%;
+  border: 2px solid rgba(94, 235, 255, 0.85);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(0, 229, 255, 0.04), rgba(0, 170, 255, 0.2));
+  box-shadow: 0 0 12px rgba(0, 210, 255, 0.48), inset 0 0 10px rgba(77, 225, 255, 0.24);
+  transform-origin: center;
+  animation: shield-pulse 1s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes shield-pulse {
+  from { transform: scale(0.98); opacity: 0.72; }
+  to { transform: scale(1.08); opacity: 1; }
+}
+
 .airplane-wrapper.damage-smoke::before {
   content: '';
   position: absolute;
@@ -442,6 +463,15 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+@keyframes plane-flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.invincible-flash {
+  animation: plane-flash 0.2s infinite ease-in-out;
 }
 
 @keyframes pulse {
@@ -1143,6 +1173,15 @@
   .airplane-wrapper.shake-drop {
     animation: shake-anim 0.28s ease-out;
     will-change: transform;
+  }
+
+  .plane-shield-aura {
+    border-width: 1.5px;
+    box-shadow: 0 0 8px rgba(0, 210, 255, 0.42), inset 0 0 5px rgba(77, 225, 255, 0.18);
+  }
+
+  .invincible-flash {
+    animation: plane-flash 0.5s steps(2, end) infinite;
   }
 
   .charred-1 {
