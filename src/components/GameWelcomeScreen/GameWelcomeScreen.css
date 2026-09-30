@@ -16,8 +16,8 @@
   flex-direction: column;
   align-items: center;
   box-sizing: border-box;
-  padding: clamp(12px, 3vw, 24px);
-  gap: clamp(12px, 3vh, 30px);
+  padding: max(76px, 10vh) clamp(12px, 3vw, 24px) max(12px, env(safe-area-inset-bottom));
+  gap: clamp(8px, 2vh, 22px);
   direction: rtl;
   overflow: hidden;
 }
@@ -82,15 +82,14 @@
   max-width: 800px;
   min-height: 0;
   flex: 1 1 auto;
-  margin-top: auto;
-  margin-bottom: auto;
+  margin: 0;
 }
 
 .gws-hero-img {
   width: min(95%, 1000px);
   height: auto;
   max-width: clamp(350px, 90vw, 1000px);
-  max-height: min(55vh, 550px);
+  max-height: min(52vh, 550px);
   object-fit: contain;
   filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.4));
   transform: translateY(-5px);
@@ -108,16 +107,16 @@
 .gws-footer {
   flex: 0 0 auto;
   margin-top: 0;
-  margin-bottom: clamp(8px, 3vh, 32px);
-  width: 100%;
+  margin-bottom: 0;
+  width: min(100%, 600px);
 }
 
 .gws-footer-buttons {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: center;
   justify-content: center;
-  gap: clamp(30px, 6vw, 60px);
-  flex-wrap: wrap;
+  gap: clamp(8px, 2.5vw, 28px);
 }
 
 .gws-img-btn {
@@ -129,12 +128,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  aspect-ratio: 565 / 231;
 }
 
 .gws-img-btn img {
-  width: clamp(160px, 30vw, 280px);
-  height: clamp(55px, 10vw, 90px);
-  object-fit: fill;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .gws-img-btn:hover:not(:disabled) {
@@ -147,8 +148,9 @@
   background-repeat: no-repeat;
   background-color: transparent;
   border: none;
-  width: clamp(160px, 30vw, 280px);
-  height: clamp(55px, 10vw, 90px);
+  width: 100%;
+  height: auto;
+  aspect-ratio: 565 / 231;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -158,7 +160,7 @@
   color: white;
   cursor: pointer;
   transition: transform 0.2s;
-  padding-bottom: 12px;
+  padding: 0;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
@@ -180,9 +182,8 @@
     max-height: 54vh;
   }
 
-  .gws-footer-buttons { gap: clamp(12px, 4vw, 36px); }
-  .gws-img-btn img,
-  .gws-start-btn { width: clamp(128px, 29vw, 220px); }
+  .gws-footer { width: min(100%, 560px); }
+  .gws-footer-buttons { gap: clamp(8px, 2.5vw, 18px); }
 }
 
 @media (max-width: 520px) {
@@ -190,13 +191,13 @@
   .gws-header { top: max(10px, env(safe-area-inset-top)); }
   .gws-stats-bg { width: min(100%, 320px); padding-inline: 10px; }
   .gws-stat-icon { width: 24px; height: 24px; }
-  .gws-body { margin-top: 52px; margin-bottom: 0; }
+  .gws-body { margin: 0; }
   .gws-hero-img { width: 100%; max-height: min(46vh, 420px); }
   .gws-footer { margin-bottom: max(10px, env(safe-area-inset-bottom)); }
-  .gws-footer-buttons { gap: 10px; flex-wrap: nowrap; }
+  .gws-footer-buttons { gap: clamp(6px, 2vw, 10px); }
   .gws-img-btn img,
-  .gws-start-btn { width: min(43vw, 180px); height: clamp(48px, 12vw, 66px); }
-  .gws-start-btn { padding-bottom: 5px; }
+  .gws-start-btn { width: 100%; height: 100%; }
+  .gws-screen { padding-top: max(72px, 10vh); }
 }
 
 @media (max-width: 900px) and (max-height: 500px) {
@@ -224,26 +225,17 @@
     font-size: 14px;
   }
 
-  .gws-start-btn {
-    width: clamp(150px, 25vw, 180px);
-    height: clamp(50px, 8vw, 65px);
-    font-size: 16px;
-    padding-bottom: 2px;
-  }
-
-  .gws-img-btn img {
-    width: clamp(150px, 25vw, 180px);
-    height: clamp(50px, 8vw, 65px);
-  }
+  .gws-footer { width: min(100%, 470px); }
 
   .gws-hero-img { max-width: min(350px, 45vw); max-height: 42vh; }
 
-  .gws-body { margin-top: 28px; }
-  .gws-footer { margin-bottom: 4px; }
+  .gws-screen { padding-top: 50px; }
+  .gws-body { margin-top: 0; }
+  .gws-footer { margin-bottom: 0; }
 }
 
 @media (min-width: 521px) and (max-height: 700px) {
-  .gws-screen { gap: 8px; }
+  .gws-screen { gap: 8px; padding-top: 64px; }
   .gws-hero-img { max-height: 42vh; }
   .gws-footer { margin-bottom: 8px; }
 }

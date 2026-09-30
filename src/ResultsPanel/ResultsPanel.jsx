@@ -4,7 +4,8 @@ import celebrationTitle from './assets/good.png';
 import coinsImage from './assets/money.png';
 import correctImage from './assets/right.png';
 import wrongImage from './assets/wrong.png';
-import buttonFrame from './assets/boutton.png';
+import exitButtonImage from '../assets/Exit.png';
+import retryButtonImage from '../assets/Retry.png';
 
 const numberValue = (value) => {
   const parsed = Number(value);
@@ -55,17 +56,11 @@ export default function ResultsPanel({
           </div>
         </div>
         <div className="results-actions">
-          <button className="results-action results-action--back" type="button" onClick={onBack}>
-            <img src={buttonFrame} alt="" aria-hidden="true" />
-            <span className="results-action__group">
-              <span>{'\u0627\u0631\u0652\u062c\u0650\u0639\u0652'}</span>
-              <span className="results-action__exit-icon" aria-hidden="true">⎋</span>
-            </span>
+          <button className="results-action results-action--back" type="button" onClick={onBack} aria-label="ارجع">
+            <img src={exitButtonImage} alt="" aria-hidden="true" />
           </button>
-          <button className="results-action results-action--retry" type="button" onClick={onRetry}>
-            <img src={buttonFrame} alt="" aria-hidden="true" />
-            <span aria-hidden="true">↻</span>
-            <span>{'\u062b\u0627\u0646\u0650\u064a\u064e\u0629\u064b'}</span>
+          <button className="results-action results-action--retry" type="button" onClick={onRetry} aria-label="حاول مرة أخرى">
+            <img src={retryButtonImage} alt="" aria-hidden="true" />
           </button>
         </div>
       </section>
