@@ -218,14 +218,26 @@ const getAnswerLanePositions = () =>
     ? [63, 47, 31, 15]
     : [65, 48, 31, 14];
 
+const getMonsterBoxSize = (stageWidth: number, compact: boolean) =>
+  compact ? Math.min(104, Math.max(82, stageWidth * 0.11)) : 250;
+
+const requestMobileFullscreen = () => {
+  if (!window.matchMedia('(pointer: coarse)').matches) return;
+  if (document.fullscreenElement || window.matchMedia('(display-mode: fullscreen)').matches) return;
+  const request = document.documentElement.requestFullscreen?.({ navigationUI: 'hide' });
+  void request?.catch(() => {});
+};
+
 const ObstacleLayer = memo(function ObstacleLayer({
   obstacles,
   stageWidth,
-  stageHeight
+  stageHeight,
+  boxSize
 }: {
   obstacles: Obstacle[];
   stageWidth: number;
   stageHeight: number;
+  boxSize: number;
 }) {
   return (
     <>
@@ -237,6 +249,8 @@ const ObstacleLayer = memo(function ObstacleLayer({
           style={{
             left: 0,
             bottom: 0,
+            width: boxSize,
+            height: boxSize,
             translate: `${(obs.x / 100) * stageWidth}px ${(-obs.y / 100) * stageHeight}px`
           }}
         >
@@ -386,6 +400,7 @@ function App() {
 
   const skyRef = useRef<HTMLDivElement>(null);
   const stageSizeRef = useRef({ width: 0, height: 0 });
+  const [, setStageLayoutRevision] = useState(0);
   const planeSizePctRef = useRef({
     width: 0, height: 0, left: 0, bottom: 0,
     spriteWidth: 0, spriteHeight: 0
@@ -508,6 +523,7 @@ function App() {
   };
 
   const startGame = async (category: string) => {
+    requestMobileFullscreen();
     if (autoAdvanceTimerRef.current) {
       clearTimeout(autoAdvanceTimerRef.current);
       autoAdvanceTimerRef.current = null;
@@ -691,6 +707,7 @@ function App() {
     const isMobile = window.matchMedia('(pointer: coarse)').matches;
     const isCompactScreen = window.matchMedia('(pointer: coarse), (max-width: 950px)').matches;
     const minFrameDuration = isMobile ? 1000 / 30 : 0;
+    const mobileGameSpeed = isMobile ? 0.86 : 1;
     let previousFrameTime = 0;
     let lastUpdateTime = 0;
     let answerLanePositions = getAnswerLanePositions();
@@ -702,6 +719,7 @@ function App() {
         width,
         height
       };
+      setStageLayoutRevision(revision => revision + 1);
       answerLanePositions = getAnswerLanePositions();
       cloudsRef.current.forEach((cloud) => {
         cloud.y = answerLanePositions[cloud.idx] ?? cloud.y;
@@ -767,7 +785,7 @@ function App() {
         return;
       }
       previousFrameTime = time;
-      const frameScale = Math.min((time - (lastUpdateTime || time - 1000 / 60)) / (1000 / 60), 2.5);
+      const frameScale = Math.min((time - (lastUpdateTime || time - 1000 / 60)) / (1000 / 60), 2.5) * mobileGameSpeed;
       lastUpdateTime = time;
       const boostScale = planeEffectRef.current === 'boost' ? 1.15 : 1;
       const planeWidthPct = planeSizePctRef.current.width * boostScale;
@@ -908,7 +926,7 @@ function App() {
           obs.hasShot = true;
           const newId = ++bulletIdCounterRef.current;
           const monsterMask = monsterAlphaMaskRef.current;
-          const monsterBoxSize = isCompactScreen ? 65 : 250;
+          const monsterBoxSize = getMonsterBoxSize(stageSizeRef.current.width, isCompactScreen);
           const monsterImageHeight = monsterBoxSize / 1.5;
           const monsterImageTop = (monsterBoxSize - monsterImageHeight) / 2;
           const monsterVisibleLeft = monsterBoxSize * ((1536 - 1 - 1413) / 1536);
@@ -942,7 +960,7 @@ function App() {
       };
 
       const monsterSpriteRect = (obs: Obstacle): SpriteRect => {
-        const boxSize = isCompactScreen ? 65 : 250;
+        const boxSize = getMonsterBoxSize(stageSizeRef.current.width, isCompactScreen);
         const imageHeight = boxSize / 1.5;
         const imageTop = (boxSize - imageHeight) / 2;
         return {
@@ -1793,6 +1811,8 @@ function App() {
   const currentQuestion = questions[currentQuestionIndex];
   const renderStageWidth = stageSizeRef.current.width || (typeof window !== 'undefined' ? window.innerWidth : 0);
   const renderStageHeight = stageSizeRef.current.height || (typeof window !== 'undefined' ? window.innerHeight : 0);
+  const isCompactStage = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse), (max-width: 950px)').matches;
+  const renderMonsterBoxSize = getMonsterBoxSize(renderStageWidth, isCompactStage);
   const isMobilePortrait = typeof window !== 'undefined' && window.matchMedia("(max-width: 768px) and (orientation: portrait)").matches;
   const lanePositions = useMemo(
     () => getAnswerLanePositions().map(position => `${position}%`),
@@ -1969,6 +1989,7 @@ function App() {
             obstacles={obstaclesRef.current}
             stageWidth={renderStageWidth}
             stageHeight={renderStageHeight}
+            boxSize={renderMonsterBoxSize}
           />
 
 
