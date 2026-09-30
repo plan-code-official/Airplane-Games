@@ -287,9 +287,8 @@ function App() {
   const [apiQuestions, setApiQuestions] = useState<Question[]>([]);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
 
-  // Joystick state — use refs only to avoid re-renders on every touch move
-  const joystickRef = useRef({ active: false, startX: 0, startY: 0, dx: 0, dy: 0 });
-  const joystickKnobRef = useRef<HTMLDivElement>(null);
+  // Touch dragging and mouse movement target the plane without React state updates.
+  const touchMovePointerRef = useRef<number | null>(null);
   const mouseTargetRef = useRef<{ x: number, y: number } | null>(null);
 
   useEffect(() => {
@@ -366,8 +365,6 @@ function App() {
     setStars(s);
   };
 
-  // Dynamic Joystick States
-  const [joystickStart, setJoystickStart] = useState<{ x: number; y: number } | null>(null);
   const [isInvincible, setIsInvincible] = useState<boolean>(false);
   const [hasActiveShield, setHasActiveShield] = useState<boolean>(false);
   const [isBossCrashing, setIsBossCrashing] = useState<boolean>(false);
@@ -643,60 +640,38 @@ function App() {
     };
   }, [gameState]);
 
-  // Joystick Event Handlers — direct DOM updates, zero re-renders
-  const handleJoystickStart = (e: React.PointerEvent) => {
-    e.preventDefault();
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    joystickRef.current = { active: true, startX: e.clientX, startY: e.clientY, dx: 0, dy: 0, centerX, centerY } as any;
-    if (joystickKnobRef.current) {
-      joystickKnobRef.current.style.transform = 'translate(-50%, -50%)';
-    }
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  const updatePlaneTargetFromPointer = (e: React.PointerEvent<HTMLDivElement>) => {
+    const stage = skyRef.current;
+    if (!stage) return;
+    const rect = stage.getBoundingClientRect();
+    const x = Math.max(5, Math.min(55, ((e.clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(10, Math.min(85, 100 - (((e.clientY - rect.top) / rect.height) * 100)));
+    mouseTargetRef.current = { x, y };
   };
 
-  const handleJoystickMove = (e: React.PointerEvent) => {
+  const handleStagePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'mouse') return;
+    const target = e.target as HTMLElement;
+    if (target.closest('.sky-hud-header, .mobile-controls-overlay, button, a')) return;
     e.preventDefault();
-    if (!joystickRef.current.active) return;
-
-    const jRef = joystickRef.current as any;
-    let centerX = jRef.centerX;
-    let centerY = jRef.centerY;
-    
-    // Fallback if missing
-    if (!centerX) {
-      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      centerX = rect.left + rect.width / 2;
-      centerY = rect.top + rect.height / 2;
-    }
-
-    const dx = e.clientX - centerX;
-    const dy = e.clientY - centerY;
-
-    const maxDist = 30;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    const clampedX = dist > maxDist ? (dx / dist) * maxDist : dx;
-    const clampedY = dist > maxDist ? (dy / dist) * maxDist : dy;
-
-    joystickRef.current.dx = clampedX;
-    joystickRef.current.dy = clampedY;
-
-    // Direct DOM update — no React re-render
-    if (joystickKnobRef.current) {
-      joystickKnobRef.current.style.transform = `translate(calc(-50% + ${clampedX}px), calc(-50% + ${clampedY}px))`;
-    }
+    touchMovePointerRef.current = e.pointerId;
+    updatePlaneTargetFromPointer(e);
+    e.currentTarget.setPointerCapture(e.pointerId);
   };
 
-  const handleJoystickEnd = (e: React.PointerEvent) => {
-    e.preventDefault();
-    joystickRef.current = { active: false, startX: 0, startY: 0, dx: 0, dy: 0 } as any;
-    if (joystickKnobRef.current) {
-      joystickKnobRef.current.style.transform = 'translate(-50%, -50%)';
+  const handleStagePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'mouse') {
+      updatePlaneTargetFromPointer(e);
+      return;
     }
-    try {
-      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-    } catch(err){}
+    if (touchMovePointerRef.current !== e.pointerId) return;
+    e.preventDefault();
+    updatePlaneTargetFromPointer(e);
+  };
+
+  const handleStagePointerEnd = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (touchMovePointerRef.current !== e.pointerId) return;
+    touchMovePointerRef.current = null;
   };
 
   // Gameplay / Obstacles Loop & Invincibility Checking
@@ -773,10 +748,22 @@ function App() {
     isInvincibleRef.current = false;
     setIsInvincible(false);
 
+    const getSafeObstacleY = (preferredY?: number) => {
+      const stageHeight = stageSizeRef.current.height || window.innerHeight;
+      const boxSize = getMonsterBoxSize(stageSizeRef.current.width || window.innerWidth, isCompactScreen);
+      const headerHeight = skyRef.current?.querySelector('.sky-hud-header')?.getBoundingClientRect().height
+        ?? (isCompactScreen ? 56 : 72);
+      const minY = 12;
+      const maxY = Math.max(minY, 100 - ((headerHeight + 16 + boxSize) / stageHeight) * 100);
+      return preferredY === undefined
+        ? minY + Math.random() * (maxY - minY)
+        : Math.max(minY, Math.min(maxY, preferredY));
+    };
+
     obstaclesRef.current = [
-      { id: 1, x: 110, y: 25, speed: 0.35, type: 1, hasShot: false, hp: 2 },
-      { id: 2, x: 150, y: 55, speed: 0.4, type: 2, hasShot: false, hp: 2 },
-      { id: 3, x: 190, y: 60, speed: 0.3, type: 3, hasShot: false, hp: 2 }
+      { id: 1, x: 110, y: getSafeObstacleY(25), speed: 0.35, type: 1, hasShot: false, hp: 2 },
+      { id: 2, x: 150, y: getSafeObstacleY(55), speed: 0.4, type: 2, hasShot: false, hp: 2 },
+      { id: 3, x: 190, y: getSafeObstacleY(60), speed: 0.3, type: 3, hasShot: false, hp: 2 }
     ];
 
     const loop = (time: number) => {
@@ -823,18 +810,9 @@ function App() {
         const targetY = mouseTargetRef.current.y;
         const diffX = targetX - planeXRef.current;
         const diffY = targetY - planeYRef.current;
-        const followFactor = 1 - Math.pow(0.9, frameScale);
+        const followFactor = 1 - Math.pow(isMobile ? 0.65 : 0.9, frameScale);
         if (Math.abs(diffX) > 0.5) dx += diffX * followFactor;
         if (Math.abs(diffY) > 0.5) dy += diffY * followFactor;
-      }
-
-      if (joystickRef.current.active) {
-        const maxDist = 30;
-        const jx = Math.max(-maxDist, Math.min(maxDist, joystickRef.current.dx)) / maxDist;
-        const jy = Math.max(-maxDist, Math.min(maxDist, joystickRef.current.dy)) / maxDist;
-        dx += jx * 0.38 * frameScale * 3.0;
-        dy -= jy * 0.38 * frameScale * 3.0;
-        mouseTargetRef.current = null;
       }
 
       if (isMobile && dx < 0) dx *= 0.65;
@@ -910,7 +888,7 @@ function App() {
         obs.x -= obs.speed * frameScale;
         if (obs.x < -15) {
           obs.x = 110 + Math.random() * 20;
-          obs.y = 15 + Math.random() * 50;
+          obs.y = getSafeObstacleY();
           obs.speed = 0.3 + Math.random() * 0.2;
           obs.hasShot = false;
         }
@@ -1116,7 +1094,7 @@ function App() {
 
                 // Reset/respawn
                 obs.x = 115 + Math.random() * 20;
-                obs.y = 15 + Math.random() * 65;
+                obs.y = getSafeObstacleY();
                 obs.speed = 0.3 + Math.random() * 0.2;
                 obs.hasShot = false;
                 obs.hp = 2;
@@ -1914,17 +1892,10 @@ function App() {
         <div
           className="sky-container"
           ref={skyRef}
-          onPointerMove={(e) => {
-            if (e.pointerType !== 'mouse') return;
-            if (skyRef.current) {
-              const rect = skyRef.current.getBoundingClientRect();
-              let px = ((e.clientX - rect.left) / rect.width) * 100;
-              let py = 100 - (((e.clientY - rect.top) / rect.height) * 100);
-              px = Math.max(5, Math.min(55, px));
-              py = Math.max(10, Math.min(85, py));
-              mouseTargetRef.current = { x: px, y: py };
-            }
-          }}
+          onPointerDown={handleStagePointerDown}
+          onPointerMove={handleStagePointerMove}
+          onPointerUp={handleStagePointerEnd}
+          onPointerCancel={handleStagePointerEnd}
         >
 
 
@@ -2098,45 +2069,6 @@ function App() {
 
           {/* Styled Mobile Overlay Controls */}
           <div className="mobile-controls-overlay">
-            {/* Compact Analog Joystick */}
-            {gameState === 'playing' && (
-              <div
-                className="joystick-zone"
-                onPointerDown={handleJoystickStart}
-                onPointerMove={handleJoystickMove}
-                onPointerUp={handleJoystickEnd}
-                onPointerCancel={handleJoystickEnd}
-                onContextMenu={(e) => e.preventDefault()}
-                style={{
-                  width: '90px',
-                  height: '90px',
-                  background: 'rgba(255,255,255,0.12)',
-                  border: '2px solid rgba(255,255,255,0.25)',
-                  borderRadius: '50%',
-                  touchAction: 'none',
-                  zIndex: 100,
-                  backdropFilter: 'blur(4px)',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.2), inset 0 0 8px rgba(255,255,255,0.05)'
-                }}
-              >
-                <div
-                  ref={joystickKnobRef}
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    width: '38px',
-                    height: '38px',
-                    background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(200,220,230,0.7) 100%)',
-                    borderRadius: '50%',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                    transform: 'translate(-50%, -50%)',
-                    pointerEvents: 'none'
-                  }}
-                />
-              </div>
-            )}
-
             {gameState === 'playing' && (
               <button
                 className="action-fire-btn"

@@ -174,10 +174,13 @@
   /* Force LTR so D-pad is always on the left, Fire always on the right */
 }
 
-.joystick-zone,
 .action-fire-btn {
   pointer-events: auto;
   /* re-enable clicking on buttons */
+}
+
+.action-fire-btn {
+  margin-left: auto;
 }
 
 /* D-PAD Styling */
@@ -1164,6 +1167,10 @@
 
 @media (pointer: coarse),
 (max-width: 950px) {
+  .sky-container {
+    touch-action: none;
+  }
+
 .obstacle-bullet,
 .player-bullet {
     width: 12px !important;
