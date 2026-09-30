@@ -301,6 +301,10 @@ class AudioSystem {
         audioObj.play().catch(e => {
           console.error("Audio playback failed:", e);
         });
+      } else if ('speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined' && text.trim()) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = langCode;
+        window.speechSynthesis.speak(utterance);
       }
     } catch (e) {
       console.error("Speech synthesis/audio failed:", e);
