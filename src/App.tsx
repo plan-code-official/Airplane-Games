@@ -256,6 +256,13 @@ function App() {
     width: 0, height: 0, left: 0, bottom: 0,
     spriteWidth: 0, spriteHeight: 0
   });
+  const planeAlphaMaskRef = useRef<{
+    width: number;
+    height: number;
+    pixels: Uint8Array;
+    noseColumn: number;
+    noseRow: number;
+  } | null>(null);
   const updatePlaneMetricsRef = useRef<() => void>(() => {});
   const planeRef = useRef<HTMLImageElement>(null);
   const playerBulletLayerRef = useRef<HTMLCanvasElement>(null);
@@ -562,6 +569,62 @@ function App() {
         spriteWidth: (spriteWidth / width) * 100,
         spriteHeight: (spriteHeight / height) * 100
       };
+
+      // Build a compact occupancy mask once. A rectangular hitbox includes the
+      // transparent corners around this sprite, which is why bullets appeared
+      // to hit while visibly below or beside the plane.
+      const image = planeRef.current;
+      if (image?.complete && image.naturalWidth > 0 && !planeAlphaMaskRef.current) {
+        const sourceCanvas = document.createElement('canvas');
+        sourceCanvas.width = image.naturalWidth;
+        sourceCanvas.height = image.naturalHeight;
+        const sourceContext = sourceCanvas.getContext('2d', { willReadFrequently: true });
+        if (sourceContext) {
+          sourceContext.drawImage(image, 0, 0);
+          const alpha = sourceContext.getImageData(0, 0, image.naturalWidth, image.naturalHeight).data;
+          const maskWidth = 128;
+          const maskHeight = Math.ceil(maskWidth * image.naturalHeight / image.naturalWidth);
+          const pixels = new Uint8Array(maskWidth * maskHeight);
+
+          for (let cellY = 0; cellY < maskHeight; cellY += 1) {
+            const sourceTop = Math.floor(cellY * image.naturalHeight / maskHeight);
+            const sourceBottom = Math.max(sourceTop + 1, Math.ceil((cellY + 1) * image.naturalHeight / maskHeight));
+            for (let cellX = 0; cellX < maskWidth; cellX += 1) {
+              const sourceLeft = Math.floor(cellX * image.naturalWidth / maskWidth);
+              const sourceRight = Math.max(sourceLeft + 1, Math.ceil((cellX + 1) * image.naturalWidth / maskWidth));
+              let opaque = false;
+              for (let y = sourceTop; y < sourceBottom && !opaque; y += 1) {
+                for (let x = sourceLeft; x < sourceRight; x += 1) {
+                  // The PNG includes long exhaust plumes below and behind the
+                  // craft. They are visual effects, not part of the aircraft's
+                  // collision hull.
+                  const insideAircraftArea = x >= image.naturalWidth * 0.22 && y <= image.naturalHeight * 0.74;
+                  if (insideAircraftArea && alpha[(y * image.naturalWidth + x) * 4 + 3] > 24) {
+                    opaque = true;
+                    break;
+                  }
+                }
+              }
+              pixels[cellY * maskWidth + cellX] = opaque ? 1 : 0;
+            }
+          }
+          let noseColumn = maskWidth - 1;
+          while (noseColumn > 0 && !pixels.some((pixel, index) => index % maskWidth === noseColumn && pixel)) {
+            noseColumn -= 1;
+          }
+          let firstNoseRow = 0;
+          let lastNoseRow = maskHeight - 1;
+          while (firstNoseRow < maskHeight && !pixels[firstNoseRow * maskWidth + noseColumn]) firstNoseRow += 1;
+          while (lastNoseRow >= firstNoseRow && !pixels[lastNoseRow * maskWidth + noseColumn]) lastNoseRow -= 1;
+          planeAlphaMaskRef.current = {
+            width: maskWidth,
+            height: maskHeight,
+            pixels,
+            noseColumn,
+            noseRow: (firstNoseRow + lastNoseRow) / 2
+          };
+        }
+      }
     };
     updatePlaneMetricsRef.current = updateStageSize;
     updateStageSize();
@@ -642,6 +705,13 @@ function App() {
       planeXRef.current = Math.max(5, Math.min(55, planeXRef.current + dx));
       planeYRef.current = Math.max(10, Math.min(85, planeYRef.current + dy));
 
+      const planeSpriteWidthPx = (planeSizePctRef.current.spriteWidth / 100) * stageSizeRef.current.width;
+      const planeSpriteHeightPx = (planeSizePctRef.current.spriteHeight / 100) * stageSizeRef.current.height;
+      const planeSpriteLeftPx = (planeXRef.current / 100) * stageSizeRef.current.width - planeSpriteWidthPx * (boostScale - 1) / 2;
+      const planeSpriteBottomPx = (planeYRef.current / 100) * stageSizeRef.current.height - planeSpriteHeightPx * (boostScale - 1) / 2;
+      const planeSpriteWidthScaledPx = planeSpriteWidthPx * boostScale;
+      const planeSpriteHeightScaledPx = planeSpriteHeightPx * boostScale;
+      const planeSpriteTopPx = stageSizeRef.current.height - planeSpriteBottomPx - planeSpriteHeightScaledPx;
       const planeHitboxLeft = planeXRef.current - planeSizePctRef.current.spriteWidth * (boostScale - 1) / 2 + planeSizePctRef.current.left * boostScale;
       const planeHitboxBottom = planeYRef.current - planeSizePctRef.current.spriteHeight * (boostScale - 1) / 2 + planeSizePctRef.current.bottom * boostScale;
       const planeCenterX = planeHitboxLeft + planeWidthPct / 2;
@@ -730,13 +800,38 @@ function App() {
         // Check collision in scene percentages without reading each bullet's
         // DOM bounds (which forced layout once per active projectile).
         if (!isInvincibleRef.current && !isFlyingOver) {
-          const bulletBottom = bullet.y - enemyBulletHeightPct / 2;
-          const bulletTop = bullet.y + enemyBulletHeightPct / 2;
-          const overlapsPlaneX = bullet.x < planeHitboxLeft + planeWidthPct &&
-            bullet.x + enemyBulletWidthPct > planeHitboxLeft;
-          const overlapsPlaneY = bulletTop > planeHitboxBottom &&
-            bulletBottom < planeHitboxBottom + planeHeightPct;
-          if (overlapsPlaneX && overlapsPlaneY) {
+          const mask = planeAlphaMaskRef.current;
+          const bulletLeftPx = (bullet.x / 100) * stageSizeRef.current.width;
+          const bulletTopPx = stageSizeRef.current.height - (bullet.y / 100) * stageSizeRef.current.height - enemyBulletHeightPct / 2 / 100 * stageSizeRef.current.height;
+          const bulletRightPx = bulletLeftPx + enemyBulletWidthPct / 100 * stageSizeRef.current.width;
+          const bulletBottomPx = bulletTopPx + enemyBulletHeightPct / 100 * stageSizeRef.current.height;
+          let overlapsPlane = false;
+
+          if (mask && planeSpriteWidthScaledPx > 0 && planeSpriteHeightScaledPx > 0) {
+            const left = Math.max(0, Math.floor(((bulletLeftPx - planeSpriteLeftPx) / planeSpriteWidthScaledPx) * mask.width));
+            const right = Math.min(mask.width - 1, Math.floor(((bulletRightPx - planeSpriteLeftPx) / planeSpriteWidthScaledPx) * mask.width));
+            const top = Math.max(0, Math.floor(((bulletTopPx - planeSpriteTopPx) / planeSpriteHeightScaledPx) * mask.height));
+            const bottom = Math.min(mask.height - 1, Math.floor(((bulletBottomPx - planeSpriteTopPx) / planeSpriteHeightScaledPx) * mask.height));
+
+            for (let maskY = top; maskY <= bottom && !overlapsPlane; maskY += 1) {
+              for (let maskX = left; maskX <= right; maskX += 1) {
+                if (mask.pixels[maskY * mask.width + maskX]) {
+                  overlapsPlane = true;
+                  break;
+                }
+              }
+            }
+          } else {
+            const bulletBottom = bullet.y - enemyBulletHeightPct / 2;
+            const bulletTop = bullet.y + enemyBulletHeightPct / 2;
+            const overlapsPlaneX = bullet.x < planeHitboxLeft + planeWidthPct &&
+              bullet.x + enemyBulletWidthPct > planeHitboxLeft;
+            const overlapsPlaneY = bulletTop > planeHitboxBottom &&
+              bulletBottom < planeHitboxBottom + planeHeightPct;
+            overlapsPlane = overlapsPlaneX && overlapsPlaneY;
+          }
+
+          if (overlapsPlane) {
             handleObstacleHit();
             isInvincibleRef.current = true;
             setIsInvincible(true);
@@ -1151,10 +1246,15 @@ function App() {
 
     const level = weaponLevelRef.current;
     const boostScale = planeEffectRef.current === 'boost' ? 1.15 : 1;
-    const spawnX = planeXRef.current - planeSizePctRef.current.spriteWidth * (boostScale - 1) / 2 +
-      (planeSizePctRef.current.left + planeSizePctRef.current.width) * boostScale;
-    const spawnY = planeYRef.current - planeSizePctRef.current.spriteHeight * (boostScale - 1) / 2 +
-      planeSizePctRef.current.bottom * boostScale;
+    const mask = planeAlphaMaskRef.current;
+    const spriteLeft = planeXRef.current - planeSizePctRef.current.spriteWidth * (boostScale - 1) / 2;
+    const spriteBottom = planeYRef.current - planeSizePctRef.current.spriteHeight * (boostScale - 1) / 2;
+    const spawnX = spriteLeft + (mask
+      ? ((mask.noseColumn + 1) / mask.width) * planeSizePctRef.current.spriteWidth * boostScale
+      : (planeSizePctRef.current.left + planeSizePctRef.current.width) * boostScale);
+    const spawnY = spriteBottom + (mask
+      ? (1 - (mask.noseRow + 0.5) / mask.height) * planeSizePctRef.current.spriteHeight * boostScale
+      : planeSizePctRef.current.bottom * boostScale);
     const addBullet = (id: number, x: number, y: number) => {
       playerBulletsRef.current.push({ id, x, y, speed: 1.5 });
 
