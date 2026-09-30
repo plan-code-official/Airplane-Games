@@ -1925,6 +1925,10 @@ function App() {
             </div>
 
             <div className="hud-right">
+              <div className="hud-coins" aria-label={`العملات ${stars}`}>
+                <img src={daadCoins} alt="" aria-hidden="true" />
+                <span>{stars}</span>
+              </div>
               <div className="hud-lives" aria-label={`${lives} من 3 قلوب`}>
                 <span className="hud-lives-label">القلوب</span>
                 <div className="hud-heart-row">
@@ -1934,10 +1938,6 @@ function App() {
                     </span>
                   ))}
                 </div>
-              </div>
-              <div className="hud-coins" aria-label={`العملات ${stars}`}>
-                <img src={daadCoins} alt="" aria-hidden="true" />
-                <span>{stars}</span>
               </div>
             </div>
 
