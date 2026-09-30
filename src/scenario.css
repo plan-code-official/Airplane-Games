@@ -367,19 +367,16 @@
   top: 16.27%;
   width: 77.05%;
   height: 61.45%;
-  border: 2px solid rgba(94, 235, 255, 0.85);
+  border: 1.5px solid rgba(220, 249, 255, 0.82);
   border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(0, 229, 255, 0.04), rgba(0, 170, 255, 0.2));
-  box-shadow: 0 0 12px rgba(0, 210, 255, 0.48), inset 0 0 10px rgba(77, 225, 255, 0.24);
+  background: linear-gradient(135deg, rgba(223, 250, 255, 0.2), rgba(115, 216, 255, 0.08) 42%, rgba(21, 157, 211, 0.2));
+  box-shadow: 0 0 5px rgba(124, 225, 255, 0.24), inset 0 0 12px rgba(221, 249, 255, 0.2);
+  backdrop-filter: blur(1px) saturate(1.15);
   transform-origin: center;
-  animation: shield-pulse 1s ease-in-out infinite alternate;
+  animation: none;
+  opacity: 0.82;
   pointer-events: none;
   z-index: 2;
-}
-
-@keyframes shield-pulse {
-  from { transform: scale(0.98); opacity: 0.72; }
-  to { transform: scale(1.08); opacity: 1; }
 }
 
 .airplane-wrapper.damage-smoke::before {

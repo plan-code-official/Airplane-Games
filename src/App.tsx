@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { DoorOpen, Flame, Heart, Play, Shield, Smartphone, Volume2, VolumeX, Zap } from 'lucide-react';
+import { Flame, Play, Shield, Smartphone, Volume2, VolumeX, Zap } from 'lucide-react';
 import { type Question } from './data/questions';
 import { audio } from './utils/audio';
 import { getGameQuestions, startGameSession, submitGameAnswers, completeGameSession } from './utils/gameApi';
@@ -13,6 +13,8 @@ import Celebration from './Celebration/Celebration';
 import GameWelcomeScreen from './components/GameWelcomeScreen/GameWelcomeScreen';
 import exitButtonBg from './assets/exit_transparent.png';
 import startButtonBgNew from './assets/start_transparent.png';
+import exitHudIcon from './assets/ExitButton.svg';
+import heartHudIcon from './assets/heart.png';
  
 interface ExplosionParticle {
   id: number;
@@ -645,7 +647,9 @@ function App() {
     if (!stage) return;
     const rect = stage.getBoundingClientRect();
     const x = Math.max(5, Math.min(55, ((e.clientX - rect.left) / rect.width) * 100));
-    const y = Math.max(10, Math.min(85, 100 - (((e.clientY - rect.top) / rect.height) * 100)));
+    const verticalProgress = (e.clientY - rect.top) / rect.height;
+    const minPlaneY = -planeSizePctRef.current.bottom;
+    const y = 85 + (minPlaneY - 85) * verticalProgress;
     mouseTargetRef.current = { x, y };
   };
 
@@ -818,7 +822,8 @@ function App() {
       if (isMobile && dx < 0) dx *= 0.65;
 
       planeXRef.current = Math.max(5, Math.min(55, planeXRef.current + dx));
-      planeYRef.current = Math.max(10, Math.min(85, planeYRef.current + dy));
+      const minPlaneY = -planeSizePctRef.current.bottom;
+      planeYRef.current = Math.max(minPlaneY, Math.min(85, planeYRef.current + dy));
 
       const planeSpriteWidthPx = (planeSizePctRef.current.spriteWidth / 100) * stageSizeRef.current.width;
       const planeSpriteHeightPx = (planeSizePctRef.current.spriteHeight / 100) * stageSizeRef.current.height;
@@ -1901,50 +1906,43 @@ function App() {
 
           {/* Top HUD Header */}
           <div className="sky-hud-header">
-            <div className="hud-left">
-              <button className="hud-back-btn" onClick={handleBackToMenu} style={{ background: '#ef4444', color: 'white', padding: '8px 12px', fontSize: '24px' }} title="خروج" aria-label="خروج"><DoorOpen aria-hidden="true" /></button>
-              <span className="hud-category">{currentQuestion?.categoryName}</span>
+            <button className="hud-exit-button" onClick={handleBackToMenu} title="خروج" aria-label="خروج">
+              <img src={exitHudIcon} alt="" />
+            </button>
+
+            <div className="hud-center" aria-live="polite">
+              <span className="hud-question-label">السؤال</span>
+              <span className="hud-question-number">
+                {currentQuestionIndex + 1}/{Math.max(questions.length, 1)}
+              </span>
             </div>
-            <div className="hud-center">
-              {currentQuestion && !isFlyingOver && (
-                <div className="hud-question-text-inline" style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center' }}>
-                  {currentQuestion.audioUrl && (
-                    <button
-                      className="play-audio-btn"
-                      onClick={() => audio.speakText(currentQuestion.question, 'ar-SA', currentQuestion.audioUrl)}
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.2)',
-                        border: '1px solid rgba(255,255,255,0.4)',
-                        borderRadius: '50%',
-                        cursor: 'pointer',
-                        fontSize: '24px',
-                        width: '45px',
-                        height: '45px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                      }}
-                      title="استمع للسؤال"
-                    >
-                      <Play aria-hidden="true" size={18} />
-                    </button>
-                  )}
-                  <span className="hud-question-main-text">{currentQuestion.question}</span>
-                </div>
-              )}
-            </div>
+
             <div className="hud-right">
-              <button className="sound-toggle-inline" onClick={toggleMute}>
-                {isMuted ? <VolumeX aria-hidden="true" /> : <Volume2 aria-hidden="true" />}
-              </button>
-              <div className="hud-lives">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <span key={i} className={`heart-icon ${i >= lives ? 'lost' : ''}`}><Heart aria-hidden="true" fill="currentColor" /></span>
-                ))}
+              <div className="hud-lives" aria-label={`${lives} من 3 قلوب`}>
+                <span className="hud-lives-label">القلوب</span>
+                <div className="hud-heart-row">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <span key={i} className={`heart-icon ${i >= lives ? 'lost' : ''}`}>
+                      <img src={heartHudIcon} alt="" aria-hidden="true" />
+                    </span>
+                  ))}
+                </div>
               </div>
-              <span className="hud-question-number">السؤال {currentQuestionIndex + 1}</span>
+              <div className="hud-coins" aria-label={`العملات ${stars}`}>
+                <img src={daadCoins} alt="" aria-hidden="true" />
+                <span>{stars}</span>
+              </div>
+            </div>
+
+            <div
+              className="hud-progress-track"
+              role="progressbar"
+              aria-label="تقدم الأسئلة"
+              aria-valuemin={0}
+              aria-valuemax={Math.max(questions.length, 1)}
+              aria-valuenow={Math.min(currentQuestionIndex + 1, Math.max(questions.length, 1))}
+            >
+              <span style={{ width: `${Math.min(100, ((currentQuestionIndex + 1) / Math.max(questions.length, 1)) * 100)}%` }} />
             </div>
           </div>
 
