@@ -1218,8 +1218,6 @@ function App() {
           hasShieldRef.current = true;
           setHasActiveShield(true);
           invincibilityTimeRef.current = Date.now() + 5000;
-          setPlaneEffect('boost');
-          setTimeout(() => setPlaneEffect('normal'), 500);
           return;
         }
         uncollectedShields.push(shield);
@@ -1806,10 +1804,10 @@ function App() {
     let classes = ['airplane-wrapper'];
     if (isFlyingOver) classes.push('plane-flyover');
     if (planeEffect === 'boost') classes.push('engine-boost');
-    if (planeEffect === 'shake') classes.push('shake-drop');
+    if (planeEffect === 'shake') classes.push('shake-drop', 'damage-hit');
     if (movementDir === 'up') classes.push('tilt-up');
     if (movementDir === 'down') classes.push('tilt-down');
-    if (isInvincible) classes.push('invincible-flash');
+    if (isInvincible && !hasActiveShield) classes.push('invincible-flash');
 
     // Add charring effect based on damage level
     const damageLevel = 3 - lives;

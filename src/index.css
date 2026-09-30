@@ -2297,14 +2297,14 @@ body {
 }
 
 .sky-hud-header {
-  top: 10px;
+  top: 8px;
   left: 2%;
   width: 96%;
-  height: 126px;
-  padding: 8px 22px;
+  height: 84px;
+  padding: 4px 18px;
   display: grid;
-  grid-template-columns: 76px minmax(120px, 1fr) minmax(270px, 1fr);
-  gap: 20px;
+  grid-template-columns: 60px minmax(100px, 1fr) minmax(240px, 1fr);
+  gap: 16px;
   direction: ltr;
   border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 14px;
@@ -2316,8 +2316,8 @@ body {
 }
 
 .hud-exit-button {
-  width: 72px;
-  height: 72px;
+  width: 56px;
+  height: 54px;
   padding: 0;
   border: 0;
   border-radius: 22px;
@@ -2351,7 +2351,7 @@ body {
 }
 
 .hud-question-label {
-  font-size: 38px;
+  font-size: 28px;
   font-weight: 700;
 }
 
@@ -2360,7 +2360,7 @@ body {
   background: transparent;
   color: #fff;
   font-family: 'Lateef', var(--font-arabic), sans-serif;
-  font-size: 48px;
+  font-size: 36px;
   font-weight: 700;
   line-height: 0.95;
   direction: ltr;
@@ -2387,7 +2387,7 @@ body {
 .hud-lives-label {
   color: #fff;
   font-family: 'Lateef', var(--font-arabic), sans-serif;
-  font-size: 32px;
+  font-size: 25px;
   font-weight: 700;
   line-height: 0.85;
 }
@@ -2400,8 +2400,8 @@ body {
 
 .sky-hud-header .heart-icon {
   display: block;
-  width: 52px;
-  height: 46px;
+  width: 40px;
+  height: 35px;
   filter: none;
   transition: opacity 0.2s ease, filter 0.2s ease;
 }
@@ -2420,9 +2420,9 @@ body {
 }
 
 .hud-coins {
-  min-width: 158px;
-  height: 76px;
-  padding: 5px 14px;
+  min-width: 132px;
+  height: 56px;
+  padding: 4px 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2431,15 +2431,15 @@ body {
   border-radius: 999px;
   color: #fff;
   font-family: 'Lateef', var(--font-arabic), sans-serif;
-  font-size: 40px;
+  font-size: 30px;
   font-weight: 700;
   line-height: 1;
   direction: ltr;
 }
 
 .hud-coins img {
-  width: 58px;
-  height: 58px;
+  width: 44px;
+  height: 44px;
   object-fit: contain;
 }
 
@@ -2448,7 +2448,7 @@ body {
   top: calc(100% + 3px);
   left: -0.2%;
   width: 100.4%;
-  height: 12px;
+  height: 10px;
   overflow: hidden;
   border: 2px solid #fff;
   border-radius: 999px;
@@ -2465,59 +2465,81 @@ body {
 
 @media (max-width: 900px), (max-height: 500px) {
   .sky-hud-header {
-    top: 6px;
-    height: 92px;
-    padding: 5px 10px;
-    grid-template-columns: 48px minmax(82px, 1fr) minmax(188px, 1.35fr);
-    gap: 6px;
+    top: 5px;
+    height: 64px;
+    padding: 3px 8px;
+    grid-template-columns: 42px minmax(65px, 1fr) minmax(160px, 1.35fr);
+    gap: 4px;
     border-radius: 10px;
   }
 
   .hud-exit-button {
-    width: 48px;
-    height: 46px;
-    border-radius: 14px;
+    width: 40px;
+    height: 38px;
+    border-radius: 12px;
   }
 
   .hud-question-label {
-    font-size: 25px;
+    font-size: 19px;
   }
 
   .sky-hud-header .hud-question-number {
-    font-size: 34px;
+    font-size: 26px;
   }
 
   .sky-hud-header .hud-right {
-    gap: 7px;
+    gap: 5px;
   }
 
   .hud-lives-label {
-    font-size: 21px;
+    font-size: 17px;
   }
 
   .hud-heart-row {
-    gap: 2px;
+    gap: 1px;
   }
 
   .sky-hud-header .heart-icon {
-    width: 31px;
-    height: 27px;
+    width: 25px;
+    height: 22px;
   }
 
   .hud-coins {
-    min-width: 92px;
-    height: 56px;
-    padding: 3px 8px;
-    gap: 4px;
-    font-size: 30px;
+    min-width: 74px;
+    height: 44px;
+    padding: 2px 6px;
+    gap: 3px;
+    font-size: 24px;
   }
 
   .hud-coins img {
-    width: 42px;
-    height: 42px;
+    width: 34px;
+    height: 34px;
   }
 
   .hud-progress-track {
-    height: 9px;
+    height: 8px;
   }
+}
+
+.sky-container .airplane-wrapper.shake-drop.damage-hit {
+  animation: plane-damage-recoil 0.46s cubic-bezier(0.2, 0.75, 0.25, 1);
+  will-change: transform;
+}
+
+.airplane-wrapper.damage-hit .airplane-img {
+  animation: plane-damage-flinch 0.46s ease-out;
+}
+
+@keyframes plane-damage-recoil {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  18% { transform: translateX(-12px) rotate(-7deg); }
+  42% { transform: translateX(7px) rotate(4deg); }
+  68% { transform: translateX(-4px) rotate(-2deg); }
+}
+
+@keyframes plane-damage-flinch {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  18% { transform: scale(0.9); opacity: 0.68; }
+  42% { transform: scale(1.04); opacity: 1; }
 }
