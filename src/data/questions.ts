@@ -1,11 +1,17 @@
 export interface Question {
   id: number;
   question: string;
-  options: string[];
+  options: Array<string | QuestionOption>;
   answerIndex: number;
   category: 'math' | 'science' | 'general';
   categoryName: string;
   audioUrl?: string | null;
+  imageUrl?: string | null;
+}
+
+export interface QuestionOption {
+  text: string;
+  imageUrl?: string | null;
 }
 
 export const QUESTIONS: Question[] = [

@@ -1,6 +1,6 @@
 import { memo, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Flame, Play, Shield, Smartphone, Volume2, VolumeX, Zap } from 'lucide-react';
-import { type Question } from './data/questions';
+import { type Question, type QuestionOption } from './data/questions';
 import { audio } from './utils/audio';
 import { getGameQuestions, startGameSession, submitGameAnswers, completeGameSession } from './utils/gameApi';
 import daadCoins from "./assets/daddcoin.webp";
@@ -223,6 +223,9 @@ const getAnswerLanePositions = () =>
 const getMonsterBoxSize = (stageWidth: number, compact: boolean) =>
   compact ? Math.min(104, Math.max(82, stageWidth * 0.11)) : 250;
 
+const getQuestionOptionText = (option: string | QuestionOption) =>
+  typeof option === 'string' ? option : option.text;
+
 const requestMobileFullscreen = () => {
   if (!window.matchMedia('(pointer: coarse)').matches) return;
   if (document.fullscreenElement || window.matchMedia('(display-mode: fullscreen)').matches) return;
@@ -307,21 +310,28 @@ function App() {
             if (typeof parsedOptions === 'string') {
               try { parsedOptions = JSON.parse(parsedOptions); } catch (e) { parsedOptions = []; }
             }
-            const textOptions = Array.isArray(parsedOptions)
-              ? parsedOptions.map((o: any) => typeof o === 'string' ? o : (o.text || ''))
+            const normalizedOptions: Array<string | QuestionOption> = Array.isArray(parsedOptions)
+              ? parsedOptions.map((option: any) => {
+                  if (typeof option === 'string') return option;
+                  return {
+                    text: String(option?.text ?? ''),
+                    imageUrl: option?.imageUrl ?? option?.image ?? null
+                  };
+                })
               : [];
 
             const correctAnswerText = q.correctAnswer;
-            const answerIndex = textOptions.findIndex((t: string) => t === correctAnswerText);
+            const answerIndex = normalizedOptions.findIndex(option => getQuestionOptionText(option) === correctAnswerText);
 
             return {
               id: q.id,
-              question: q.question,
-              options: textOptions,
+              question: String(q.question ?? q.text ?? ''),
+              options: normalizedOptions,
               answerIndex: answerIndex >= 0 ? answerIndex : 0,
               category: 'general',
               categoryName: data.data.lessonName,
-              audioUrl: q.audioUrl || null
+              audioUrl: q.audioUrl || q.audio || null,
+              imageUrl: q.imageUrl || q.image || null
             };
           });
           setApiQuestions(mapped);
@@ -473,7 +483,7 @@ function App() {
     const lanePositionsNum = getAnswerLanePositions();
     cloudsRef.current = question.options.map((option, idx) => ({
       idx,
-      text: option,
+      text: getQuestionOptionText(option),
       x: 100 + (idx * 6), // Staggered slightly
       y: lanePositionsNum[idx],
       speed: 0.08 + Math.random() * 0.04, // Smooth slow speed so player has time to read
@@ -1944,6 +1954,37 @@ function App() {
             </div>
           </div>
 
+          {currentQuestion && !isFlyingOver && (
+            <section className="question-prompt-panel" aria-label="السؤال الحالي" dir="auto">
+              <div className="question-prompt-copy">
+                {currentQuestion.question && <p>{currentQuestion.question}</p>}
+                {(currentQuestion.audioUrl || currentQuestion.question) && (
+                  <button
+                    className="question-audio-btn"
+                    type="button"
+                    aria-label="استمع إلى السؤال"
+                    title="استمع إلى السؤال"
+                    onClick={() => {
+                      const language = /[\u0600-\u06FF]/.test(currentQuestion.question) ? 'ar-SA' : 'en-US';
+                      audio.speakText(currentQuestion.question, language, currentQuestion.audioUrl);
+                    }}
+                  >
+                    <Play aria-hidden="true" size={18} />
+                  </button>
+                )}
+              </div>
+              {currentQuestion.imageUrl && (
+                <img
+                  className="question-prompt-image"
+                  src={currentQuestion.imageUrl}
+                  alt="صورة السؤال"
+                  decoding="async"
+                  onError={(event) => { event.currentTarget.style.display = 'none'; }}
+                />
+              )}
+            </section>
+          )}
+
           <div className="buildings-layer-bg" />
           <div className="clouds-container">
             <div className="cloud cloud-type-1" style={{ top: '15%', animationDuration: '30s' }} />
@@ -2017,7 +2058,15 @@ function App() {
                       <span className="cloud-badge">
                         {idx === 0 ? "أ" : idx === 1 ? "ب" : idx === 2 ? "ج" : "د"}
                       </span>
-                      <span className="cloud-text">{option}</span>
+                  <span className="cloud-text">{getQuestionOptionText(option)}</span>
+                  {typeof option !== 'string' && option.imageUrl && (
+                    <img
+                      className="cloud-option-image"
+                      src={option.imageUrl}
+                      alt={getQuestionOptionText(option)}
+                      decoding="async"
+                    />
+                  )}
                     </div>
                   </div>
                 );
