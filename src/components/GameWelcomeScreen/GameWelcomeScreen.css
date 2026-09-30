@@ -44,18 +44,35 @@
   background-repeat: no-repeat;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 5px clamp(12px, 3vw, 25px);
   min-height: clamp(44px, 7vh, 60px);
   height: auto;
-  gap: clamp(6px, 2vw, 15px);
+  gap: clamp(8px, 2vw, 16px);
   direction: ltr;
+}
+
+.gws-stats-icons,
+.gws-stats-values {
+  display: inline-flex;
+  align-items: center;
+}
+
+.gws-stats-icons {
+  flex: 0 0 auto;
+  gap: clamp(3px, 0.8vw, 7px);
+}
+
+.gws-stats-values {
+  min-width: 0;
+  gap: clamp(5px, 1vw, 9px);
 }
 
 .gws-stat-icon {
   width: clamp(22px, 5vw, 35px);
   height: clamp(22px, 5vw, 35px);
   object-fit: contain;
+  flex: 0 0 auto;
 }
 
 .gws-stat-text {

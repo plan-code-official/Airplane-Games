@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Flame, Play, Shield, Smartphone, Volume2, VolumeX, Zap } from 'lucide-react';
+import { Flame, Shield, Smartphone, Volume2, VolumeX, Zap } from 'lucide-react';
 import { type Question, type QuestionOption } from './data/questions';
 import { audio } from './utils/audio';
 import { getGameQuestions, startGameSession, submitGameAnswers, completeGameSession } from './utils/gameApi';
@@ -1780,10 +1780,10 @@ function App() {
       }
     }
 
-    const allQuestionsCompleted = currentQuestionIndexRef.current >= questionsRef.current.length - 1;
-    const isAlive = livesRef.current > 0;
+    const totalQuestions = questionsRef.current.length;
+    const correctRatio = totalQuestions > 0 ? starsRef.current / totalQuestions : 0;
 
-    if (won && allQuestionsCompleted && isAlive && starsRef.current > 0) {
+    if (correctRatio > 0.5) {
       setGameState('celebration');
     } else {
       audio.playLose();
@@ -1925,10 +1925,6 @@ function App() {
             </div>
 
             <div className="hud-right">
-              <div className="hud-coins" aria-label={`العملات ${stars}`}>
-                <img src={daadCoins} alt="" aria-hidden="true" />
-                <span>{stars}</span>
-              </div>
               <div className="hud-lives" aria-label={`${lives} من 3 قلوب`}>
                 <span className="hud-lives-label">القلوب</span>
                 <div className="hud-heart-row">
@@ -1938,6 +1934,10 @@ function App() {
                     </span>
                   ))}
                 </div>
+              </div>
+              <div className="hud-coins" aria-label={`العملات ${stars}`}>
+                <img src={daadCoins} alt="" aria-hidden="true" />
+                <span>{stars}</span>
               </div>
             </div>
 
@@ -1957,20 +1957,6 @@ function App() {
             <section className="question-prompt-panel" aria-label="السؤال الحالي" dir="auto">
               <div className="question-prompt-copy">
                 {currentQuestion.question && <p>{currentQuestion.question}</p>}
-                {(currentQuestion.audioUrl || currentQuestion.question) && (
-                  <button
-                    className="question-audio-btn"
-                    type="button"
-                    aria-label="استمع إلى السؤال"
-                    title="استمع إلى السؤال"
-                    onClick={() => {
-                      const language = /[\u0600-\u06FF]/.test(currentQuestion.question) ? 'ar-SA' : 'en-US';
-                      audio.speakText(currentQuestion.question, language, currentQuestion.audioUrl);
-                    }}
-                  >
-                    <Play aria-hidden="true" size={18} />
-                  </button>
-                )}
               </div>
               {currentQuestion.imageUrl && (
                 <img
@@ -2158,8 +2144,8 @@ function App() {
       {gameState === 'gameover' && (
         <div className="sky-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <ResultsPanel 
-             score={gameOverStats?.score || stars} 
-             totalScore={questions.length} 
+             score={questions.length > 0 ? Math.round((stars / questions.length) * 100) : 0}
+             totalScore={100}
              correctAnswers={stars} 
              wrongAnswers={questions.length - stars} 
              coins={gameOverStats?.coins || 0}
