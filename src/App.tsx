@@ -213,6 +213,11 @@ const alphaMasksOverlap = (
   return false;
 };
 
+const getAnswerLanePositions = () =>
+  typeof window !== 'undefined' && window.matchMedia('(max-width: 768px) and (orientation: portrait)').matches
+    ? [63, 47, 31, 15]
+    : [65, 48, 31, 14];
+
 const ObstacleLayer = memo(function ObstacleLayer({
   obstacles,
   stageWidth,
@@ -444,6 +449,7 @@ function App() {
 
   // Moving cloud options ref
   const cloudsRef = useRef<CloudOption[]>([]);
+  const cloudSizeRef = useRef<Map<number, { width: number; height: number }>>(new Map());
 
   // Auto fire interval ref
   const autoFireIntervalRef = useRef<any>(null);
@@ -451,7 +457,7 @@ function App() {
 
   const initClouds = (question: Question) => {
     if (!question) return;
-    const lanePositionsNum = [65, 48, 31, 14];
+    const lanePositionsNum = getAnswerLanePositions();
     cloudsRef.current = question.options.map((option, idx) => ({
       idx,
       text: option,
@@ -461,6 +467,25 @@ function App() {
       isActive: true
     }));
   };
+
+  useEffect(() => {
+    const elements = cloudsRef.current
+      .map(cloud => document.getElementById(`cloud-option-${cloud.idx}`))
+      .filter((element): element is HTMLElement => element instanceof HTMLElement);
+    const measure = () => {
+      const sizes = new Map<number, { width: number; height: number }>();
+      cloudsRef.current.forEach((cloud) => {
+        const element = document.getElementById(`cloud-option-${cloud.idx}`);
+        if (element) sizes.set(cloud.idx, { width: element.offsetWidth, height: element.offsetHeight });
+      });
+      cloudSizeRef.current = sizes;
+    };
+    measure();
+
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    elements.forEach(element => observer?.observe(element));
+    return () => observer?.disconnect();
+  }, [currentQuestionIndex, gameState, isFlyingOver, isPhonePortrait, questions]);
 
   useEffect(() => {
     const checkOrientation = () => {
@@ -672,6 +697,7 @@ function App() {
     const minFrameDuration = isMobile ? 1000 / 30 : 0;
     let previousFrameTime = 0;
     let lastUpdateTime = 0;
+    let answerLanePositions = getAnswerLanePositions();
 
     const updateStageSize = () => {
       const width = skyRef.current?.clientWidth || window.innerWidth;
@@ -680,6 +706,10 @@ function App() {
         width,
         height
       };
+      answerLanePositions = getAnswerLanePositions();
+      cloudsRef.current.forEach((cloud) => {
+        cloud.y = answerLanePositions[cloud.idx] ?? cloud.y;
+      });
       const spriteWidth = planeRef.current?.offsetWidth || 185;
       const spriteHeight = planeRef.current?.offsetHeight || spriteWidth * 682 / 1024;
       const alphaLeft = 103 / 1024;
@@ -827,11 +857,12 @@ function App() {
       }
 
       // Track and highlight closest target lane
-      const targetLanes = [75, 55, 35, 15];
       let closestLaneIdx = 0;
       let minDiff = Infinity;
-      targetLanes.forEach((pos, idx) => {
-        const diff = Math.abs(planeYRef.current - pos);
+      answerLanePositions.forEach((laneBottom, idx) => {
+        const optionHeight = cloudSizeRef.current.get(idx)?.height ?? 60;
+        const laneCenter = laneBottom + (optionHeight / 2 / stageSizeRef.current.height) * 100;
+        const diff = Math.abs(planeCenterY - laneCenter);
         if (diff < minDiff) {
           minDiff = diff;
           closestLaneIdx = idx;
@@ -986,7 +1017,28 @@ function App() {
 
         // Check collision with player plane
         if (!isAnswerCheckedRef.current && !isFlyingOver && cloud.isActive) {
-          if (checkOverlapPct(planeCenterX, planeCenterY, cloud.x, cloud.y, 14, 15)) {
+          const optionSize = cloudSizeRef.current.get(cloud.idx) ?? { width: 240, height: 70 };
+          const answerBottomPx = (cloud.y / 100) * stageSizeRef.current.height;
+          const answerRect: SpriteRect = {
+            left: (cloud.x / 100) * stageSizeRef.current.width,
+            top: stageSizeRef.current.height - answerBottomPx - optionSize.height - 24,
+            width: optionSize.width,
+            height: optionSize.height + 24
+          };
+          const planeFallbackRect: SpriteRect = {
+            left: (planeHitboxLeft / 100) * stageSizeRef.current.width,
+            top: stageSizeRef.current.height - ((planeHitboxBottom + planeHeightPct) / 100) * stageSizeRef.current.height,
+            width: (planeWidthPct / 100) * stageSizeRef.current.width,
+            height: (planeHeightPct / 100) * stageSizeRef.current.height
+          };
+          const intersectsAnswer = planeAlphaMaskRef.current
+            ? alphaMaskTouchesRect(planeAlphaMaskRef.current, planeSpriteRect, answerRect)
+            : planeFallbackRect.left < answerRect.left + answerRect.width &&
+              planeFallbackRect.left + planeFallbackRect.width > answerRect.left &&
+              planeFallbackRect.top < answerRect.top + answerRect.height &&
+              planeFallbackRect.top + planeFallbackRect.height > answerRect.top;
+
+          if (intersectsAnswer) {
             cloud.isActive = false;
             handleCloudCollision(cloud);
           }
@@ -1649,7 +1701,7 @@ function App() {
   const renderStageHeight = stageSizeRef.current.height || (typeof window !== 'undefined' ? window.innerHeight : 0);
   const isMobilePortrait = typeof window !== 'undefined' && window.matchMedia("(max-width: 768px) and (orientation: portrait)").matches;
   const lanePositions = useMemo(
-    () => isMobilePortrait ? ['63%', '47%', '31%', '15%'] : ['65%', '48%', '31%', '14%'],
+    () => getAnswerLanePositions().map(position => `${position}%`),
     [isMobilePortrait]
   );
 
