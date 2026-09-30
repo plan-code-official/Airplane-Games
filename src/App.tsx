@@ -84,6 +84,135 @@ interface Obstacle {
   hp?: number;
 }
 
+interface SpriteAlphaMask {
+  width: number;
+  height: number;
+  pixels: Uint8Array;
+  noseColumn: number;
+  noseRow: number;
+}
+
+interface SpriteRect {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+const createSpriteAlphaMask = (
+  image: HTMLImageElement,
+  includePixel: (x: number, y: number) => boolean = () => true
+): SpriteAlphaMask | null => {
+  if (!image.complete || image.naturalWidth === 0 || image.naturalHeight === 0) return null;
+  const canvas = document.createElement('canvas');
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  if (!context) return null;
+
+  context.drawImage(image, 0, 0);
+  const alpha = context.getImageData(0, 0, image.naturalWidth, image.naturalHeight).data;
+  const width = 128;
+  const height = Math.ceil(width * image.naturalHeight / image.naturalWidth);
+  const pixels = new Uint8Array(width * height);
+
+  for (let cellY = 0; cellY < height; cellY += 1) {
+    const sourceTop = Math.floor(cellY * image.naturalHeight / height);
+    const sourceBottom = Math.max(sourceTop + 1, Math.ceil((cellY + 1) * image.naturalHeight / height));
+    for (let cellX = 0; cellX < width; cellX += 1) {
+      const sourceLeft = Math.floor(cellX * image.naturalWidth / width);
+      const sourceRight = Math.max(sourceLeft + 1, Math.ceil((cellX + 1) * image.naturalWidth / width));
+      let opaque = false;
+      for (let y = sourceTop; y < sourceBottom && !opaque; y += 1) {
+        for (let x = sourceLeft; x < sourceRight; x += 1) {
+          if (includePixel(x, y) && alpha[(y * image.naturalWidth + x) * 4 + 3] > 24) {
+            opaque = true;
+            break;
+          }
+        }
+      }
+      pixels[cellY * width + cellX] = opaque ? 1 : 0;
+    }
+  }
+
+  let noseColumn = width - 1;
+  while (noseColumn > 0) {
+    let hasPixel = false;
+    for (let y = 0; y < height; y += 1) {
+      if (pixels[y * width + noseColumn]) {
+        hasPixel = true;
+        break;
+      }
+    }
+    if (hasPixel) break;
+    noseColumn -= 1;
+  }
+  let firstNoseRow = 0;
+  let lastNoseRow = height - 1;
+  while (firstNoseRow < height && !pixels[firstNoseRow * width + noseColumn]) firstNoseRow += 1;
+  while (lastNoseRow >= firstNoseRow && !pixels[lastNoseRow * width + noseColumn]) lastNoseRow -= 1;
+
+  return { width, height, pixels, noseColumn, noseRow: (firstNoseRow + lastNoseRow) / 2 };
+};
+
+const alphaMaskTouchesRect = (
+  mask: SpriteAlphaMask,
+  sprite: SpriteRect,
+  target: SpriteRect,
+  mirrorX = false
+) => {
+  const left = Math.max(sprite.left, target.left);
+  const right = Math.min(sprite.left + sprite.width, target.left + target.width);
+  const top = Math.max(sprite.top, target.top);
+  const bottom = Math.min(sprite.top + sprite.height, target.top + target.height);
+  if (left >= right || top >= bottom || sprite.width <= 0 || sprite.height <= 0) return false;
+
+  const firstX = Math.max(0, Math.floor(((left - sprite.left) / sprite.width) * mask.width));
+  const lastX = Math.min(mask.width - 1, Math.floor(((right - sprite.left) / sprite.width) * mask.width));
+  const firstY = Math.max(0, Math.floor(((top - sprite.top) / sprite.height) * mask.height));
+  const lastY = Math.min(mask.height - 1, Math.floor(((bottom - sprite.top) / sprite.height) * mask.height));
+  for (let y = firstY; y <= lastY; y += 1) {
+    for (let x = firstX; x <= lastX; x += 1) {
+      const sourceX = mirrorX ? mask.width - 1 - x : x;
+      if (mask.pixels[y * mask.width + sourceX]) return true;
+    }
+  }
+  return false;
+};
+
+const alphaMasksOverlap = (
+  firstMask: SpriteAlphaMask,
+  firstRect: SpriteRect,
+  secondMask: SpriteAlphaMask,
+  secondRect: SpriteRect,
+  secondMirrorX = false
+) => {
+  const left = Math.max(firstRect.left, secondRect.left);
+  const right = Math.min(firstRect.left + firstRect.width, secondRect.left + secondRect.width);
+  const top = Math.max(firstRect.top, secondRect.top);
+  const bottom = Math.min(firstRect.top + firstRect.height, secondRect.top + secondRect.height);
+  if (left >= right || top >= bottom) return false;
+
+  const firstX = Math.max(0, Math.floor(((left - firstRect.left) / firstRect.width) * firstMask.width));
+  const lastX = Math.min(firstMask.width - 1, Math.floor(((right - firstRect.left) / firstRect.width) * firstMask.width));
+  const firstY = Math.max(0, Math.floor(((top - firstRect.top) / firstRect.height) * firstMask.height));
+  const lastY = Math.min(firstMask.height - 1, Math.floor(((bottom - firstRect.top) / firstRect.height) * firstMask.height));
+
+  for (let y = firstY; y <= lastY; y += 1) {
+    for (let x = firstX; x <= lastX; x += 1) {
+      if (!firstMask.pixels[y * firstMask.width + x]) continue;
+      const cell: SpriteRect = {
+        left: firstRect.left + x * firstRect.width / firstMask.width,
+        top: firstRect.top + y * firstRect.height / firstMask.height,
+        width: firstRect.width / firstMask.width,
+        height: firstRect.height / firstMask.height
+      };
+      if (alphaMaskTouchesRect(secondMask, secondRect, cell, secondMirrorX)) return true;
+    }
+  }
+  return false;
+};
+
 const ObstacleLayer = memo(function ObstacleLayer({
   obstacles,
   stageWidth,
@@ -256,13 +385,9 @@ function App() {
     width: 0, height: 0, left: 0, bottom: 0,
     spriteWidth: 0, spriteHeight: 0
   });
-  const planeAlphaMaskRef = useRef<{
-    width: number;
-    height: number;
-    pixels: Uint8Array;
-    noseColumn: number;
-    noseRow: number;
-  } | null>(null);
+  const planeAlphaMaskRef = useRef<SpriteAlphaMask | null>(null);
+  const monsterAlphaMaskRef = useRef<SpriteAlphaMask | null>(null);
+  const monsterMaskLoadStartedRef = useRef(false);
   const updatePlaneMetricsRef = useRef<() => void>(() => {});
   const planeRef = useRef<HTMLImageElement>(null);
   const playerBulletLayerRef = useRef<HTMLCanvasElement>(null);
@@ -575,55 +700,23 @@ function App() {
       // to hit while visibly below or beside the plane.
       const image = planeRef.current;
       if (image?.complete && image.naturalWidth > 0 && !planeAlphaMaskRef.current) {
-        const sourceCanvas = document.createElement('canvas');
-        sourceCanvas.width = image.naturalWidth;
-        sourceCanvas.height = image.naturalHeight;
-        const sourceContext = sourceCanvas.getContext('2d', { willReadFrequently: true });
-        if (sourceContext) {
-          sourceContext.drawImage(image, 0, 0);
-          const alpha = sourceContext.getImageData(0, 0, image.naturalWidth, image.naturalHeight).data;
-          const maskWidth = 128;
-          const maskHeight = Math.ceil(maskWidth * image.naturalHeight / image.naturalWidth);
-          const pixels = new Uint8Array(maskWidth * maskHeight);
+        // Exhaust plumes are visible effects, not part of the aircraft hull.
+        planeAlphaMaskRef.current = createSpriteAlphaMask(image, (x, y) =>
+          x >= image.naturalWidth * 0.22 && y <= image.naturalHeight * 0.74
+        );
+      }
 
-          for (let cellY = 0; cellY < maskHeight; cellY += 1) {
-            const sourceTop = Math.floor(cellY * image.naturalHeight / maskHeight);
-            const sourceBottom = Math.max(sourceTop + 1, Math.ceil((cellY + 1) * image.naturalHeight / maskHeight));
-            for (let cellX = 0; cellX < maskWidth; cellX += 1) {
-              const sourceLeft = Math.floor(cellX * image.naturalWidth / maskWidth);
-              const sourceRight = Math.max(sourceLeft + 1, Math.ceil((cellX + 1) * image.naturalWidth / maskWidth));
-              let opaque = false;
-              for (let y = sourceTop; y < sourceBottom && !opaque; y += 1) {
-                for (let x = sourceLeft; x < sourceRight; x += 1) {
-                  // The PNG includes long exhaust plumes below and behind the
-                  // craft. They are visual effects, not part of the aircraft's
-                  // collision hull.
-                  const insideAircraftArea = x >= image.naturalWidth * 0.22 && y <= image.naturalHeight * 0.74;
-                  if (insideAircraftArea && alpha[(y * image.naturalWidth + x) * 4 + 3] > 24) {
-                    opaque = true;
-                    break;
-                  }
-                }
-              }
-              pixels[cellY * maskWidth + cellX] = opaque ? 1 : 0;
-            }
-          }
-          let noseColumn = maskWidth - 1;
-          while (noseColumn > 0 && !pixels.some((pixel, index) => index % maskWidth === noseColumn && pixel)) {
-            noseColumn -= 1;
-          }
-          let firstNoseRow = 0;
-          let lastNoseRow = maskHeight - 1;
-          while (firstNoseRow < maskHeight && !pixels[firstNoseRow * maskWidth + noseColumn]) firstNoseRow += 1;
-          while (lastNoseRow >= firstNoseRow && !pixels[lastNoseRow * maskWidth + noseColumn]) lastNoseRow -= 1;
-          planeAlphaMaskRef.current = {
-            width: maskWidth,
-            height: maskHeight,
-            pixels,
-            noseColumn,
-            noseRow: (firstNoseRow + lastNoseRow) / 2
-          };
-        }
+      if (!monsterAlphaMaskRef.current && !monsterMaskLoadStartedRef.current) {
+        monsterMaskLoadStartedRef.current = true;
+        const monsterImage = new Image();
+        monsterImage.onload = () => {
+          // The enemy image is mirrored in the scene. Clip its rear exhaust in
+          // source coordinates before using the mirrored mask for collisions.
+          monsterAlphaMaskRef.current = createSpriteAlphaMask(monsterImage, x =>
+            x >= monsterImage.naturalWidth * 0.28
+          );
+        };
+        monsterImage.src = '/monster.png?v=2';
       }
     };
     updatePlaneMetricsRef.current = updateStageSize;
@@ -712,6 +805,12 @@ function App() {
       const planeSpriteWidthScaledPx = planeSpriteWidthPx * boostScale;
       const planeSpriteHeightScaledPx = planeSpriteHeightPx * boostScale;
       const planeSpriteTopPx = stageSizeRef.current.height - planeSpriteBottomPx - planeSpriteHeightScaledPx;
+      const planeSpriteRect: SpriteRect = {
+        left: planeSpriteLeftPx,
+        top: planeSpriteTopPx,
+        width: planeSpriteWidthScaledPx,
+        height: planeSpriteHeightScaledPx
+      };
       const planeHitboxLeft = planeXRef.current - planeSizePctRef.current.spriteWidth * (boostScale - 1) / 2 + planeSizePctRef.current.left * boostScale;
       const planeHitboxBottom = planeYRef.current - planeSizePctRef.current.spriteHeight * (boostScale - 1) / 2 + planeSizePctRef.current.bottom * boostScale;
       const planeCenterX = planeHitboxLeft + planeWidthPct / 2;
@@ -759,20 +858,25 @@ function App() {
           obsEl.style.display = 'block';
         }
 
-        // Spawn from the monster's lower edge after its DOM position is current.
+        // Spawn from the front tip of the mirrored enemy sprite.
         if (!obs.hasShot && obs.x < 98) {
           obs.hasShot = true;
           const newId = ++bulletIdCounterRef.current;
+          const monsterMask = monsterAlphaMaskRef.current;
           const monsterBoxSize = isCompactScreen ? 65 : 250;
           const monsterImageHeight = monsterBoxSize / 1.5;
           const monsterImageTop = (monsterBoxSize - monsterImageHeight) / 2;
           const monsterVisibleLeft = monsterBoxSize * ((1536 - 1 - 1413) / 1536);
-          const monsterVisibleBottom = monsterBoxSize -
-            (monsterImageTop + (734 / 1024) * monsterImageHeight);
+          const noseX = monsterMask
+            ? monsterBoxSize * (1 - (monsterMask.noseColumn + 0.5) / monsterMask.width)
+            : monsterVisibleLeft;
+          const noseYFromTop = monsterMask
+            ? monsterImageTop + ((monsterMask.noseRow + 0.5) / monsterMask.height) * monsterImageHeight
+            : monsterImageTop + 0.58 * monsterImageHeight;
           obstacleBulletsRef.current.push({
             id: newId,
-            x: obs.x + (monsterVisibleLeft / stageSizeRef.current.width) * 100,
-            y: obs.y + (monsterVisibleBottom / stageSizeRef.current.height) * 100,
+            x: obs.x + (noseX / stageSizeRef.current.width) * 100,
+            y: obs.y + ((monsterBoxSize - noseYFromTop) / stageSizeRef.current.height) * 100,
             speed: 0.65
           });
         }
@@ -790,6 +894,18 @@ function App() {
       
       const checkOverlapPct = (x1, y1, x2, y2, thresholdX, thresholdY) => {
         return Math.abs(x1 - x2) < thresholdX && Math.abs(y1 - y2) < thresholdY;
+      };
+
+      const monsterSpriteRect = (obs: Obstacle): SpriteRect => {
+        const boxSize = isCompactScreen ? 65 : 250;
+        const imageHeight = boxSize / 1.5;
+        const imageTop = (boxSize - imageHeight) / 2;
+        return {
+          left: (obs.x / 100) * stageSizeRef.current.width,
+          top: stageSizeRef.current.height - (obs.y / 100) * stageSizeRef.current.height - boxSize + imageTop,
+          width: boxSize,
+          height: imageHeight
+        };
       };
 
       // 3b. Update obstacle bullets movement & collision
@@ -884,13 +1000,27 @@ function App() {
 
         obstaclesRef.current.forEach((obs) => {
           if (obs.x < 110 && bullet.x < 110) {
-            if (getPxDist(bullet.x, bullet.y, obs.x, obs.y) < 45) {
+            const enemyMask = monsterAlphaMaskRef.current;
+            const enemyRect = monsterSpriteRect(obs);
+            const bulletWidthPx = isCompactScreen ? 12 : 25;
+            const bulletHeightPx = isCompactScreen ? 4 : 8;
+            const bulletRect: SpriteRect = {
+              left: (bullet.x / 100) * stageSizeRef.current.width,
+              top: stageSizeRef.current.height - (bullet.y / 100) * stageSizeRef.current.height - bulletHeightPx / 2,
+              width: bulletWidthPx,
+              height: bulletHeightPx
+            };
+            const hitsEnemy = enemyMask
+              ? alphaMaskTouchesRect(enemyMask, enemyRect, bulletRect, true)
+              : getPxDist(bullet.x, bullet.y, obs.x, obs.y) < 45;
+
+            if (hitsEnemy) {
               // Decrement monster health
               obs.hp = (obs.hp || 2) - 1;
               bullet.x = 200; // Trigger bullet removal
 
-              const ptX = (obs.x / 100) * skyW;
-              const ptY = skyH - (obs.y / 100) * skyH;
+              const ptX = bulletRect.left + bulletRect.width / 2;
+              const ptY = bulletRect.top + bulletRect.height / 2;
               fireExplosion(ptX, ptY, 'red');
 
               if (obs.hp <= 0) {
@@ -957,7 +1087,12 @@ function App() {
       // 5. Check minion collisions
       if (!isInvincibleRef.current && !isFlyingOver) {
         obstaclesRef.current.forEach((obs) => {
-          if (getPxDist(planeCenterX, planeCenterY, obs.x, obs.y) < 60) {
+          const planeMask = planeAlphaMaskRef.current;
+          const monsterMask = monsterAlphaMaskRef.current;
+          const collidesWithMonster = planeMask && monsterMask
+            ? alphaMasksOverlap(planeMask, planeSpriteRect, monsterMask, monsterSpriteRect(obs), true)
+            : getPxDist(planeCenterX, planeCenterY, obs.x, obs.y) < 60;
+          if (collidesWithMonster) {
             handleObstacleHit();
             isInvincibleRef.current = true;
             setIsInvincible(true);
