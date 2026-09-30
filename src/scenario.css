@@ -1201,7 +1201,7 @@
 
   .plane-shield-aura {
     border-width: 1.5px;
-    box-shadow: 0 0 8px rgba(0, 210, 255, 0.42), inset 0 0 5px rgba(77, 225, 255, 0.18);
+    box-shadow: 0 0 4px rgba(124, 225, 255, 0.2), inset 0 0 8px rgba(221, 249, 255, 0.16);
   }
 
   .invincible-flash {
