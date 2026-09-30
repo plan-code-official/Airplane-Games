@@ -225,6 +225,11 @@ const getMonsterBoxSize = (stageWidth: number, compact: boolean) =>
 const getQuestionOptionText = (option: string | QuestionOption) =>
   typeof option === 'string' ? option : option.text;
 
+const getQuestionPoints = (question?: Question) => {
+  const points = Number(question?.points);
+  return Number.isFinite(points) && points >= 0 ? points : 10;
+};
+
 const requestMobileFullscreen = () => {
   if (!window.matchMedia('(pointer: coarse)').matches) return;
   if (document.fullscreenElement || window.matchMedia('(display-mode: fullscreen)').matches) return;
@@ -329,6 +334,9 @@ function App() {
               answerIndex: answerIndex >= 0 ? answerIndex : 0,
               category: 'general',
               categoryName: data.data.lessonName,
+              points: q.points !== null && q.points !== undefined && Number.isFinite(Number(q.points))
+                ? Number(q.points)
+                : undefined,
               audioUrl: q.audioUrl || q.audio || null,
               imageUrl: q.imageUrl || q.image || null
             };
@@ -374,6 +382,17 @@ function App() {
   const setStarsSync = (s: number) => {
     starsRef.current = s;
     setStars(s);
+  };
+  const [earnedPoints, setEarnedPoints] = useState<number>(0);
+  const earnedPointsRef = useRef<number>(0);
+  const addEarnedPoints = (amount: number) => {
+    const next = earnedPointsRef.current + amount;
+    earnedPointsRef.current = next;
+    setEarnedPoints(next);
+  };
+  const resetEarnedPoints = () => {
+    earnedPointsRef.current = 0;
+    setEarnedPoints(0);
   };
 
   const [isInvincible, setIsInvincible] = useState<boolean>(false);
@@ -557,6 +576,7 @@ function App() {
     setLives(3);
     setPlaneLane(1);
     setStarsSync(0);
+    resetEarnedPoints();
     setIsBossCrashing(false);
 
     obstacleBulletsRef.current = [];
@@ -1740,6 +1760,7 @@ function App() {
 
     if (correct) {
       setStarsSync(starsRef.current + 1);
+      addEarnedPoints(getQuestionPoints(questionsRef.current[currentQuestionIndexRef.current]));
       setPlaneEffect('boost');
       audio.playSuccess();
     }
@@ -1855,7 +1876,7 @@ function App() {
           statLeftIcon={questionCoinImg}
           statLeftAlt="Q"
           statLeftValue={apiQuestions.length || 10}
-          statRightValue={apiQuestions.length ? apiQuestions.length * 10 : 100}
+          statRightValue={apiQuestions.length ? apiQuestions.reduce((total, question) => total + getQuestionPoints(question), 0) : 100}
           statRightIcon={daadCoins}
           statRightAlt="Coin"
           heroImage={descriptionImg}
@@ -1935,9 +1956,9 @@ function App() {
                   ))}
                 </div>
               </div>
-              <div className="hud-coins" aria-label={`العملات ${stars}`}>
+              <div className="hud-coins" aria-label={`النقاط ${earnedPoints}`}>
                 <img src={daadCoins} alt="" aria-hidden="true" />
-                <span>{stars}</span>
+                <span>{earnedPoints}</span>
               </div>
             </div>
 

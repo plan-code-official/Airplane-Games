@@ -27,8 +27,8 @@
    ========================================= */
 .gws-header {
   position: absolute;
-  top: clamp(12px, 3vh, 24px);
-  left: clamp(12px, 3vw, 24px);
+  top: clamp(24px, 4vh, 50px);
+  left: clamp(16px, 2.5vw, 48px);
   right: clamp(12px, 3vw, 24px);
   height: auto;
   z-index: 1;
@@ -36,7 +36,7 @@
 
 .gws-stats-bg {
   position: relative;
-  width: min(100%, 390px);
+  width: min(100%, 480px);
   min-width: 0;
   box-sizing: border-box;
   background-size: 100% 100%;
@@ -44,33 +44,17 @@
   background-repeat: no-repeat;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  padding: 5px clamp(12px, 3vw, 25px);
-  min-height: clamp(44px, 7vh, 60px);
+  justify-content: space-between;
+  padding: 7px clamp(16px, 2.5vw, 30px);
+  min-height: clamp(72px, 9vh, 108px);
   height: auto;
-  gap: clamp(8px, 2vw, 16px);
+  gap: clamp(5px, 1vw, 14px);
   direction: ltr;
 }
 
-.gws-stats-icons,
-.gws-stats-values {
-  display: inline-flex;
-  align-items: center;
-}
-
-.gws-stats-icons {
-  flex: 0 0 auto;
-  gap: clamp(3px, 0.8vw, 7px);
-}
-
-.gws-stats-values {
-  min-width: 0;
-  gap: clamp(5px, 1vw, 9px);
-}
-
 .gws-stat-icon {
-  width: clamp(22px, 5vw, 35px);
-  height: clamp(22px, 5vw, 35px);
+  width: clamp(30px, 3.5vw, 52px);
+  height: clamp(30px, 3.5vw, 52px);
   object-fit: contain;
   flex: 0 0 auto;
 }
@@ -78,7 +62,7 @@
 .gws-stat-text {
   color: white;
   font-family: var(--font-arabic, 'Cairo', sans-serif);
-  font-size: clamp(15px, 2.5vw, 22px);
+  font-size: clamp(22px, 2vw, 32px);
   white-space: nowrap;
   font-weight: bold;
 }
@@ -205,9 +189,10 @@
 
 @media (max-width: 520px) {
   .gws-screen { gap: 8px; }
-  .gws-header { top: max(10px, env(safe-area-inset-top)); }
-  .gws-stats-bg { width: min(100%, 320px); padding-inline: 10px; }
-  .gws-stat-icon { width: 24px; height: 24px; }
+  .gws-header { top: max(12px, env(safe-area-inset-top)); }
+  .gws-stats-bg { width: min(100%, 360px); min-height: 54px; padding-inline: 10px; }
+  .gws-stat-icon { width: 28px; height: 28px; }
+  .gws-stat-text { font-size: clamp(15px, 4vw, 20px); }
   .gws-body { margin: 0; }
   .gws-hero-img { width: 100%; max-height: min(46vh, 420px); }
   .gws-footer { margin-bottom: max(10px, env(safe-area-inset-bottom)); }
@@ -231,15 +216,15 @@
   }
 
   .gws-stats-bg {
-    width: min(250px, 55vw);
+    width: min(340px, 65vw);
     min-width: 0;
-    min-height: 36px;
+    min-height: 44px;
     height: auto;
     padding: 2px 15px;
   }
 
   .gws-stat-text {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .gws-footer { width: min(100%, 470px); }

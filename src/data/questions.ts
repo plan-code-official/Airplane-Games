@@ -5,6 +5,7 @@ export interface Question {
   answerIndex: number;
   category: 'math' | 'science' | 'general';
   categoryName: string;
+  points?: number;
   audioUrl?: string | null;
   imageUrl?: string | null;
 }

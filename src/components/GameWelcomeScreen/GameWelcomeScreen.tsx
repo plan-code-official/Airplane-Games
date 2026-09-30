@@ -60,19 +60,15 @@ export default function GameWelcomeScreen({
           className="gws-stats-bg"
           style={{ backgroundImage: `url(${statsBgImage})` }}
         >
-          <div className="gws-stats-icons" aria-hidden="true">
-            {statLeftIcon && <img src={statLeftIcon} alt="" className="gws-stat-icon" />}
-            {statRightIcon && <img src={statRightIcon} alt="" className="gws-stat-icon" />}
-          </div>
-          <div className="gws-stats-values">
-            {statLeftValue !== undefined && <span className="gws-stat-text">{statLeftValue}</span>}
-            {statRightValue !== undefined && (
-              <>
-                <span className="gws-stat-text">=</span>
-                <span className="gws-stat-text gws-stat-text--yellow">{statRightValue}</span>
-              </>
-            )}
-          </div>
+          {statLeftIcon && <img src={statLeftIcon} alt={statLeftAlt} className="gws-stat-icon" />}
+          {statLeftValue !== undefined && <span className="gws-stat-text">{statLeftValue}</span>}
+          {statRightValue !== undefined && (
+            <>
+              <span className="gws-stat-text">=</span>
+              <span className="gws-stat-text gws-stat-text--yellow">{statRightValue}</span>
+            </>
+          )}
+          {statRightIcon && <img src={statRightIcon} alt={statRightAlt} className="gws-stat-icon" />}
         </div>
       </header>
 
