@@ -65,10 +65,10 @@ export default function GameWelcomeScreen({
           {statRightValue !== undefined && (
             <>
               <span className="gws-stat-text">=</span>
+              {statRightIcon && <img src={statRightIcon} alt={statRightAlt} className="gws-stat-icon" />}
               <span className="gws-stat-text gws-stat-text--yellow">{statRightValue}</span>
             </>
           )}
-          {statRightIcon && <img src={statRightIcon} alt={statRightAlt} className="gws-stat-icon" />}
         </div>
       </header>
 

@@ -1856,7 +1856,7 @@ function App() {
         <p>هذه اللعبة مصممة للعب في الوضع العرضي للحصول على أفضل تجربة.</p>
       </div>
 
-      {gameState !== 'playing' && (
+      {gameState === 'gameover' && (
         <button
           className="sound-toggle"
           onClick={toggleMute}
