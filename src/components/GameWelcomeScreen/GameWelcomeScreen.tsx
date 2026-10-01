@@ -51,6 +51,7 @@ export default function GameWelcomeScreen({
   return (
     <div
       className="gws-screen"
+      dir="rtl"
       style={backgroundImage ? { backgroundImage: `url(${backgroundImage})` } : {}}
     >
 
@@ -64,26 +65,27 @@ export default function GameWelcomeScreen({
           {statLeftValue !== undefined && <span className="gws-stat-text">{statLeftValue}</span>}
           {statRightValue !== undefined && (
             <>
-              <span className="gws-stat-text">=</span>
-              {statRightIcon && <img src={statRightIcon} alt={statRightAlt} className="gws-stat-icon" />}
+              <span className="gws-stat-equals" aria-hidden="true">=</span>
               <span className="gws-stat-text gws-stat-text--yellow">{statRightValue}</span>
+              {statRightIcon && <img src={statRightIcon} alt={statRightAlt} className="gws-stat-icon" />}
             </>
           )}
         </div>
       </header>
 
-      {/* BODY: Hero / Description Image */}
-      <main className="gws-body">
-        <img
-          src={heroImage}
-          alt={heroAlt}
-          className="gws-hero-img"
-        />
-      </main>
+      <div className="gws-main-footer">
+        {/* BODY: Hero / Description Image */}
+        <main className="gws-body">
+          <img
+            src={heroImage}
+            alt={heroAlt}
+            className="gws-description-art"
+          />
+        </main>
 
-      {/* FOOTER: Exit + Start Buttons */}
-      <footer className="gws-footer">
-        <div className="gws-footer-buttons">
+        {/* FOOTER: Exit + Start Buttons */}
+        <footer className="gws-footer">
+          <div className="gws-footer-buttons">
 
           {/* Exit button */}
           <button className="gws-img-btn" onClick={handleExit} aria-label="خروج">
@@ -99,8 +101,9 @@ export default function GameWelcomeScreen({
             aria-label={isLoading ? 'جارٍ التحميل' : 'ابدأ اللعبة'}
           />
 
-        </div>
-      </footer>
+          </div>
+        </footer>
+      </div>
 
     </div>
   );

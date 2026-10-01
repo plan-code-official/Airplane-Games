@@ -19,24 +19,31 @@ export default function ResultsPanel({
   correctAnswers,
   wrongAnswers,
   coins,
+  totalQuestions,
   onRetry,
   onBack,
 }) {
-  const finalScore = numberValue(score);
-  const maximumScore = numberValue(totalScore) || 100;
   const correct = numberValue(correctAnswers);
   const wrong = numberValue(wrongAnswers);
   const earnedCoins = numberValue(coins);
+  const questionCount = numberValue(totalQuestions) || correct + wrong;
+  const correctPercent = questionCount ? Math.round((correct / questionCount) * 100) : 0;
+  const isSuccess = questionCount > 0 && correctPercent >= 50;
 
   return (
     <div className="results-overlay">
       <section className="results-screen" aria-label="نتائج اللعبة" dir="rtl">
         <div className="results-panel" style={{ '--results-panel-image': `url(${panelFrame})` }}>
+          <img className="results-panel__frame" src={panelFrame} alt="" aria-hidden="true" />
           <div className="results-panel__content">
-            <img className="results-panel__title" src={celebrationTitle} alt="أحسنت" />
-            <div className="results-score-card">
-              <span className="results-score-card__label">{'\u0627\u0644\u062f\u0651\u064e\u0631\u064e\u062c\u064e\u0629\u064f'}</span>
-              <strong>{finalScore}/{maximumScore}</strong>
+            {isSuccess ? (
+              <img className="results-panel__title" src={celebrationTitle} alt="أحسنت" />
+            ) : (
+              <div className="results-panel__fail-title">حاول مرة أخرى!</div>
+            )}
+            <div className="results-grade" aria-label={`الدرجة ${correctPercent} من 100`}>
+              <span>الدَّرَجَة</span>
+              <strong>{correctPercent}/100</strong>
             </div>
             <div className="results-stats" aria-label="إحصاءات الأداء">
               <div className="results-stat-card results-stat-card--correct">
@@ -56,11 +63,11 @@ export default function ResultsPanel({
           </div>
         </div>
         <div className="results-actions">
-          <button className="results-action results-action--back" type="button" onClick={onBack} aria-label="ارجع">
-            <img src={exitButtonImage} alt="" aria-hidden="true" />
+          <button className="results-action results-action--back" type="button" onClick={onBack}>
+            <img className="results-action__bg" src={exitButtonImage} alt="خروج" />
           </button>
-          <button className="results-action results-action--retry" type="button" onClick={onRetry} aria-label="حاول مرة أخرى">
-            <img src={retryButtonImage} alt="" aria-hidden="true" />
+          <button className="results-action results-action--retry" type="button" onClick={onRetry}>
+            <img className="results-action__bg" src={retryButtonImage} alt="إعادة المحاولة" />
           </button>
         </div>
       </section>

@@ -225,11 +225,6 @@ const getMonsterBoxSize = (stageWidth: number, compact: boolean) =>
 const getQuestionOptionText = (option: string | QuestionOption) =>
   typeof option === 'string' ? option : option.text;
 
-const getQuestionPoints = (question?: Question) => {
-  const points = Number(question?.points);
-  return Number.isFinite(points) && points >= 0 ? points : 10;
-};
-
 const requestMobileFullscreen = () => {
   if (!window.matchMedia('(pointer: coarse)').matches) return;
   if (document.fullscreenElement || window.matchMedia('(display-mode: fullscreen)').matches) return;
@@ -295,6 +290,7 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [apiQuestions, setApiQuestions] = useState<Question[]>([]);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
+  const [previewQuestionImage, setPreviewQuestionImage] = useState<string | null>(null);
 
   // Touch dragging and mouse movement target the plane without React state updates.
   const touchMovePointerRef = useRef<number | null>(null);
@@ -686,6 +682,15 @@ function App() {
     if (e.pointerType === 'mouse') return;
     const target = e.target as HTMLElement;
     if (target.closest('.sky-hud-header, .mobile-controls-overlay, button, a')) return;
+
+    const stage = skyRef.current;
+    const usesTouchLayout = window.matchMedia('(pointer: coarse), (max-width: 1024px)').matches;
+    if (stage && usesTouchLayout) {
+      const { left, width } = stage.getBoundingClientRect();
+      // The right half is reserved for answers and fire controls on touch layouts.
+      if (e.clientX > left + width / 2) return;
+    }
+
     e.preventDefault();
     touchMovePointerRef.current = e.pointerId;
     updatePlaneTargetFromPointer(e);
@@ -1615,6 +1620,9 @@ function App() {
   const handleCloudCollision = (cloud: CloudOption) => {
     if (isAnswerCheckedRef.current || isFlyingOver) return;
 
+    // A question ends as soon as an answer is selected, so its audio must end too.
+    audio.stopQuestionAudio();
+
     setSelectedAnswer(cloud.idx);
     const currentQuestion = questionsRef.current[currentQuestionIndexRef.current];
     const correct = cloud.idx === currentQuestion.answerIndex;
@@ -1760,7 +1768,8 @@ function App() {
 
     if (correct) {
       setStarsSync(starsRef.current + 1);
-      addEarnedPoints(getQuestionPoints(questionsRef.current[currentQuestionIndexRef.current]));
+      // Each correct question contributes one Daad coin.
+      addEarnedPoints(1);
       setPlaneEffect('boost');
       audio.playSuccess();
     }
@@ -1802,9 +1811,11 @@ function App() {
     }
 
     const totalQuestions = questionsRef.current.length;
-    const correctRatio = totalQuestions > 0 ? starsRef.current / totalQuestions : 0;
+    const correctPercent = totalQuestions > 0
+      ? Math.round((starsRef.current / totalQuestions) * 100)
+      : 0;
 
-    if (correctRatio > 0.5) {
+    if (correctPercent >= 50) {
       setGameState('celebration');
     } else {
       audio.playLose();
@@ -1823,6 +1834,13 @@ function App() {
   const renderStageWidth = stageSizeRef.current.width || (typeof window !== 'undefined' ? window.innerWidth : 0);
   const renderStageHeight = stageSizeRef.current.height || (typeof window !== 'undefined' ? window.innerHeight : 0);
   const isCompactStage = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse), (max-width: 950px)').matches;
+
+  useEffect(() => {
+    if (gameState !== 'playing' || isFlyingOver || !currentQuestion?.audioUrl) return;
+
+    audio.speakText(currentQuestion.question, 'en-US', currentQuestion.audioUrl);
+    return () => audio.stopQuestionAudio();
+  }, [currentQuestion?.audioUrl, currentQuestion?.id, gameState, isFlyingOver]);
   const renderMonsterBoxSize = getMonsterBoxSize(renderStageWidth, isCompactStage);
   const isMobilePortrait = typeof window !== 'undefined' && window.matchMedia("(max-width: 768px) and (orientation: portrait)").matches;
   const lanePositions = useMemo(
@@ -1876,7 +1894,7 @@ function App() {
           statLeftIcon={questionCoinImg}
           statLeftAlt="Q"
           statLeftValue={apiQuestions.length || 10}
-          statRightValue={apiQuestions.length ? apiQuestions.reduce((total, question) => total + getQuestionPoints(question), 0) : 100}
+          statRightValue={apiQuestions.length || 10}
           statRightIcon={daadCoins}
           statRightAlt="Coin"
           heroImage={descriptionImg}
@@ -1978,17 +1996,49 @@ function App() {
             <section className="question-prompt-panel" aria-label="السؤال الحالي" dir="auto">
               <div className="question-prompt-copy">
                 {currentQuestion.question && <p>{currentQuestion.question}</p>}
+                {currentQuestion.audioUrl && (
+                  <button
+                    className="question-audio-btn"
+                    type="button"
+                    aria-label="تشغيل صوت السؤال"
+                    onClick={() => audio.speakText(currentQuestion.question, 'en-US', currentQuestion.audioUrl)}
+                  >
+                    <Volume2 aria-hidden="true" size={22} />
+                  </button>
+                )}
               </div>
               {currentQuestion.imageUrl && (
-                <img
-                  className="question-prompt-image"
-                  src={currentQuestion.imageUrl}
-                  alt="صورة السؤال"
-                  decoding="async"
-                  onError={(event) => { event.currentTarget.style.display = 'none'; }}
-                />
+                <button
+                  className="question-prompt-image-button"
+                  type="button"
+                  aria-label="تكبير صورة السؤال"
+                  onClick={() => setPreviewQuestionImage(currentQuestion.imageUrl!)}
+                >
+                  <img
+                    className="question-prompt-image"
+                    src={currentQuestion.imageUrl}
+                    alt="صورة السؤال"
+                    decoding="async"
+                    onError={(event) => { event.currentTarget.parentElement?.remove(); }}
+                  />
+                </button>
               )}
             </section>
+          )}
+
+          {previewQuestionImage && (
+            <div
+              className="question-image-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="صورة السؤال بحجم كبير"
+              onClick={() => setPreviewQuestionImage(null)}
+            >
+              <div className="question-image-modal__content" onClick={(event) => event.stopPropagation()}>
+                <button className="question-image-modal__close" type="button" onClick={() => setPreviewQuestionImage(null)} aria-label="إغلاق">×</button>
+                <img src={previewQuestionImage} alt="صورة السؤال بحجم كبير" />
+              </div>
+            </div>
           )}
 
           <div className="buildings-layer-bg" />
@@ -2169,7 +2219,8 @@ function App() {
              totalScore={100}
              correctAnswers={stars} 
              wrongAnswers={questions.length - stars} 
-             coins={gameOverStats?.coins || 0}
+             coins={earnedPoints}
+             totalQuestions={questions.length}
              onRetry={() => startGame(selectedCategory)}
              onBack={handleBackToMenu}
           />

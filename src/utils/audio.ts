@@ -1,7 +1,9 @@
+import planeEngineSound from '../assets/plane3.mp3';
+
 class AudioSystem {
   private ctx: AudioContext | null = null;
-  private engineOsc: OscillatorNode | null = null;
-  private engineGain: GainNode | null = null;
+  private engineAudio: HTMLAudioElement | null = null;
+  private questionAudio: HTMLAudioElement | null = null;
   private explosionBuffer: AudioBuffer | null = null;
   private lastLaserAt = 0;
   private lastExplosionAt = 0;
@@ -20,6 +22,7 @@ class AudioSystem {
     this.isMuted = mute;
     if (mute) {
       this.stopEngine();
+      this.stopQuestionAudio();
     } else {
       this.startEngine(200);
     }
@@ -158,62 +161,33 @@ class AudioSystem {
     });
   }
 
-  startEngine(altitude: number) {
+  startEngine(_altitude: number) {
     if (this.isMuted) return;
     try {
-      this.initCtx();
-      if (!this.ctx) return;
-      
-      if (this.engineOsc) {
-        this.updateEnginePitch(altitude);
-        return;
+      if (!this.engineAudio) {
+        this.engineAudio = new Audio(planeEngineSound);
+        this.engineAudio.loop = true;
+        this.engineAudio.preload = 'auto';
+        this.engineAudio.volume = 0.14;
       }
 
-      this.engineOsc = this.ctx.createOscillator();
-      this.engineGain = this.ctx.createGain();
-
-      this.engineOsc.type = 'triangle';
-      
-      // Calculate frequency: low altitude = lower frequency, high altitude = higher frequency hum!
-      const targetFreq = 60 + (altitude / 100) * 40; // 60Hz to 100Hz
-      this.engineOsc.frequency.setValueAtTime(targetFreq, this.ctx.currentTime);
-
-      this.engineGain.gain.setValueAtTime(0.03, this.ctx.currentTime); // Low volume background hum
-
-      // Lowpass filter to make it sound like a real distant propeller engine
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(150, this.ctx.currentTime);
-
-      this.engineOsc.connect(filter);
-      filter.connect(this.engineGain);
-      this.engineGain.connect(this.ctx.destination);
-
-      this.engineOsc.start(0);
+      if (!this.engineAudio.paused) return;
+      void this.engineAudio.play().catch(() => {
+        // Browsers can defer playback until the next user gesture.
+      });
     } catch (e) {
-      console.error("Failed to start engine hum:", e);
+      console.error("Failed to start plane engine sound:", e);
     }
   }
 
-  updateEnginePitch(altitude: number) {
-    if (this.isMuted || !this.engineOsc || !this.ctx) return;
-    const targetFreq = 60 + (altitude / 100) * 40;
-    this.engineOsc.frequency.setTargetAtTime(targetFreq, this.ctx.currentTime, 0.5);
+  updateEnginePitch(_altitude: number) {
+    // The recorded engine sound keeps a consistent pitch during flight.
   }
 
   stopEngine() {
-    if (this.engineOsc) {
-      try {
-        this.engineOsc.stop();
-        this.engineOsc.disconnect();
-      } catch (e) {}
-      this.engineOsc = null;
-    }
-    if (this.engineGain) {
-      try {
-        this.engineGain.disconnect();
-      } catch (e) {}
-      this.engineGain = null;
+    if (this.engineAudio) {
+      this.engineAudio.pause();
+      this.engineAudio.currentTime = 0;
     }
   }
 
@@ -294,11 +268,11 @@ class AudioSystem {
   speakText(text: string, langCode: string = 'ar-SA', audioUrl?: string | null) {
     if (this.isMuted) return;
     try {
-      window.speechSynthesis.cancel(); // Stop any ongoing speech
+      this.stopQuestionAudio();
 
       if (audioUrl) {
-        const audioObj = new Audio(audioUrl);
-        audioObj.play().catch(e => {
+        this.questionAudio = new Audio(audioUrl);
+        this.questionAudio.play().catch(e => {
           console.error("Audio playback failed:", e);
         });
       } else if ('speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined' && text.trim()) {
@@ -308,6 +282,15 @@ class AudioSystem {
       }
     } catch (e) {
       console.error("Speech synthesis/audio failed:", e);
+    }
+  }
+
+  stopQuestionAudio() {
+    window.speechSynthesis?.cancel();
+    if (this.questionAudio) {
+      this.questionAudio.pause();
+      this.questionAudio.currentTime = 0;
+      this.questionAudio = null;
     }
   }
 

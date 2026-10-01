@@ -1,235 +1,63 @@
-/* Three-zone, scroll-free welcome layout: stats, hero, calls to action. */
 .gws-screen {
   position: fixed;
   inset: 0;
   z-index: 5000;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  gap: clamp(8px, 2dvh, 22px);
   width: 100%;
   height: 100dvh;
-  min-height: 0;
-  box-sizing: border-box;
-  padding: max(8px, env(safe-area-inset-top)) clamp(10px, 2.5vw, 28px)
-    max(8px, env(safe-area-inset-bottom));
-  gap: clamp(6px, 1.4vh, 14px);
+  padding: max(8px, env(safe-area-inset-top)) clamp(10px, 3vw, 40px) max(8px, env(safe-area-inset-bottom));
   overflow: hidden;
-  direction: rtl;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-/* HEADER — normal flow reserves its space; content order stays LTR and left anchored. */
-.gws-header {
-  position: static;
-  z-index: 1;
-  flex: 0 0 auto;
-  align-self: flex-start;
-  width: auto;
-  margin: 0;
-  margin-right: auto;
-  margin-left: 0;
-  direction: ltr;
-}
-
-.gws-stats-bg {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  /* Portable component dimensions: independent from this page's hero and footer. */
-  width: 260px;
-  min-width: 0;
-  min-height: 56px;
-  box-sizing: border-box;
-  padding: 4px 14px;
-  gap: 8px;
-  background-position: center;
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  direction: ltr;
-}
-
-.gws-stat-icon {
-  flex: 0 0 auto;
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
-}
-
-.gws-stat-text {
-  color: #fff;
-  font-family: var(--font-arabic, 'Lateef', sans-serif);
-  font-size: 24px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.gws-stat-text--yellow {
-  color: #ffe45c;
-}
-
-/* CENTER — this is the only zone allowed to shrink. */
-.gws-body {
-  display: flex;
-  flex: 1 1 auto;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.gws-hero-img {
-  display: block;
-  flex: 0 1 auto;
-  width: auto;
-  height: auto;
-  max-width: min(90vw, 800px);
-  max-height: min(55vh, 500px);
-  object-fit: contain;
-  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.32));
-}
-
-/* FOOTER — button dimensions follow their shared 565:231 source ratio. */
-.gws-footer {
-  display: flex;
-  flex: 0 0 auto;
-  justify-content: center;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-.gws-footer-buttons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: max-content;
-  max-width: 100%;
-  gap: clamp(10px, 1.8vw, 24px);
-  /* The first button is the RTL reading start, so Exit remains on the right. */
-  direction: rtl;
-}
-
-.gws-img-btn,
-.gws-start-btn {
-  display: block;
-  flex: 0 1 auto;
-  width: clamp(120px, 22vw, 280px);
-  height: auto;
-  aspect-ratio: 565 / 231;
-  box-sizing: border-box;
-  padding: 0;
-  overflow: hidden;
-  border: 0;
-  border-radius: 999px;
+  /* Transparent by default so the existing animated sky background remains visible. */
   background-color: transparent;
   background-position: center;
+  background-size: cover;
   background-repeat: no-repeat;
-  background-size: 100% 100%;
-  cursor: pointer;
-  transition: transform 0.16s ease, filter 0.16s ease;
+  font-family: Lateef, var(--font-arabic, sans-serif);
+  direction: rtl;
 }
 
-.gws-img-btn img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
+.gws-header {
+  position: relative;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  margin-right: auto;
+  margin-left: 0;
+  width: clamp(160px, 18vw, 250px);
+  z-index: 1;
 }
 
-.gws-img-btn:hover:not(:disabled),
-.gws-start-btn:hover:not(:disabled) {
-  transform: translateY(-2px) scale(1.025);
-  filter: brightness(1.12);
+.gws-stats-bg { box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; width: 100%; height: auto; aspect-ratio: 397 / 137; padding: 5% 9%; gap: 5px; background-position: center; background-repeat: no-repeat; background-size: 100% 100%; direction: ltr; }
+.gws-stat-icon { flex: 0 0 auto; width: clamp(18px, 2vw, 29px); height: auto; aspect-ratio: 1; object-fit: contain; }
+.gws-stat-text, .gws-stat-equals { flex: 0 1 auto; color: #fff; font-size: clamp(18px, 1.8vw, 26px); font-weight: 800; line-height: 1; white-space: nowrap; }
+.gws-stat-text--yellow { color: #ffe500; }
+
+.gws-main-footer { display: flex; flex: 1 1 auto; flex-direction: column; align-items: center; justify-content: center; gap: clamp(8px, 2dvh, 22px); width: 100%; min-height: 0; }
+.gws-body { display: flex; flex: 0 1 auto; align-items: center; justify-content: center; align-self: center; width: 100%; min-height: 0; min-width: 0; overflow: hidden; }
+.gws-description-art { display: block; flex: 0 1 auto; width: auto; height: auto; max-width: min(90vw, 800px); max-height: min(55dvh, 500px, 100%); object-fit: contain; filter: drop-shadow(0 14px 28px rgba(0, 0, 0, .42)); }
+
+.gws-footer { flex: 0 0 auto; align-self: center; width: min(100%, clamp(280px, 38vw, 720px)); padding-bottom: max(0px, env(safe-area-inset-bottom)); }
+.gws-footer-buttons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; gap: clamp(8px, 2vw, 20px); width: 100%; }
+.gws-img-btn, .gws-start-btn { display: block; width: 100%; height: auto; aspect-ratio: 565 / 231; min-width: 0; box-sizing: border-box; padding: 0; border: 0; background-color: transparent; cursor: pointer; transition: transform .18s ease, filter .18s ease; }
+.gws-start-btn { background-position: center; background-repeat: no-repeat; background-size: 100% 100%; }
+.gws-img-btn img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.gws-img-btn:hover, .gws-start-btn:hover:not(:disabled) { transform: translateY(-2px) scale(1.025); filter: brightness(1.12); }
+.gws-img-btn:active, .gws-start-btn:active:not(:disabled) { transform: scale(.98); }
+.gws-start-btn:disabled { cursor: progress; opacity: .65; }
+.gws-img-btn:focus-visible, .gws-start-btn:focus-visible { outline: 3px solid #8bf4ff; outline-offset: 3px; border-radius: 15px; }
+
+@media (max-width: 599px) {
+  .gws-screen, .gws-main-footer { gap: clamp(6px, 1.2dvh, 12px); }
 }
 
-.gws-img-btn:focus-visible,
-.gws-start-btn:focus-visible {
-  outline: 3px solid #b9f5ff;
-  outline-offset: 3px;
-}
-
-.gws-start-btn:disabled {
-  cursor: progress;
-  opacity: 0.72;
-}
-
-/* Tighten only the mobile image-to-footer gap; keep the hero's size limits. */
-@media (max-width: 950px) {
-  .gws-screen {
-    gap: 4px;
-  }
-
-  .gws-body {
-    justify-content: flex-end;
-  }
-
-  .gws-footer-buttons {
-    gap: clamp(6px, 2vw, 12px);
-  }
-
-  .gws-img-btn,
-  .gws-start-btn {
-    width: clamp(112px, 39vw, 178px);
-  }
-}
-
-/* Self-contained small-device adjustment for the reusable stats pill. */
-@media (max-width: 400px) {
-  .gws-stats-bg {
-    width: 208px;
-    min-height: 48px;
-    padding: 4px 11px;
-    gap: 6px;
-  }
-
-  .gws-stat-icon {
-    width: 30px;
-    height: 30px;
-  }
-
-  .gws-stat-text {
-    font-size: 20px;
-  }
-}
-
-/* Shrink fixed zones first on short landscape screens. */
-@media (max-height: 430px) {
-  .gws-screen {
-    gap: 3px;
-    padding-top: max(4px, env(safe-area-inset-top));
-    padding-bottom: max(5px, env(safe-area-inset-bottom));
-  }
-
-  .gws-stats-bg {
-    width: 190px;
-    min-height: 40px;
-    padding: 2px 9px;
-  }
-
-  .gws-stat-icon {
-    width: 26px;
-    height: 26px;
-  }
-
-  .gws-stat-text {
-    font-size: 18px;
-  }
-
-  .gws-img-btn,
-  .gws-start-btn {
-    width: clamp(108px, 25vw, 166px);
-  }
-}
-
-/* Last-resort scroll is confined to the center, never the page. */
-@media (max-height: 300px) {
-  .gws-body {
-    justify-content: flex-start;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-  }
+@media (max-height: 500px) {
+  .gws-screen, .gws-main-footer { gap: 5px; }
+  .gws-header { width: clamp(142px, 23vw, 190px); }
+  .gws-stat-text, .gws-stat-equals { font-size: clamp(14px, 2.8vw, 18px); }
+  .gws-stat-icon { width: clamp(15px, 3vw, 21px); }
+  .gws-footer { width: min(100%, clamp(230px, 45vw, 440px)); }
+  .gws-body { overflow-y: auto; overflow-x: hidden; }
+  .gws-description-art { max-height: min(48dvh, 360px, 100%); }
 }
