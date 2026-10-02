@@ -1,8 +1,10 @@
 import planeEngineSound from '../assets/plane3.mp3';
+import bulletShotSound from '../assets/shoot.mpeg?url';
 
 class AudioSystem {
   private ctx: AudioContext | null = null;
   private engineAudio: HTMLAudioElement | null = null;
+  private bulletShotAudio: HTMLAudioElement | null = null;
   private questionAudio: HTMLAudioElement | null = null;
   private explosionBuffer: AudioBuffer | null = null;
   private lastLaserAt = 0;
@@ -39,21 +41,21 @@ class AudioSystem {
 
     const now = this.ctx.currentTime;
     const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5 (ascending major triad)
-    
+
     notes.forEach((freq, index) => {
       const osc = this.ctx!.createOscillator();
       const gain = this.ctx!.createGain();
-      
+
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(freq, now + index * 0.1);
-      
+
       gain.gain.setValueAtTime(0, now + index * 0.1);
       gain.gain.linearRampToValueAtTime(0.15, now + index * 0.1 + 0.05);
       gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.1 + 0.4);
-      
+
       osc.connect(gain);
       gain.connect(this.ctx!.destination);
-      
+
       osc.start(now + index * 0.1);
       osc.stop(now + index * 0.1 + 0.5);
     });
@@ -135,27 +137,27 @@ class AudioSystem {
 
     const now = this.ctx.currentTime;
     const notes = [392.00, 349.23, 311.13, 293.66, 261.63]; // Descending (G4, F4, Eb4, D4, C4)
-    
+
     notes.forEach((freq, index) => {
       const osc = this.ctx!.createOscillator();
       const gain = this.ctx!.createGain();
-      
+
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(freq, now + index * 0.2);
       osc.frequency.linearRampToValueAtTime(freq - 20, now + index * 0.2 + 0.2);
-      
+
       gain.gain.setValueAtTime(0.1, now + index * 0.2);
       gain.gain.linearRampToValueAtTime(0.08, now + index * 0.2 + 0.05);
       gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.2 + 0.25);
-      
+
       const filter = this.ctx!.createBiquadFilter();
       filter.type = 'lowpass';
       filter.frequency.setValueAtTime(500, now + index * 0.2);
-      
+
       osc.connect(filter);
       filter.connect(gain);
       gain.connect(this.ctx!.destination);
-      
+
       osc.start(now + index * 0.2);
       osc.stop(now + index * 0.2 + 0.3);
     });
@@ -191,24 +193,43 @@ class AudioSystem {
     }
   }
 
+  playBulletShot() {
+    if (this.isMuted) return;
+
+    try {
+      if (!this.bulletShotAudio) {
+        this.bulletShotAudio = new Audio(bulletShotSound);
+        this.bulletShotAudio.preload = 'auto';
+        this.bulletShotAudio.volume = 0.45;
+      }
+
+      this.bulletShotAudio.currentTime = 0;
+      void this.bulletShotAudio.play().catch(() => {
+        // Audio playback may be blocked until the browser receives a gesture.
+      });
+    } catch (error) {
+      console.error('Failed to play bullet shot sound:', error);
+    }
+  }
+
   playLaser() {
     if (this.isMuted) return;
     this.initCtx();
     if (!this.ctx) return;
-    
+
     const now = this.ctx.currentTime;
     if (now - this.lastLaserAt < 0.1) return;
     this.lastLaserAt = now;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
-    
+
     osc.type = 'sine';
     osc.frequency.setValueAtTime(600, now);
     osc.frequency.exponentialRampToValueAtTime(200, now + 0.15);
-    
+
     gain.gain.setValueAtTime(0.04, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-    
+
     osc.connect(gain);
     gain.connect(this.ctx.destination);
 
@@ -216,7 +237,7 @@ class AudioSystem {
       osc.disconnect();
       gain.disconnect();
     };
-    
+
     osc.start(now);
     osc.stop(now + 0.15);
   }
@@ -225,7 +246,7 @@ class AudioSystem {
     if (this.isMuted) return;
     this.initCtx();
     if (!this.ctx) return;
-    
+
     const now = this.ctx.currentTime;
     if (now - this.lastExplosionAt < 0.12) return;
     this.lastExplosionAt = now;
@@ -238,19 +259,19 @@ class AudioSystem {
         data[i] = Math.random() * 2 - 1;
       }
     }
-    
+
     const noise = this.ctx.createBufferSource();
     noise.buffer = this.explosionBuffer;
-    
+
     const filter = this.ctx.createBiquadFilter();
     filter.type = 'lowpass';
     filter.frequency.setValueAtTime(500, now);
     filter.frequency.exponentialRampToValueAtTime(10, now + 0.35);
-    
+
     const gain = this.ctx.createGain();
     gain.gain.setValueAtTime(0.08, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-    
+
     noise.connect(filter);
     filter.connect(gain);
     gain.connect(this.ctx.destination);
@@ -260,7 +281,7 @@ class AudioSystem {
       filter.disconnect();
       gain.disconnect();
     };
-    
+
     noise.start(now);
     noise.stop(now + 0.4);
   }

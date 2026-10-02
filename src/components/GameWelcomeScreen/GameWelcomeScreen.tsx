@@ -73,37 +73,40 @@ export default function GameWelcomeScreen({
         </div>
       </header>
 
-      <div className="gws-main-footer">
-        {/* BODY: Hero / Description Image */}
-        <main className="gws-body">
-          <img
-            src={heroImage}
-            alt={heroAlt}
-            className="gws-description-art"
-          />
-        </main>
-
-        {/* FOOTER: Exit + Start Buttons */}
-        <footer className="gws-footer">
-          <div className="gws-footer-buttons">
-
-          {/* Exit button */}
-          <button className="gws-img-btn" onClick={handleExit} aria-label="خروج">
-            <img src={exitButtonImage} alt="Exit" />
-          </button>
-
-          {/* Start button */}
-          <button
-            className="gws-start-btn"
-            style={{ backgroundImage: `url(${startButtonImage})` }}
-            onClick={onStart}
-            disabled={startDisabled}
-            aria-label={isLoading ? 'جارٍ التحميل' : 'ابدأ اللعبة'}
-          />
-
+      <main className="gws-main">
+        <div className="gws-stage">
+          <div className="gws-body">
+            <img
+              src={heroImage}
+              alt={heroAlt}
+              className="gws-description-art"
+              onLoad={(event) => {
+                const { naturalWidth, naturalHeight } = event.currentTarget;
+                const stage = event.currentTarget.closest<HTMLElement>('.gws-stage');
+                if (stage && naturalWidth > 0 && naturalHeight > 0) {
+                  stage.style.setProperty('--gws-art-ratio', `${naturalWidth} / ${naturalHeight}`);
+                }
+              }}
+            />
           </div>
-        </footer>
-      </div>
+
+          <footer className="gws-footer">
+            <div className="gws-footer-buttons">
+              <button className="gws-img-btn" type="button" onClick={handleExit} aria-label="خروج">
+                <img src={exitButtonImage} alt="" />
+              </button>
+              <button
+                className="gws-start-btn"
+                type="button"
+                style={{ backgroundImage: `url(${startButtonImage})` }}
+                onClick={onStart}
+                disabled={startDisabled}
+                aria-label={isLoading ? 'جارٍ التحميل' : 'ابدأ اللعبة'}
+              />
+            </div>
+          </footer>
+        </div>
+      </main>
 
     </div>
   );

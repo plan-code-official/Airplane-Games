@@ -1597,7 +1597,7 @@ function App() {
       addBullet(b3, spawnX, spawnY + spread * 2);
     }
 
-    audio.playLaser();
+    audio.playBulletShot();
   };
 
   const startAutoFire = (e: React.MouseEvent | React.TouchEvent) => {

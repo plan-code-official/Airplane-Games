@@ -1,4 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Outfit:wght@400;600;800&family=Lateef:wght@400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @font-face {
   font-family: 'FontGame';
@@ -39,8 +42,10 @@ body {
   height: 100dvh;
   width: 100vw;
   user-select: none;
-  touch-action: pan-x pan-y; /* Prevent pinch zoom but allow scrolling */
-  -webkit-text-size-adjust: 100%; /* Prevent font scaling in landscape */
+  touch-action: pan-x pan-y;
+  /* Prevent pinch zoom but allow scrolling */
+  -webkit-text-size-adjust: 100%;
+  /* Prevent font scaling in landscape */
 }
 
 #root {
@@ -104,8 +109,15 @@ body {
 }
 
 @keyframes engine-glow {
-  from { transform: scale(0.9); opacity: 0.55; }
-  to { transform: scale(1.15); opacity: 1; }
+  from {
+    transform: scale(0.9);
+    opacity: 0.55;
+  }
+
+  to {
+    transform: scale(1.15);
+    opacity: 1;
+  }
 }
 
 @keyframes pulse-btn {
@@ -780,7 +792,8 @@ body {
 }
 
 .welcome-content {
-  margin: auto; /* Fix for flexbox cutoff when content is taller than viewport */
+  margin: auto;
+  /* Fix for flexbox cutoff when content is taller than viewport */
   max-width: 600px;
   background: rgba(255, 255, 255, 0.05);
   border: 2px solid rgba(255, 255, 255, 0.1);
@@ -921,7 +934,8 @@ body {
 }
 
 .result-card {
-  margin: auto; /* Fix for flexbox cutoff when content is taller than viewport */
+  margin: auto;
+  /* Fix for flexbox cutoff when content is taller than viewport */
   max-width: 550px;
   width: 90%;
   max-height: 90vh;
@@ -2257,37 +2271,46 @@ body {
   font-weight: 900;
 }
 
-@media (max-width: 900px), (max-height: 500px) {
+@media (max-width: 900px),
+(max-height: 500px) {
   .sky-hud-header {
     padding: 8px 12px;
   }
+
   .hud-question-main-text {
     font-size: 18px;
   }
+
   .hud-back-btn {
     padding: 4px 8px !important;
     font-size: 18px !important;
   }
+
   .hud-category {
     padding: 4px 10px;
     font-size: 12px;
   }
+
   .hud-lives {
     padding: 4px 8px;
     gap: 4px;
   }
+
   .heart-icon {
     font-size: 16px;
   }
+
   .sound-toggle-inline {
     width: 28px;
     height: 28px;
     font-size: 12px;
   }
+
   .hud-question-text-inline {
     padding: 4px 12px;
     gap: 8px !important;
   }
+
   .play-audio-btn {
     width: 30px !important;
     height: 30px !important;
@@ -2463,7 +2486,7 @@ body {
   background: #06445a;
 }
 
-.hud-progress-track > span {
+.hud-progress-track>span {
   display: block;
   height: 100%;
   border-radius: inherit;
@@ -2471,7 +2494,8 @@ body {
   transition: width 0.25s ease;
 }
 
-@media (max-width: 900px), (max-height: 500px) {
+@media (max-width: 900px),
+(max-height: 500px) {
   .sky-hud-header {
     top: 5px;
     height: 64px;
@@ -2540,14 +2564,1343 @@ body {
 }
 
 @keyframes plane-damage-recoil {
-  0%, 100% { transform: translateX(0) rotate(0); }
-  18% { transform: translateX(-12px) rotate(-7deg); }
-  42% { transform: translateX(7px) rotate(4deg); }
-  68% { transform: translateX(-4px) rotate(-2deg); }
+
+  0%,
+  100% {
+    transform: translateX(0) rotate(0);
+  }
+
+  18% {
+    transform: translateX(-12px) rotate(-7deg);
+  }
+
+  42% {
+    transform: translateX(7px) rotate(4deg);
+  }
+
+  68% {
+    transform: translateX(-4px) rotate(-2deg);
+  }
 }
 
 @keyframes plane-damage-flinch {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  18% { transform: scale(0.9); opacity: 0.68; }
-  42% { transform: scale(1.04); opacity: 1; }
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  18% {
+    transform: scale(0.9);
+    opacity: 0.68;
+  }
+
+  42% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+}
+
+
+
+
+
+
+:root {
+  --spacing: 0.25rem;
+  --font-cairo: 'Lateef', 'FontGame', 'Cairo', 'Tajawal', system-ui, sans-serif;
+  --font-tajawal: 'Lateef', 'FontGame', 'Tajawal', 'Cairo', system-ui, sans-serif;
+  --font-Lateef: 'Lateef', 'FontGame', 'Cairo', 'Tajawal', system-ui, sans-serif;
+
+  /* Theme Colors */
+  --bg-dark: #0a0d1a;
+  --bg-card: rgba(15, 23, 42, 0.75);
+  --bg-card-hover: rgba(30, 41, 59, 0.85);
+  --border-color: rgba(99, 102, 241, 0.2);
+  --border-neon: #00f0ff;
+
+  /* Neon Glows */
+  --neon-cyan: #00f0ff;
+  --neon-pink: #ff007f;
+  --neon-green: #39ff14;
+  --neon-yellow: #fff01f;
+  --neon-purple: #bd00ff;
+  --neon-orange: #ff5f00;
+
+  color-scheme: dark;
+  font-synthesis: weight;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@font-face {
+  font-family: 'FontGame';
+  src: url('./assets/FontGame.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: var(--font-Lateef);
+  user-select: none;
+}
+
+body {
+  background: var(--bg-dark);
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(255, 0, 127, 0.08) 0%, transparent 40%);
+  color: #f3f4f6;
+  min-height: 100vh;
+  overflow-x: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* The play screen is a contained app surface. Keep the document from scrolling
+   while allowing the question card and maze to share the available viewport. */
+html.game-active,
+body.game-active {
+  height: 100%;
+  overflow: hidden;
+}
+
+body.game-active #root {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.game-screen {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.game-header {
+  flex: 0 0 auto;
+}
+
+.maze-header {
+  width: 100%;
+  flex: 0 0 auto;
+  padding: 12px 18px 8px;
+  position: relative;
+  z-index: 10;
+  border-radius: 18px;
+  background: linear-gradient(100deg, rgba(53, 53, 53, .94), rgba(83, 83, 83, .92));
+  border: 1px solid rgba(255, 255, 255, .22);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, .22);
+}
+
+.maze-header__main {
+  min-height: 98px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(110px, .8fr) 74px;
+  align-items: center;
+  gap: 16px;
+}
+
+.maze-header__left {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: clamp(12px, 3vw, 36px);
+  min-width: 0;
+}
+
+.maze-header__lives {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  color: #fff;
+  font-size: clamp(1.2rem, 2.5vw, 2rem);
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.maze-header__hearts {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.maze-header__hearts img {
+  width: clamp(25px, 3.8vw, 44px);
+  height: clamp(25px, 3.8vw, 44px);
+  object-fit: contain;
+  transition: opacity .2s, filter .2s, transform .2s;
+}
+
+.maze-header__hearts img.is-inactive {
+  opacity: .28;
+  filter: grayscale(1);
+  transform: scale(.88);
+}
+
+.maze-header__coins {
+  min-width: clamp(96px, 12vw, 150px);
+  height: clamp(54px, 6vw, 76px);
+  padding: 4px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, .8);
+  border-radius: 999px;
+  color: #fff;
+}
+
+.maze-header__coins img {
+  width: clamp(38px, 5vw, 58px);
+  height: clamp(38px, 5vw, 58px);
+  object-fit: contain;
+}
+
+.maze-header__coins strong {
+  font: 900 clamp(1.25rem, 2.4vw, 2rem)/1 Lateef, sans-serif;
+}
+
+.maze-header__question {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: clamp(1.35rem, 2.7vw, 2.2rem);
+  font-weight: 900;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.maze-header__question strong {
+  font: 900 clamp(1.45rem, 2.7vw, 2.2rem)/1.1 Lateef, sans-serif;
+}
+
+.maze-header__exit {
+  justify-self: end;
+  width: clamp(46px, 5.2vw, 66px);
+  height: clamp(46px, 5.2vw, 66px);
+  padding: 0 !important;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 20px;
+  background: #fff;
+  cursor: pointer;
+  transition: transform .15s, background .15s;
+}
+
+.maze-header__exit:hover {
+  transform: scale(1.05);
+  background: #e7f4ff;
+}
+
+.maze-header__exit img {
+  width: 78%;
+  height: 78%;
+  object-fit: contain;
+}
+
+.maze-header__progress {
+  width: 100%;
+  height: 14px;
+  overflow: hidden;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #063746;
+}
+
+.maze-header__progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #50d8fa;
+  transition: width .35s ease;
+}
+
+.game-main {
+  min-height: 0;
+}
+
+.question-panel {
+  min-height: 0;
+}
+
+.question-content {
+  min-height: 0;
+}
+
+.question-decoration {
+  width: 70%;
+  height: 70%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.question-image-wrap {
+  flex: 1 1 0;
+}
+
+.question-image {
+  width: auto;
+  height: auto;
+  max-height: 100%;
+}
+
+.question-image-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 8, 20, .86);
+  backdrop-filter: blur(8px);
+}
+
+.question-image-modal__content {
+  position: relative;
+  width: min(92vw, 900px);
+  height: min(88vh, 700px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  border-radius: 24px;
+  background: rgba(8, 30, 50, .96);
+  border: 2px solid rgba(0, 240, 255, .45);
+}
+
+.question-image-modal__content img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 16px;
+}
+
+.question-image-modal__close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 1;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: #ef4444;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.question-text {
+  width: 100%;
+  max-height: 38%;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  font-size: clamp(0.95rem, min(2.5vw, 3.4vh), 2rem) !important;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.question-audio svg {
+  max-width: 18vw;
+  max-height: 12vh;
+}
+
+.maze-column {
+  min-height: 0;
+}
+
+/* Give the maze the dominant visual area on wider displays. The canvas remains
+   square, but its maximum size now follows the available viewport instead of
+   being limited by the question card's fixed desktop width. */
+.maze-canvas-shell {
+  flex: 0 1 auto;
+}
+
+@media (min-width: 1024px) {
+  .game-screen {
+    width: 100%;
+    max-width: 1920px;
+    padding: clamp(12px, 1.5vw, 28px);
+    gap: clamp(8px, 1vw, 16px);
+  }
+
+  .game-main {
+    gap: clamp(16px, 2vw, 32px);
+  }
+
+  .question-panel {
+    flex-basis: clamp(280px, 20vw, 360px);
+    width: clamp(280px, 20vw, 360px);
+    overflow: hidden;
+  }
+
+  .question-content {
+    justify-content: flex-start;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: clamp(4px, 0.6vw, 10px);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 240, 255, 0.55) transparent;
+  }
+
+  .question-image-wrap {
+    flex: 0 1 auto;
+    max-height: 45%;
+  }
+
+  .question-text {
+    flex: 0 1 auto;
+    max-height: 38%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: block;
+    -webkit-line-clamp: unset;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .maze-column {
+    flex: 1 1 auto;
+    flex-basis: 0;
+    align-items: stretch;
+  }
+
+  .maze-canvas-shell {
+    width: 100%;
+    height: 100% !important;
+    max-width: none;
+    max-height: none;
+    aspect-ratio: auto;
+  }
+
+  .maze-canvas-shell canvas {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .game-screen {
+    padding: 12px clamp(16px, 3vw, 36px);
+  }
+
+  .game-main {
+    gap: 10px;
+  }
+
+  .question-panel {
+    flex-basis: clamp(150px, 21dvh, 220px);
+  }
+
+  .maze-canvas-shell {
+    width: min(100%, calc(100dvh - 220px));
+    height: auto !important;
+    max-width: none;
+    max-height: none;
+  }
+}
+
+@media (max-width: 1023px) {
+  .game-screen {
+    padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    gap: 8px;
+  }
+
+  .maze-header {
+    padding: 8px 10px 6px;
+    border-radius: 16px;
+  }
+
+  .maze-header__main {
+    min-height: 72px;
+    grid-template-columns: minmax(0, 1fr) minmax(82px, .7fr) 48px;
+    gap: 8px;
+  }
+
+  .maze-header__left {
+    gap: clamp(8px, 2vw, 18px);
+  }
+
+  .maze-header__lives {
+    font-size: clamp(1rem, 3.8vw, 1.4rem);
+  }
+
+  .maze-header__hearts {
+    gap: 4px;
+  }
+
+  .maze-header__coins {
+    min-width: clamp(70px, 20vw, 110px);
+    height: 46px;
+    padding: 3px 8px;
+    gap: 4px;
+  }
+
+  .maze-header__coins img {
+    width: 34px;
+    height: 34px;
+  }
+
+  .maze-header__coins strong {
+    font-size: 1.2rem;
+  }
+
+  .maze-header__question {
+    font-size: clamp(1rem, 4vw, 1.35rem);
+  }
+
+  .maze-header__question strong {
+    font-size: clamp(1.05rem, 4vw, 1.4rem);
+  }
+
+  .maze-header__exit {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+  }
+
+  .maze-header__progress {
+    height: 11px;
+  }
+
+  .game-hud {
+    gap: 10px;
+  }
+
+  .game-hud>div {
+    gap: 0;
+  }
+
+  .game-hud span:first-child {
+    font-size: 0.6rem;
+  }
+
+  .game-hud span:last-child {
+    font-size: 0.95rem;
+  }
+
+  .game-main {
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 0;
+  }
+
+  .question-panel {
+    flex: 0 0 clamp(145px, 28dvh, 245px);
+    width: 100%;
+    border-radius: 18px;
+  }
+
+  .question-image-wrap {
+    min-height: 0;
+  }
+
+  .question-text {
+    max-height: 38%;
+    font-size: clamp(0.9rem, 4vw, 1.3rem) !important;
+    line-height: 1.2;
+  }
+
+  .question-audio svg {
+    width: 50px;
+    height: 50px;
+  }
+
+  .maze-column {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .maze-header__main {
+    grid-template-columns: minmax(0, 1fr) minmax(70px, .55fr) 40px;
+    gap: 5px;
+  }
+
+  .maze-header__lives {
+    font-size: .95rem;
+  }
+
+  .maze-header__hearts img {
+    width: 22px;
+    height: 22px;
+  }
+
+  .maze-header__coins {
+    min-width: 64px;
+    height: 38px;
+    padding: 2px 5px;
+  }
+
+  .maze-header__coins img {
+    width: 29px;
+    height: 29px;
+  }
+
+  .maze-header__coins strong {
+    font-size: 1rem;
+  }
+
+  .maze-header__exit {
+    width: 36px;
+    height: 36px;
+  }
+
+  .game-hud {
+    gap: 6px;
+  }
+
+  .game-hud>div:nth-child(1) {
+    display: none;
+  }
+
+  .question-panel {
+    flex-basis: clamp(135px, 25dvh, 205px);
+  }
+}
+
+/* Keep the tablet maze large after the mobile stacking rules above. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .game-main {
+    flex-direction: row;
+    align-items: stretch;
+    gap: clamp(10px, 2vw, 20px);
+  }
+
+  .question-panel {
+    flex: 0 0 clamp(180px, 24vw, 260px);
+    width: clamp(180px, 24vw, 260px);
+    height: 100%;
+  }
+
+  .maze-column {
+    flex: 1 1 auto;
+    width: auto;
+    align-items: stretch;
+  }
+
+  .maze-canvas-shell {
+    width: 100%;
+    height: 100% !important;
+    max-width: none;
+    max-height: none;
+    aspect-ratio: auto;
+  }
+
+  .maze-canvas-shell canvas {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+  }
+}
+
+/* Keep the question card readable on wider layouts, even when a question has
+   a long Arabic prompt plus image and audio. */
+@media (min-width: 768px) {
+  .question-panel {
+    padding: clamp(10px, 1vw, 16px) !important;
+  }
+
+  .question-content {
+    justify-content: flex-start;
+    gap: clamp(6px, 0.8vw, 12px);
+    padding: 4px 2px clamp(12px, 1.2vw, 18px);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .question-image-wrap {
+    flex: 0 1 auto;
+    max-height: 42%;
+  }
+
+  .question-text {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: 34%;
+    padding: clamp(8px, 0.9vw, 14px) !important;
+    font-size: clamp(1.15rem, min(1.8vw, 2.6vh), 1.7rem) !important;
+    line-height: 1.15;
+    display: block;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-line-clamp: unset;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .question-audio {
+    flex: 0 0 auto;
+    min-height: 0;
+  }
+
+  .question-audio svg {
+    width: clamp(42px, 5vw, 68px);
+    height: clamp(42px, 5vw, 68px);
+    max-width: none;
+    max-height: none;
+  }
+}
+
+/* Intentional content hierarchy for each question combination. */
+.question-content--text {
+  justify-content: center;
+}
+
+.question-content--text .question-text {
+  flex: 0 1 auto;
+  max-height: 100%;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.question-content--image-text,
+.question-content--image-text-audio {
+  justify-content: flex-start;
+}
+
+.question-content--image-text .question-image-wrap,
+.question-content--image-text-audio .question-image-wrap {
+  flex: 0 0 36%;
+  width: 100%;
+  max-height: none;
+  min-height: 0;
+}
+
+.question-content--image-text .question-text,
+.question-content--image-text-audio .question-text,
+.question-content--text-audio .question-text {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  width: 100%;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.question-content--image-text-audio .question-audio,
+.question-content--text-audio .question-audio {
+  flex: 0 0 auto;
+  padding-top: 2px;
+}
+
+/* Give the question image and its text a little breathing room on larger
+   layouts without changing the compact mobile composition. */
+@media (min-width: 768px) {
+
+  .question-content--image-text .question-text,
+  .question-content--image-text-audio .question-text {
+    margin-top: clamp(8px, 1.2dvh, 18px);
+  }
+}
+
+.question-content--image-audio .question-image-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+
+.question-content--image-audio .question-audio {
+  flex: 0 0 auto;
+}
+
+.question-content--image-text-audio .question-image-wrap img,
+.question-content--image-text .question-image-wrap img {
+  max-height: 100%;
+}
+
+/* Glassmorphism Classes */
+.glass-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 12px 40px 0 rgba(99, 102, 241, 0.15);
+}
+
+.neon-border-cyan {
+  border: 1px solid var(--neon-cyan);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.3), inset 0 0 10px rgba(0, 240, 255, 0.2);
+}
+
+.neon-border-pink {
+  border: 1px solid var(--neon-pink);
+  box-shadow: 0 0 15px rgba(255, 0, 127, 0.3), inset 0 0 10px rgba(255, 0, 127, 0.2);
+}
+
+/* Typography & Glows */
+.text-glow-cyan {
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6), 0 0 20px rgba(0, 240, 255, 0.3);
+}
+
+.text-glow-pink {
+  text-shadow: 0 0 8px rgba(255, 0, 127, 0.6), 0 0 20px rgba(255, 0, 127, 0.3);
+}
+
+.text-glow-green {
+  text-shadow: 0 0 8px rgba(57, 255, 20, 0.6), 0 0 20px rgba(57, 255, 20, 0.3);
+}
+
+.text-glow-yellow {
+  text-shadow: 0 0 8px rgba(255, 240, 31, 0.6), 0 0 20px rgba(255, 240, 31, 0.3);
+}
+
+/* Animations */
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    opacity: 0.9;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+  }
+
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+  }
+}
+
+.pulse-glow-cyan {
+  animation: pulse-glow 2s infinite ease-in-out;
+}
+
+@keyframes shake {
+
+  10%,
+  90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+
+  20%,
+  80% {
+    transform: translate3d(2px, 0, 0);
+  }
+
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+
+  40%,
+  60% {
+    transform: translate3d(4px, 0, 0);
+  }
+}
+
+.animate-shake {
+  animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Game Button Styles */
+.game-btn {
+  position: relative;
+  background: linear-gradient(135deg, #4f46e5 0%, #312e81 100%);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 32px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.game-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(to right,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      rgba(255, 255, 255, 0) 100%);
+  transform: skewX(-25deg);
+  transition: 0.75s;
+  opacity: 0;
+}
+
+.game-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
+  border-color: rgba(99, 102, 241, 0.8);
+}
+
+.game-btn:hover::after {
+  left: 125%;
+  opacity: 1;
+}
+
+.game-btn:active {
+  transform: translateY(1px);
+}
+
+.game-btn-pink {
+  background: linear-gradient(135deg, #db2777 0%, #831843 100%);
+}
+
+.game-btn-pink:hover {
+  box-shadow: 0 0 20px rgba(219, 39, 119, 0.6);
+  border-color: rgba(219, 39, 119, 0.8);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.6);
+}
+
+/* New Welcome Screen Styles */
+.welcome-screen-new {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  gap: 30px;
+  direction: rtl;
+  /* Ensure the whole screen handles RTL properly */
+}
+
+.welcome-header-new {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+}
+
+.welcome-stats-bg {
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 25px;
+  min-width: 250px;
+  height: 60px;
+  gap: 15px;
+  direction: ltr;
+  /* Force LTR so Question Coin is Left, DaddCoin is Right */
+}
+
+.welcome-q-coin,
+.welcome-dadd-coin {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.welcome-stat-text {
+  font-size: 24px;
+  font-weight: 900;
+  font-family: 'Arial Black', Impact, sans-serif;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  margin-top: 2px;
+}
+
+.q-count {
+  color: white;
+}
+
+.xp-count {
+  color: #ffcc00;
+  /* Yellow */
+}
+
+.welcome-stat-arrow {
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.welcome-body-new {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 800px;
+  margin-top: 50px;
+  /* Push down to avoid header */
+}
+
+.welcome-description-img {
+  width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+}
+
+.welcome-footer-new {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 20px;
+}
+
+.welcome-start-btn-new {
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: transparent;
+  border: none;
+  width: 260px;
+  height: 85px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-weight: 900;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.2s;
+  padding-bottom: 12px;
+  /* Offset text to center properly on the graphic */
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.welcome-start-btn-new:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+
+.welcome-start-btn-new:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.welcome-loading,
+.welcome-error-new p {
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+  .welcome-screen-new {
+    justify-content: center;
+    gap: 15px;
+  }
+
+  .welcome-header-new {
+    position: relative;
+    top: 0;
+    right: 0;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .welcome-body-new {
+    margin-top: 0;
+  }
+
+  .welcome-stats-bg {
+    min-width: 220px;
+    height: 50px;
+    padding: 2px 20px;
+  }
+
+  .welcome-q-coin,
+  .welcome-dadd-coin {
+    width: 25px;
+    height: 25px;
+  }
+
+  .welcome-stat-text {
+    font-size: 18px;
+  }
+
+  .welcome-start-btn-new {
+    width: 180px;
+    height: 55px;
+    font-size: 22px;
+    padding-bottom: 5px;
+  }
+
+  .welcome-description-img {
+    max-height: 45vh;
+  }
+}
+
+.answer-feedback-card {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: clamp(220px, 42vw, 360px);
+  padding: clamp(16px, 2.6vh, 26px) clamp(24px, 4vw, 48px);
+  border: 2px solid;
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(8, 48, 70, .96), rgba(5, 30, 48, .94));
+  box-shadow: 0 16px 40px rgba(0, 0, 0, .45), inset 0 0 18px rgba(0, 196, 230, .16);
+  font-family: 'Lateef', sans-serif;
+  font-size: clamp(2.1rem, min(6vw, 6.4vh), 3.8rem);
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+  animation: answerFeedbackPop .22s cubic-bezier(.2, .86, .3, 1) both;
+}
+
+.answer-feedback-card--inline {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+  animation-name: answerFeedbackMazePop;
+}
+
+.answer-feedback-card--success {
+  color: #38ef7d;
+  border-color: #38ef7d;
+  text-shadow: 0 0 16px rgba(56, 239, 125, .55);
+}
+
+.answer-feedback-card--wrong {
+  color: #ff5d5c;
+  border-color: #ff5d5c;
+  text-shadow: 0 0 16px rgba(255, 93, 92, .55);
+}
+
+.answer-feedback__icon {
+  width: 1.15em;
+  height: 1.15em;
+  flex: 0 0 auto;
+}
+
+.answer-feedback__text {
+  display: inline-block;
+}
+
+.answer-feedback-card {
+  direction: ltr;
+  flex-direction: row;
+}
+
+.answer-feedback__text {
+  direction: rtl;
+}
+
+@keyframes answerFeedbackPop {
+  from {
+    opacity: 0;
+    transform: scale(.88) translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes answerFeedbackMazePop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.88) translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+
+
+
+
+.poppins-thin {
+  font-family: "Poppins", sans-serif;
+  font-weight: 100;
+  font-style: normal;
+}
+
+.poppins-extralight {
+  font-family: "Poppins", sans-serif;
+  font-weight: 200;
+  font-style: normal;
+}
+
+.poppins-light {
+  font-family: "Poppins", sans-serif;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.poppins-regular {
+  font-family: "Poppins", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.poppins-medium {
+  font-family: "Poppins", sans-serif;
+  font-weight: 500;
+  font-style: normal;
+}
+
+.poppins-semibold {
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  font-style: normal;
+}
+
+.poppins-bold {
+  font-family: "Poppins", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.poppins-extrabold {
+  font-family: "Poppins", sans-serif;
+  font-weight: 800;
+  font-style: normal;
+}
+
+.poppins-black {
+  font-family: "Poppins", sans-serif;
+  font-weight: 900;
+  font-style: normal;
+}
+
+.poppins-thin-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 100;
+  font-style: italic;
+}
+
+.poppins-extralight-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 200;
+  font-style: italic;
+}
+
+.poppins-light-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 300;
+  font-style: italic;
+}
+
+.poppins-regular-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.poppins-medium-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 500;
+  font-style: italic;
+}
+
+.poppins-semibold-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  font-style: italic;
+}
+
+.poppins-bold-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 700;
+  font-style: italic;
+}
+
+.poppins-extrabold-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 800;
+  font-style: italic;
+}
+
+.poppins-black-italic {
+  font-family: "Poppins", sans-serif;
+  font-weight: 900;
+  font-style: italic;
+}
+
+
+.cairo {
+  font-family: "Cairo", sans-serif;
 }
