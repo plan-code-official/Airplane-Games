@@ -220,7 +220,7 @@ const getAnswerLanePositions = () =>
     : [65, 48, 31, 14];
 
 const getMonsterBoxSize = (stageWidth: number, compact: boolean) =>
-  compact ? Math.min(104, Math.max(82, stageWidth * 0.11)) : 250;
+  compact ? Math.min(180, Math.max(128, stageWidth * 0.2)) : 250;
 
 const getQuestionOptionText = (option: string | QuestionOption) =>
   typeof option === 'string' ? option : option.text;

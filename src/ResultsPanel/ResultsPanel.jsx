@@ -62,11 +62,11 @@ export default function ResultsPanel({
             </div>
           </div>
         </div>
-        <div className="results-actions">
-          <button className="results-action results-action--back" type="button" onClick={onBack}>
+        <div className="results-actions" aria-label="إجراءات النتائج">
+          <button className="results-action results-action--back" type="button" onClick={onBack} aria-label="خروج">
             <img className="results-action__bg" src={exitButtonImage} alt="خروج" />
           </button>
-          <button className="results-action results-action--retry" type="button" onClick={onRetry}>
+          <button className="results-action results-action--retry" type="button" onClick={onRetry} aria-label="إعادة المحاولة">
             <img className="results-action__bg" src={retryButtonImage} alt="إعادة المحاولة" />
           </button>
         </div>
