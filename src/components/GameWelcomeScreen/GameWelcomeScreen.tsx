@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import './GameWelcomeScreen.css';
 
 interface GameWelcomeScreenProps {
@@ -80,13 +80,6 @@ export default function GameWelcomeScreen({
               src={heroImage}
               alt={heroAlt}
               className="gws-description-art"
-              onLoad={(event) => {
-                const { naturalWidth, naturalHeight } = event.currentTarget;
-                const stage = event.currentTarget.closest<HTMLElement>('.gws-stage');
-                if (stage && naturalWidth > 0 && naturalHeight > 0) {
-                  stage.style.setProperty('--gws-art-ratio', `${naturalWidth} / ${naturalHeight}`);
-                }
-              }}
             />
           </div>
 

@@ -8,7 +8,7 @@ import questionCoinImg from "./assets/QuestionCoin.png";
 import questionNumberBg from "./assets/QuestionNumber.png";
 import descriptionImg from "./assets/description.png";
 import welcomeExitButton from './assets/Exit1.png';
-import welcomeStartButton from './assets/Start.png';
+import welcomeStartButton from './assets/start_transparent.png';
 import ResultsPanel from './ResultsPanel/ResultsPanel';
 import Celebration from './Celebration/Celebration';
 import GameWelcomeScreen from './components/GameWelcomeScreen/GameWelcomeScreen';
@@ -1995,7 +1995,7 @@ function App() {
           {currentQuestion && !isFlyingOver && (
             <section className="question-prompt-panel" aria-label="السؤال الحالي" dir="auto">
               <div className="question-prompt-copy">
-                {currentQuestion.question && <p>{currentQuestion.question}</p>}
+                {currentQuestion.question && currentQuestion.question !== "." && <p>{currentQuestion.question}</p>}
                 {currentQuestion.audioUrl && (
                   <button
                     className="question-audio-btn"
