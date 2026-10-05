@@ -1,50 +1,95 @@
 const BASE_URL = 'https://learning-platform-1euu.onrender.com/api/v1';
 
+let latestToken: string | null = null;
+
+const apiFetch = async (url: string, options: RequestInit = {}, initialToken: string | null) => {
+    if (!latestToken && initialToken) {
+        latestToken = initialToken;
+    }
+
+    const currentToken = latestToken || initialToken;
+    const fetchOptions = { ...options };
+    if (currentToken) {
+        fetchOptions.headers = { ...fetchOptions.headers, Authorization: `Bearer ${currentToken}` };
+    }
+
+    let res = await fetch(url, fetchOptions);
+
+    if (res.status === 401) {
+        console.warn("401 Unauthorized encountered. Attempting to refresh token...");
+        try {
+            const storedRole = localStorage.getItem("app_role");
+            const refreshEndpoint = storedRole === "STUDENT" ? "/student/refresh" : "/auth/refresh";
+
+            const refreshRes = await fetch(`${BASE_URL}${refreshEndpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+
+            if (refreshRes.ok) {
+                const refreshData = await refreshRes.json();
+                const newToken = refreshData?.data?.accessToken || refreshData?.data?.token || refreshData?.accessToken || refreshData?.token;
+                
+                if (newToken) {
+                    console.log("Token refreshed successfully.");
+                    latestToken = newToken;
+
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.has('token')) urlParams.set('token', newToken);
+                    if (urlParams.has('accesstoken')) urlParams.set('accesstoken', newToken);
+                    const newUrl = window.location.pathname + '?' + urlParams.toString();
+                    window.history.replaceState(null, '', newUrl);
+
+                    fetchOptions.headers = { ...fetchOptions.headers, Authorization: `Bearer ${newToken}` };
+                    res = await fetch(url, fetchOptions);
+                }
+            } else {
+                console.error("Token refresh failed with status", refreshRes.status);
+            }
+        } catch (err) {
+            console.error("Error during token refresh", err);
+        }
+    }
+    
+    return res;
+};
+
 export const getGameQuestions = async (gameId: number, lessonId: string | null, token: string | null) => {
     const headers: HeadersInit = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
     const url = lessonId
         ? `${BASE_URL}/student/games/${gameId}/questions?lessonId=${lessonId}`
         : `${BASE_URL}/student/games/${gameId}/questions`;
 
-    const response = await fetch(url, { headers });
+    const response = await apiFetch(url, { headers }, token);
     return response.json();
 }
 
 export const startGameSession = async (gameId: number, lessonId: string | null, token: string | null) => {
     const headers: HeadersInit = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
     const url = lessonId
         ? `${BASE_URL}/student/games/${gameId}/sessions?lessonId=${lessonId}`
         : `${BASE_URL}/student/games/${gameId}/sessions`;
 
-    const response = await fetch(url, { method: 'POST', headers });
+    const response = await apiFetch(url, { method: 'POST', headers }, token);
     return response.json();
 }
 
 export const submitGameAnswers = async (sessionId: string | number, answers: any[], token: string | null) => {
     const headers: HeadersInit = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    const response = await fetch(`${BASE_URL}/student/games/sessions/${sessionId}/submit-answers`, {
+    const response = await apiFetch(`${BASE_URL}/student/games/sessions/${sessionId}/submit-answers`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ answers })
-    });
-
+    }, token);
     return response.json();
 };
 
 export const completeGameSession = async (sessionId: string | number, token: string | null) => {
     const headers: HeadersInit = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    const response = await fetch(`${BASE_URL}/student/games/sessions/${sessionId}/complete`, {
+    const response = await apiFetch(`${BASE_URL}/student/games/sessions/${sessionId}/complete`, {
         method: 'POST',
         headers,
-    });
-
+    }, token);
     return response.json();
 };
