@@ -4,20 +4,23 @@ let latestToken: string | null = null;
 
 const refreshAccessToken = async (): Promise<string | null> => {
     try {
-        let storedRole = null;
-        try {
-            storedRole = localStorage.getItem("app_role");
-        } catch (e) {
-            console.warn("Could not access localStorage", e);
-        }
-        const refreshEndpoint = storedRole === "STUDENT" ? "/student/refresh" : "/auth/refresh";
-
-        const refreshRes = await fetch(`${BASE_URL}${refreshEndpoint}`, {
+        // 1. Attempt Student Refresh
+        let refreshRes = await fetch(`${BASE_URL}/student/refresh`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: "{}"
         });
+
+        // 2. Fallback to Supervisor/Auth Refresh if unauthorized
+        if (!refreshRes.ok) {
+            refreshRes = await fetch(`${BASE_URL}/auth/refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: "{}"
+            });
+        }
 
         if (refreshRes.ok) {
             const refreshData = await refreshRes.json();
@@ -35,7 +38,7 @@ const refreshAccessToken = async (): Promise<string | null> => {
                 return newToken;
             }
         } else {
-            console.error("Token refresh failed with status", refreshRes.status);
+            console.error("Token refresh failed on both endpoints with status", refreshRes.status);
         }
     } catch (err) {
         console.error("Error during token refresh", err);
