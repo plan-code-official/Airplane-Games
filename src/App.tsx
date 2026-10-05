@@ -1827,7 +1827,11 @@ function App() {
 
 
   const handleBackToMenu = () => {
-    window.history.back();
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = '/'; 
+    }
   };
 
   const currentQuestion = questions[currentQuestionIndex];
