@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Flame, Shield, Smartphone, Volume2, VolumeX, Zap } from 'lucide-react';
+import { Flame, Smartphone, Volume2, VolumeX, Loader2 } from 'lucide-react';
 import { type Question, type QuestionOption } from './data/questions';
 import { audio } from './utils/audio';
 import { getGameQuestions, startGameSession, submitGameAnswers, completeGameSession } from './utils/gameApi';
@@ -14,7 +14,7 @@ import Celebration from './Celebration/Celebration';
 import GameWelcomeScreen from './components/GameWelcomeScreen/GameWelcomeScreen';
 import exitHudIcon from './assets/ExitButton.svg';
 import heartHudIcon from './assets/heart.png';
- 
+
 interface ExplosionParticle {
   id: number;
   x: number;
@@ -220,7 +220,7 @@ const getAnswerLanePositions = () =>
     : [65, 48, 31, 14];
 
 const getMonsterBoxSize = (stageWidth: number, compact: boolean) =>
-  compact ? Math.min(180, Math.max(128, stageWidth * 0.2)) : 250;
+  compact ? Math.min(144, Math.max(102, stageWidth * 0.16)) : 250;
 
 const getQuestionOptionText = (option: string | QuestionOption) =>
   typeof option === 'string' ? option : option.text;
@@ -229,7 +229,7 @@ const requestMobileFullscreen = () => {
   if (!window.matchMedia('(pointer: coarse)').matches) return;
   if (document.fullscreenElement || window.matchMedia('(display-mode: fullscreen)').matches) return;
   const request = document.documentElement.requestFullscreen?.({ navigationUI: 'hide' });
-  void request?.catch(() => {});
+  void request?.catch(() => { });
 };
 
 const ObstacleLayer = memo(function ObstacleLayer({
@@ -279,6 +279,10 @@ function App() {
   const [gameOverStats, setGameOverStats] = useState<{ coins?: number, stars?: number, experience?: number, score?: number, percentage?: number } | null>(null);
   const [isStartingSession, setIsStartingSession] = useState(false);
   const [isSubmittingStats, setIsSubmittingStats] = useState(false);
+  const isSubmittingStatsRef = useRef(false);
+  useEffect(() => {
+    isSubmittingStatsRef.current = isSubmittingStats;
+  }, [isSubmittingStats]);
   const [submitStatsError, setSubmitStatsError] = useState<string | null>(null);
 
   // Session tracking refs
@@ -291,6 +295,47 @@ function App() {
   const [apiQuestions, setApiQuestions] = useState<Question[]>([]);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
   const [previewQuestionImage, setPreviewQuestionImage] = useState<string | null>(null);
+  const previewQuestionImageRef = useRef<string | null>(null);
+  const isPausedRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    previewQuestionImageRef.current = previewQuestionImage;
+    if (previewQuestionImage) {
+      isPausedRef.current = true;
+    } else {
+      isPausedRef.current = false;
+    }
+  }, [previewQuestionImage]);
+
+  useEffect(() => {
+    if (gameState !== 'playing') return;
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        isPausedRef.current = true;
+      } else {
+        isPausedRef.current = false;
+      }
+    };
+
+    const handleBlur = () => {
+      isPausedRef.current = true;
+    };
+
+    const handleFocus = () => {
+      isPausedRef.current = false;
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleBlur);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleBlur);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [gameState]);
 
   // Touch dragging and mouse movement target the plane without React state updates.
   const touchMovePointerRef = useRef<number | null>(null);
@@ -312,12 +357,12 @@ function App() {
             }
             const normalizedOptions: Array<string | QuestionOption> = Array.isArray(parsedOptions)
               ? parsedOptions.map((option: any) => {
-                  if (typeof option === 'string') return option;
-                  return {
-                    text: String(option?.text ?? ''),
-                    imageUrl: option?.imageUrl ?? option?.image ?? null
-                  };
-                })
+                if (typeof option === 'string') return option;
+                return {
+                  text: String(option?.text ?? ''),
+                  imageUrl: option?.imageUrl ?? option?.image ?? null
+                };
+              })
               : [];
 
             const correctAnswerText = q.correctAnswer;
@@ -406,7 +451,7 @@ function App() {
 
   const [isFlyingOver, setIsFlyingOver] = useState<boolean>(false); // Victory animation
   const [movementDir, setMovementDir] = useState<'up' | 'down' | 'none'>('none');
-  
+
   const [isPhonePortrait, setIsPhonePortrait] = useState<boolean>(false);
 
   // Styling and Animation Effects
@@ -431,16 +476,16 @@ function App() {
   const planeAlphaMaskRef = useRef<SpriteAlphaMask | null>(null);
   const monsterAlphaMaskRef = useRef<SpriteAlphaMask | null>(null);
   const monsterMaskLoadStartedRef = useRef(false);
-  const updatePlaneMetricsRef = useRef<() => void>(() => {});
+  const updatePlaneMetricsRef = useRef<() => void>(() => { });
   const planeRef = useRef<HTMLImageElement>(null);
   const playerBulletLayerRef = useRef<HTMLCanvasElement>(null);
-  const drawPlayerBulletsRef = useRef<() => void>(() => {});
+  const drawPlayerBulletsRef = useRef<() => void>(() => { });
   const abilityCanvasRef = useRef<HTMLCanvasElement>(null);
-  const drawAbilitiesRef = useRef<(time: number) => void>(() => {});
+  const drawAbilitiesRef = useRef<(time: number) => void>(() => { });
   const explosionCanvasRef = useRef<HTMLCanvasElement>(null);
   const explosionParticlesRef = useRef<ExplosionParticle[]>([]);
   const explosionFrameRef = useRef<number | null>(null);
-  const drawExplosionsRef = useRef<(time: number) => void>(() => {});
+  const drawExplosionsRef = useRef<(time: number) => void>(() => { });
 
   const monsterRef = useRef<HTMLImageElement>(null);
 
@@ -574,6 +619,7 @@ function App() {
     setStarsSync(0);
     resetEarnedPoints();
     setIsBossCrashing(false);
+    isPausedRef.current = false;
 
     obstacleBulletsRef.current = [];
     bulletIdCounterRef.current = 0;
@@ -818,7 +864,8 @@ function App() {
       const enemyBulletWidthPct = ((isCompactScreen ? 12 : 25) / stageSizeRef.current.width) * 100;
       const enemyBulletHeightPct = ((isCompactScreen ? 4 : 8) / stageSizeRef.current.height) * 100;
 
-      if (isBossCrashing) {
+      if (isBossCrashing || isSubmittingStatsRef.current || isPausedRef.current || !!previewQuestionImageRef.current) {
+        lastUpdateTime = 0;
         animId = requestAnimationFrame(loop);
         return;
       }
@@ -885,9 +932,9 @@ function App() {
       const planeTouchesRect = (target: SpriteRect) => planeAlphaMaskRef.current
         ? alphaMaskTouchesRect(planeAlphaMaskRef.current, planeSpriteRect, target)
         : planeFallbackRect.left < target.left + target.width &&
-          planeFallbackRect.left + planeFallbackRect.width > target.left &&
-          planeFallbackRect.top < target.top + target.height &&
-          planeFallbackRect.top + planeFallbackRect.height > target.top;
+        planeFallbackRect.left + planeFallbackRect.width > target.left &&
+        planeFallbackRect.top < target.top + target.height &&
+        planeFallbackRect.top + planeFallbackRect.height > target.top;
       const pickupRect = (x: number, y: number, size: number): SpriteRect => ({
         left: (x / 100) * stageSizeRef.current.width,
         top: stageSizeRef.current.height - (y / 100) * stageSizeRef.current.height - size,
@@ -969,9 +1016,9 @@ function App() {
         const py1 = skyH - (y1Pct / 100) * skyH;
         const px2 = (x2Pct / 100) * skyW;
         const py2 = skyH - (y2Pct / 100) * skyH;
-        return Math.sqrt((px1 - px2)**2 + (py1 - py2)**2);
+        return Math.sqrt((px1 - px2) ** 2 + (py1 - py2) ** 2);
       };
-      
+
       const checkOverlapPct = (x1, y1, x2, y2, thresholdX, thresholdY) => {
         return Math.abs(x1 - x2) < thresholdX && Math.abs(y1 - y2) < thresholdY;
       };
@@ -1271,9 +1318,9 @@ function App() {
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', updateStageSize);
-      updatePlaneMetricsRef.current = () => {};
+      updatePlaneMetricsRef.current = () => { };
     };
-  }, [gameState, isBossCrashing, isFlyingOver]);
+  }, [gameState, isBossCrashing, isFlyingOver, isSubmittingStats]);
 
   // Draw all player shots in one canvas pass instead of maintaining and
   // repositioning a DOM node for every projectile on every frame.
@@ -1281,7 +1328,7 @@ function App() {
     const canvas = playerBulletLayerRef.current;
     const context = canvas?.getContext('2d', { alpha: true });
     if (!canvas || !context || gameState !== 'playing') {
-      drawPlayerBulletsRef.current = () => {};
+      drawPlayerBulletsRef.current = () => { };
       return;
     }
 
@@ -1330,7 +1377,7 @@ function App() {
     window.addEventListener('resize', resizeCanvas);
     return () => {
       window.removeEventListener('resize', resizeCanvas);
-      drawPlayerBulletsRef.current = () => {};
+      drawPlayerBulletsRef.current = () => { };
       context.clearRect(0, 0, width, height);
     };
   }, [gameState]);
@@ -1341,7 +1388,7 @@ function App() {
     const canvas = abilityCanvasRef.current;
     const context = canvas?.getContext('2d', { alpha: true, desynchronized: true });
     if (!canvas || !context || gameState !== 'playing') {
-      drawAbilitiesRef.current = () => {};
+      drawAbilitiesRef.current = () => { };
       return;
     }
 
@@ -1426,7 +1473,7 @@ function App() {
     drawAbilitiesRef.current = draw;
     window.addEventListener('resize', resizeCanvas);
     return () => {
-      drawAbilitiesRef.current = () => {};
+      drawAbilitiesRef.current = () => { };
       window.removeEventListener('resize', resizeCanvas);
       context.clearRect(0, 0, width, height);
       previousRects = [];
@@ -1438,6 +1485,7 @@ function App() {
     setPlaneEffect('shake');
     setLives(prev => {
       const nextLives = prev - 1;
+      livesRef.current = nextLives;
       if (nextLives <= 0) {
         setTimeout(() => handleEndGame(false), 1500);
       } else {
@@ -1509,7 +1557,7 @@ function App() {
     return () => {
       if (explosionFrameRef.current !== null) cancelAnimationFrame(explosionFrameRef.current);
       explosionFrameRef.current = null;
-      drawExplosionsRef.current = () => {};
+      drawExplosionsRef.current = () => { };
       window.removeEventListener('resize', resizeCanvas);
       context.clearRect(0, 0, canvas.width, canvas.height);
       explosionParticlesRef.current = [];
@@ -1660,6 +1708,10 @@ function App() {
       fireExplosion(explodeX, explodeY, 'red');
 
       setIsAnswerChecked(true);
+      // Make invincible so player doesn't get hit by bullets while retaliating
+      isInvincibleRef.current = true;
+      setIsInvincible(true);
+      invincibilityTimeRef.current = Date.now() + 2000;
 
       const planeWrapper = planeRef.current?.parentElement;
       if (planeWrapper && skyRef.current) {
@@ -1754,13 +1806,11 @@ function App() {
         setTimeout(() => {
           setPlaneEffect('normal');
         }, 1000);
+        // Only proceed if still alive
+        proceedAfterAnswer();
       }
       return newLives;
     });
-
-    if (livesRef.current > 0) {
-      proceedAfterAnswer();
-    }
   };
 
   const handleCheckAnswer = (correct: boolean) => {
@@ -1793,7 +1843,7 @@ function App() {
         const res = await completeGameSession(currentSessionId, token);
         if (res.success && res.data) {
           setGameOverStats({
-            coins: res.data.coins,
+            coins: res.data.coins ?? res.data.reward?.coins ?? 0,
             stars: res.data.stars,
             experience: res.data.experience,
             score: res.data.score,
@@ -1830,7 +1880,7 @@ function App() {
     if (window.history.length > 1) {
       window.history.back();
     } else {
-      window.location.href = '/'; 
+      window.location.href = '/';
     }
   };
 
@@ -1842,7 +1892,7 @@ function App() {
   useEffect(() => {
     if (gameState !== 'playing' || isFlyingOver || !currentQuestion?.audioUrl) return;
 
-    audio.speakText(currentQuestion.question, 'en-US', currentQuestion.audioUrl);
+    // speakText is removed, but we retain cleanup just in case
     return () => audio.stopQuestionAudio();
   }, [currentQuestion?.audioUrl, currentQuestion?.id, gameState, isFlyingOver]);
   const renderMonsterBoxSize = getMonsterBoxSize(renderStageWidth, isCompactStage);
@@ -1875,7 +1925,6 @@ function App() {
       <div className="rotate-overlay">
         <div className="rotate-icon"><Smartphone aria-hidden="true" /></div>
         <h2>يرجى تدوير الشاشة</h2>
-        <p>هذه اللعبة مصممة للعب في الوضع العرضي للحصول على أفضل تجربة.</p>
       </div>
 
       {gameState === 'gameover' && (
@@ -1893,23 +1942,23 @@ function App() {
       {/* ================= NEW WELCOME SCREEN ================= */}
       {gameState === 'welcome' && (
         <div className="sky-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <GameWelcomeScreen
-          statsBgImage={questionNumberBg}
-          statLeftIcon={questionCoinImg}
-          statLeftAlt="Q"
-          statLeftValue={apiQuestions.length || 10}
-          statRightValue={apiQuestions.length || 10}
-          statRightIcon={daadCoins}
-          statRightAlt="Coin"
-          heroImage={descriptionImg}
-          heroAlt="How to play"
-          startButtonImage={welcomeStartButton}
-          exitButtonImage={welcomeExitButton}
-          onStart={() => handleStartClick('all')}
-          isLoading={isLoadingQuestions || isStartingSession}
-          isReady={apiQuestions.length > 0}
-        />
-      </div>
+          <GameWelcomeScreen
+            statsBgImage={questionNumberBg}
+            statLeftIcon={questionCoinImg}
+            statLeftAlt="Q"
+            statLeftValue={apiQuestions.length || 10}
+            statRightValue={apiQuestions.length || 10}
+            statRightIcon={daadCoins}
+            statRightAlt="Coin"
+            heroImage={descriptionImg}
+            heroAlt="How to play"
+            startButtonImage={welcomeStartButton}
+            exitButtonImage={welcomeExitButton}
+            onStart={() => handleStartClick('all')}
+            isLoading={isLoadingQuestions || isStartingSession}
+            isReady={apiQuestions.length > 0}
+          />
+        </div>
 
       )}
 
@@ -2005,7 +2054,12 @@ function App() {
                     className="question-audio-btn"
                     type="button"
                     aria-label="تشغيل صوت السؤال"
-                    onClick={() => audio.speakText(currentQuestion.question, 'en-US', currentQuestion.audioUrl)}
+                    onClick={() => {
+                      if (currentQuestion.audioUrl) {
+                        const newAudio = new window.Audio(currentQuestion.audioUrl);
+                        newAudio.play().catch(e => console.error("Audio playback failed:", e));
+                      }
+                    }}
                   >
                     <Volume2 aria-hidden="true" size={22} />
                   </button>
@@ -2077,6 +2131,7 @@ function App() {
               src="/cartoon_airplane.png"
               className="airplane-img"
               alt="طائرة"
+              draggable={false}
               onLoad={() => updatePlaneMetricsRef.current()}
             />
 
@@ -2118,15 +2173,15 @@ function App() {
                       <span className="cloud-badge">
                         {idx === 0 ? "أ" : idx === 1 ? "ب" : idx === 2 ? "ج" : "د"}
                       </span>
-                  <span className="cloud-text">{getQuestionOptionText(option)}</span>
-                  {typeof option !== 'string' && option.imageUrl && (
-                    <img
-                      className="cloud-option-image"
-                      src={option.imageUrl}
-                      alt={getQuestionOptionText(option)}
-                      decoding="async"
-                    />
-                  )}
+                      <span className="cloud-text">{getQuestionOptionText(option)}</span>
+                      {typeof option !== 'string' && option.imageUrl && (
+                        <img
+                          className="cloud-option-image"
+                          src={option.imageUrl}
+                          alt={getQuestionOptionText(option)}
+                          decoding="async"
+                        />
+                      )}
                     </div>
                   </div>
                 );
@@ -2211,25 +2266,42 @@ function App() {
       {/* ================= CELEBRATION SCREEN ================= */}
       {gameState === 'celebration' && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 1000 }}>
-           <Celebration isVisible={true} onComplete={handleCelebrationComplete} />
+          <Celebration isVisible={true} onComplete={handleCelebrationComplete} />
         </div>
       )}
 
       {/* ================= GAME OVER SCREEN (RESULTS PANEL) ================= */}
       {gameState === 'gameover' && (
         <div className="sky-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <ResultsPanel 
-             score={questions.length > 0 ? Math.round((stars / questions.length) * 100) : 0}
-             totalScore={100}
-             correctAnswers={stars} 
-             wrongAnswers={questions.length - stars} 
-             coins={earnedPoints}
-             totalQuestions={questions.length}
-             onRetry={() => startGame(selectedCategory)}
-             onBack={handleBackToMenu}
+          <ResultsPanel
+            score={questions.length > 0 ? Math.round((stars / questions.length) * 100) : 0}
+            totalScore={100}
+            correctAnswers={stars}
+            wrongAnswers={questions.length - stars}
+            coins={gameOverStats?.coins ?? 0}
+            totalQuestions={questions.length}
+            onRetry={() => startGame(selectedCategory)}
+            onBack={handleBackToMenu}
           />
         </div>
       )}
+      {/* ================= SUBMITTING STATS SPINNER ================= */}
+      {isSubmittingStats && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 9999,
+          backgroundColor: 'rgba(0,0,0,0.7)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white'
+        }}>
+          <Loader2 className="animate-spin" size={48} />
+        </div>
+      )}
+
     </div>
   );
 }

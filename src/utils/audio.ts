@@ -286,25 +286,7 @@ class AudioSystem {
     noise.stop(now + 0.4);
   }
 
-  speakText(text: string, langCode: string = 'ar-SA', audioUrl?: string | null) {
-    if (this.isMuted) return;
-    try {
-      this.stopQuestionAudio();
-
-      if (audioUrl) {
-        this.questionAudio = new Audio(audioUrl);
-        this.questionAudio.play().catch(e => {
-          console.error("Audio playback failed:", e);
-        });
-      } else if ('speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined' && text.trim()) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = langCode;
-        window.speechSynthesis.speak(utterance);
-      }
-    } catch (e) {
-      console.error("Speech synthesis/audio failed:", e);
-    }
-  }
+  // speakText removed
 
   stopQuestionAudio() {
     window.speechSynthesis?.cancel();

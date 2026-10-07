@@ -275,7 +275,7 @@
     height: 90px !important;
   }
 
-  .action-fire-btn > svg {
+  .action-fire-btn>svg {
     width: 32px !important;
     height: 32px !important;
   }
@@ -292,7 +292,7 @@
     height: 112px !important;
   }
 
-  .action-fire-btn > svg {
+  .action-fire-btn>svg {
     width: 42px !important;
     height: 42px !important;
   }
@@ -425,8 +425,15 @@
 }
 
 @keyframes damage-smoke {
-  0% { opacity: 0.15; transform: translate(0, 0) scale(0.65); }
-  100% { opacity: 0; transform: translate(-35px, -14px) scale(1.5); }
+  0% {
+    opacity: 0.15;
+    transform: translate(0, 0) scale(0.65);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-35px, -14px) scale(1.5);
+  }
 }
 
 /* Inertia / Pitch Tilting */
@@ -509,8 +516,15 @@
 }
 
 @keyframes plane-flash {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
 }
 
 .invincible-flash {
@@ -1200,8 +1214,8 @@
     touch-action: none;
   }
 
-.obstacle-bullet,
-.player-bullet {
+  .obstacle-bullet,
+  .player-bullet {
     width: 12px !important;
     height: 4px !important;
   }
@@ -1257,33 +1271,35 @@
 .drop-heart,
 .drop-weapon,
 .drop-shield,
-.action-fire-btn > svg {
+.action-fire-btn>svg {
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
-.hud-back-btn > svg,
-.sound-toggle > svg,
-.sound-toggle-inline > svg {
+.hud-back-btn>svg,
+.sound-toggle>svg,
+.sound-toggle-inline>svg {
   width: 1em;
   height: 1em;
 }
 
-.heart-icon > svg {
+.heart-icon>svg {
   width: 1em;
   height: 1em;
   vertical-align: middle;
 }
 
-.drop-heart > svg,
-.drop-weapon > svg,
-.drop-shield > svg {
+.drop-heart>svg,
+.drop-weapon>svg,
+.drop-shield>svg {
   width: 1em;
   height: 1em;
 }
+
 /* MOBILE PERFORMANCE OPTIMIZATIONS */
 @media (max-width: 900px) {
+
   .cloud-bubble,
   .rotate-overlay,
   .sky-container,
@@ -1293,6 +1309,7 @@
     filter: none !important;
     box-shadow: none !important;
   }
+
   .airplane-img {
     filter: none !important;
   }
@@ -1308,9 +1325,9 @@
   justify-content: center;
   gap: 12px;
   width: max-content;
-  max-width: min(76vw, 780px);
-  max-height: 20vh;
-  padding: 7px 14px;
+  max-width: min(85vw, 880px);
+  max-height: 25vh;
+  padding: 8px 18px;
   transform: translateX(-50%);
   border: 1px solid rgba(255, 255, 255, 0.32);
   border-radius: 16px;
@@ -1320,6 +1337,8 @@
   backdrop-filter: blur(3px);
   pointer-events: none;
   font-family: 'Lateef', var(--font-arabic), sans-serif;
+  font-weight: 900;
+  font-size: larger;
 }
 
 .question-prompt-copy {
@@ -1331,14 +1350,14 @@
 }
 
 .question-prompt-copy p {
-  max-width: 58vw;
+  max-width: 70vw;
   color: #fff;
-  font-size: clamp(22px, 2.2vw, 32px);
-  font-weight: 700;
-  line-height: 1.1;
+  font-size: clamp(38px, 4.2vw, 56px);
+  font-weight: 800;
+  line-height: 1.15;
   text-align: center;
   overflow-wrap: anywhere;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.32);
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.45);
 }
 
 .question-prompt-image {
@@ -1379,8 +1398,14 @@
   touch-action: manipulation;
 }
 
-.question-audio-btn:hover { filter: brightness(1.14); transform: scale(1.04); }
-.question-audio-btn:active { transform: scale(.96); }
+.question-audio-btn:hover {
+  filter: brightness(1.14);
+  transform: scale(1.04);
+}
+
+.question-audio-btn:active {
+  transform: scale(.96);
+}
 
 .cloud-option-image {
   flex: 0 1 auto;
@@ -1390,14 +1415,15 @@
   object-fit: contain;
 }
 
-@media (max-width: 900px), (max-height: 500px) {
+@media (max-width: 900px),
+(max-height: 500px) {
   .question-prompt-panel {
     top: 77px;
-    gap: 6px;
-    max-width: 82vw;
-    max-height: 15vh;
-    padding: 4px 8px;
-    border-radius: 11px;
+    gap: 8px;
+    max-width: 90vw;
+    max-height: 26vh;
+    padding: 6px 14px;
+    border-radius: 12px;
   }
 
   .question-prompt-copy {
@@ -1405,9 +1431,10 @@
   }
 
   .question-prompt-copy p {
-    max-width: 58vw;
-    font-size: clamp(18px, 3vw, 23px);
-    line-height: 1.05;
+    max-width: 74vw;
+    font-size: clamp(30px, 4.8vw, 42px);
+    font-weight: 800;
+    line-height: 1.1;
   }
 
   .question-prompt-image {
@@ -1416,7 +1443,11 @@
     border-radius: 7px;
   }
 
-  .question-prompt-image-button { width: 80px; height: 56px; border-radius: 7px; }
+  .question-prompt-image-button {
+    width: 80px;
+    height: 56px;
+    border-radius: 7px;
+  }
 
   .question-audio-btn {
     width: 32px;

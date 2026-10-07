@@ -440,6 +440,10 @@ body {
   transition: bottom 1.2s ease-in-out, transform 0.8s ease-in-out, filter 0.5s ease;
   /* Keep the rendered sprite on the same coordinates as its gameplay hitbox. */
   animation: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .airplane-wrapper.engine-boost {
@@ -468,6 +472,11 @@ body {
   width: 185px;
   height: auto;
   filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.2));
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-drag: none;
 }
 
 /* Smoke trail effect */
