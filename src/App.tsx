@@ -730,7 +730,7 @@ function App() {
     if (target.closest('.sky-hud-header, .mobile-controls-overlay, button, a')) return;
 
     const stage = skyRef.current;
-    const usesTouchLayout = window.matchMedia('(pointer: coarse), (max-width: 1024px)').matches;
+    const usesTouchLayout = window.matchMedia('(pointer: coarse), (hover: none), (max-width: 1366px)').matches;
     if (stage && usesTouchLayout) {
       const { left, width } = stage.getBoundingClientRect();
       // The right half is reserved for answers and fire controls on touch layouts.
@@ -2123,7 +2123,12 @@ function App() {
               left: 0,
               translate: `${(planeXRef.current / 100) * renderStageWidth}px ${(-planeYRef.current / 100) * renderStageHeight}px`,
               position: 'absolute',
-              transition: isFlyingOver ? 'all 2.5s ease-in-out' : 'none'
+              transition: isFlyingOver ? 'all 2.5s ease-in-out' : 'none',
+              ...(isCompactStage
+                ? ({
+                    '--user-plane-mobile-width': `${Math.round(renderMonsterBoxSize * 1.1)}px`
+                  } as React.CSSProperties)
+                : {})
             }}
           >
             <img
@@ -2238,25 +2243,10 @@ function App() {
                 onPointerCancel={(e) => { e.preventDefault(); stopAutoFire(); }}
                 onMouseLeave={stopAutoFire}
                 onContextMenu={(e) => e.preventDefault()}
-                style={{
-                  width: '70px',
-                  height: '70px',
-                  borderRadius: '50%',
-                  background: 'radial-gradient(circle, #ef4444 0%, #b91c1c 100%)',
-                  color: 'white',
-                  border: '3px solid rgba(255,255,255,0.5)',
-                  boxShadow: '0 4px 12px rgba(239,68,68,0.4)',
-                  touchAction: 'none',
-                  zIndex: 100,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: 0
-                }}
+                aria-label="إطلاق النار"
               >
-                <Flame aria-hidden="true" size={24} />
-                <span className="fire-text" style={{ fontSize: '10px', fontWeight: 'bold' }}>إطلاق</span>
+                <Flame aria-hidden="true" size={40} className="fire-icon-svg" />
+                <span className="fire-text">إطلاق</span>
               </button>
             )}
           </div>

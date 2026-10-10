@@ -160,26 +160,17 @@
 /* Redesigned Mobile Controls Overlay */
 .mobile-controls-overlay {
   display: none;
-  /* hidden on non-touch devices via React conditional rendering */
   position: absolute;
-  bottom: 20px;
-  left: 20px;
-  right: 20px;
-  z-index: 50;
-  justify-content: space-between;
-  align-items: flex-end;
+  bottom: max(18px, env(safe-area-inset-bottom, 18px));
+  right: max(22px, env(safe-area-inset-right, 22px));
+  left: auto;
+  z-index: 95;
   pointer-events: none;
-  /* allow clicking through empty space */
   direction: ltr;
-  /* Force LTR so D-pad is always on the left, Fire always on the right */
 }
 
 .action-fire-btn {
   pointer-events: auto;
-  /* re-enable clicking on buttons */
-}
-
-.action-fire-btn {
   margin-left: auto;
 }
 
@@ -224,41 +215,37 @@
 
 /* Action Fire Button Styling */
 .action-fire-btn {
-  background: linear-gradient(135deg, #ef4444, #b91c1c);
-  border: none;
-  padding: 4px;
-  border-radius: 50px;
-  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4), inset 0 2px 2px rgba(255, 255, 255, 0.4);
-  transition: all 0.1s ease;
-}
-
-.fire-btn-inner {
-  background: linear-gradient(135deg, #f87171, #dc2626);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 46px;
-  padding: 12px 25px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.fire-icon {
-  font-size: 24px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  width: 120px;
+  height: 120px;
+  border-radius: 50% !important;
+  background: radial-gradient(circle at 35% 35%, #ff5252 0%, #dc2626 55%, #991b1b 100%) !important;
+  border: 3.5px solid rgba(255, 255, 255, 0.75) !important;
+  box-shadow: 0 8px 24px rgba(220, 38, 38, 0.55), inset 0 2px 4px rgba(255, 255, 255, 0.5) !important;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  padding: 0 !important;
 }
 
 .fire-text {
   color: white;
-  font-family: var(--font-arabic);
-  font-size: 18px;
+  font-family: var(--font-arabic), 'Cairo', sans-serif;
+  font-size: 16px;
   font-weight: 900;
   letter-spacing: 1px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  margin-top: 2px;
 }
 
 .action-fire-btn:active {
-  transform: scale(0.92) translateY(4px);
-  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.4), inset 0 2px 2px rgba(255, 255, 255, 0.1);
+  transform: scale(0.92) translateY(3px);
+  box-shadow: 0 3px 12px rgba(220, 38, 38, 0.6), inset 0 2px 2px rgba(255, 255, 255, 0.2) !important;
 }
 
 .d-pad-btn:disabled,
@@ -268,44 +255,58 @@
   filter: grayscale(100%);
 }
 
-/* The inline base control is intentionally overridden here for touch targets. */
-@media (max-width: 599px) {
+/* Mobile Screens: noticeably larger and comfortable to hit */
+@media (max-width: 768px) {
   .action-fire-btn {
-    width: 90px !important;
-    height: 90px !important;
+    width: 105px !important;
+    height: 105px !important;
   }
 
   .action-fire-btn>svg {
-    width: 32px !important;
-    height: 32px !important;
+    width: 38px !important;
+    height: 38px !important;
   }
 
   .action-fire-btn .fire-text {
-    font-size: 13px !important;
+    font-size: 15px !important;
+    font-weight: 900 !important;
   }
 }
 
-/* Tablets have the largest fire target for reliable sustained touch input. */
-@media (min-width: 600px) and (max-width: 1024px) {
-  .action-fire-btn {
-    width: 112px !important;
-    height: 112px !important;
-  }
-
-  .action-fire-btn>svg {
-    width: 42px !important;
-    height: 42px !important;
-  }
-
-  .action-fire-btn .fire-text {
-    font-size: 16px !important;
-  }
-}
-
-@media (pointer: coarse),
-(max-width: 950px) {
+/* Tablet Screens (iPads, Android tablets in portrait & landscape up to 1366px) */
+@media (min-width: 769px) and (max-width: 1366px),
+(pointer: coarse) and (min-width: 769px) {
   .mobile-controls-overlay {
-    display: flex;
+    bottom: max(24px, env(safe-area-inset-bottom, 24px));
+    right: max(28px, env(safe-area-inset-right, 28px));
+  }
+
+  .action-fire-btn {
+    width: 160px !important;
+    height: 160px !important;
+    border-width: 4.5px !important;
+    box-shadow: 0 10px 30px rgba(220, 38, 38, 0.6), inset 0 3px 6px rgba(255, 255, 255, 0.5) !important;
+  }
+
+  .action-fire-btn>svg {
+    width: 60px !important;
+    height: 60px !important;
+  }
+
+  .action-fire-btn .fire-text {
+    font-size: 22px !important;
+    font-weight: 900 !important;
+    letter-spacing: 1.5px !important;
+    margin-top: 4px !important;
+  }
+}
+
+/* Make mobile controls overlay visible on ALL tablet and mobile screens */
+@media (pointer: coarse),
+(hover: none),
+(max-width: 1366px) {
+  .mobile-controls-overlay {
+    display: flex !important;
   }
 
   .monster-img {
@@ -1233,7 +1234,7 @@
   }
 
   .airplane-img {
-    width: clamp(118px, 22vw, 190px) !important;
+    width: var(--user-plane-mobile-width, clamp(112px, 17.6vw, 158px)) !important;
   }
 
   .scrolling-obstacle {
