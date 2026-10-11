@@ -1,6 +1,6 @@
 import { memo, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Flame, Smartphone, Volume2, VolumeX, Loader2 } from 'lucide-react';
-import { type Question, type QuestionOption } from './data/questions';
+import { type Question, type QuestionOption, QUESTIONS } from './data/questions';
 import { audio } from './utils/audio';
 import { getGameQuestions, startGameSession, submitGameAnswers, completeGameSession } from './utils/gameApi';
 import daadCoins from "./assets/daddcoin.webp";
@@ -12,8 +12,10 @@ import welcomeStartButton from './assets/start_transparent.png';
 import ResultsPanel from './ResultsPanel/ResultsPanel';
 import Celebration from './Celebration/Celebration';
 import GameWelcomeScreen from './components/GameWelcomeScreen/GameWelcomeScreen';
+import ErrorScreen from './components/ErrorScreen/ErrorScreen';
 import exitHudIcon from './assets/ExitButton.svg';
 import heartHudIcon from './assets/heart.png';
+
 
 interface ExplosionParticle {
   id: number;
@@ -217,7 +219,7 @@ const alphaMasksOverlap = (
 const getAnswerLanePositions = () =>
   typeof window !== 'undefined' && window.matchMedia('(max-width: 768px) and (orientation: portrait)').matches
     ? [63, 47, 31, 15]
-    : [65, 48, 31, 14];
+    : [67, 49, 31, 13];
 
 const getMonsterBoxSize = (stageWidth: number, compact: boolean) =>
   compact ? Math.min(144, Math.max(102, stageWidth * 0.16)) : 250;
@@ -294,6 +296,8 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [apiQuestions, setApiQuestions] = useState<Question[]>([]);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [failedQuestionImages, setFailedQuestionImages] = useState<Record<string, boolean>>({});
   const [previewQuestionImage, setPreviewQuestionImage] = useState<string | null>(null);
   const previewQuestionImageRef = useRef<string | null>(null);
   const isPausedRef = useRef<boolean>(false);
@@ -342,14 +346,23 @@ function App() {
   const mouseTargetRef = useRef<{ x: number, y: number } | null>(null);
 
   useEffect(() => {
-    if (!lessonId) {
+    const isDemo = new URLSearchParams(window.location.search).get('demo') === 'true';
+
+    if (!lessonId && !isDemo) {
+      setError('Missing lessonId in URL parameters.');
+      setIsLoadingQuestions(false);
+      return;
+    }
+
+    if (isDemo && !lessonId) {
+      setApiQuestions(QUESTIONS);
       setIsLoadingQuestions(false);
       return;
     }
 
     getGameQuestions(3, lessonId, token)
       .then(data => {
-        if (data.success && data.data && data.data.questions) {
+        if (data.success && data.data && data.data.questions && data.data.questions.length > 0) {
           const mapped: Question[] = data.data.questions.map((q: any) => {
             let parsedOptions = q.options;
             if (typeof parsedOptions === 'string') {
@@ -383,9 +396,14 @@ function App() {
             };
           });
           setApiQuestions(mapped);
+        } else {
+          setError(data?.message || 'لا توجد أسئلة متاحة في هذا الدرس.');
         }
       })
-      .catch(err => console.error("Error fetching questions:", err))
+      .catch(err => {
+        console.error("Error fetching questions:", err);
+        setError('حدث خطأ أثناء تحميل الأسئلة.');
+      })
       .finally(() => setIsLoadingQuestions(false));
   }, [lessonId, token]);
   const [questions, _setQuestions] = useState<Question[]>([]);
@@ -1920,6 +1938,19 @@ function App() {
     return classes.join(' ');
   };
 
+  if (error || (!isLoadingQuestions && apiQuestions.length === 0)) {
+    return (
+      <ErrorScreen
+        onExit={handleBackToMenu}
+        description={
+          typeof error === 'string' && error.toLowerCase().includes('lessonid')
+            ? 'لا يمكننا العثور على الدرس المطلوب. يرجى التأكد من الرابط أو العودة للرئيسية.'
+            : (typeof error === 'string' ? error : 'لا يمكننا العثور على هذه الصفحة. دعنا نذهب إلى مكان مألوف.')
+        }
+      />
+    );
+  }
+
   return (
     <div className="app-container">
       <div className="rotate-overlay">
@@ -2065,7 +2096,7 @@ function App() {
                   </button>
                 )}
               </div>
-              {currentQuestion.imageUrl && (
+              {currentQuestion.imageUrl && !failedQuestionImages[currentQuestion.imageUrl] && (
                 <button
                   className="question-prompt-image-button"
                   type="button"
@@ -2077,7 +2108,7 @@ function App() {
                     src={currentQuestion.imageUrl}
                     alt="صورة السؤال"
                     decoding="async"
-                    onError={(event) => { event.currentTarget.parentElement?.remove(); }}
+                    onError={() => setFailedQuestionImages(prev => ({ ...prev, [currentQuestion.imageUrl!]: true }))}
                   />
                 </button>
               )}
@@ -2126,8 +2157,8 @@ function App() {
               transition: isFlyingOver ? 'all 2.5s ease-in-out' : 'none',
               ...(isCompactStage
                 ? ({
-                    '--user-plane-mobile-width': `${Math.round(renderMonsterBoxSize * 1.1)}px`
-                  } as React.CSSProperties)
+                  '--user-plane-mobile-width': `${Math.round(renderMonsterBoxSize * 1.1)}px`
+                } as React.CSSProperties)
                 : {})
             }}
           >
@@ -2175,6 +2206,12 @@ function App() {
                     }}
                   >
                     <div className="cloud-bubble">
+                      <svg className="cloud-shape-svg" viewBox="0 0 260 80" preserveAspectRatio="none" aria-hidden="true">
+                        <path
+                          d="M 45,68 C 25,68 10,55 10,40 C 10,26 22,16 36,15 C 40,6 55,0 72,0 C 88,0 102,6 110,16 C 120,4 140,-2 160,0 C 180,2 196,12 204,22 C 218,16 235,20 244,32 C 254,44 250,60 236,68 C 220,74 200,70 185,68 C 150,72 110,72 75,68 C 62,70 52,68 45,68 Z"
+                          vectorEffect="non-scaling-stroke"
+                        />
+                      </svg>
                       <span className="cloud-badge">
                         {idx === 0 ? "أ" : idx === 1 ? "ب" : idx === 2 ? "ج" : "د"}
                       </span>
