@@ -505,6 +505,16 @@ function App() {
   const explosionFrameRef = useRef<number | null>(null);
   const drawExplosionsRef = useRef<(time: number) => void>(() => { });
 
+  const fireButtonZoneRef = useRef<{
+    active: boolean;
+    leftPct: number;
+    topPctFromBottom: number;
+  }>({
+    active: false,
+    leftPct: 100,
+    topPctFromBottom: 0
+  });
+
   const monsterRef = useRef<HTMLImageElement>(null);
 
   // Gameplay loop coordinates and physics refs
@@ -731,28 +741,76 @@ function App() {
     };
   }, [gameState]);
 
+  const getFireButtonZone = () => {
+    if (fireButtonZoneRef.current.active) return fireButtonZoneRef.current;
+    const stage = skyRef.current;
+    const fireBtn = stage?.querySelector('.action-fire-btn') as HTMLElement | null;
+    if (stage && fireBtn) {
+      const stageRect = stage.getBoundingClientRect();
+      const fireRect = fireBtn.getBoundingClientRect();
+      const isVisible = fireRect.width > 0 && fireRect.height > 0 && window.getComputedStyle(fireBtn).display !== 'none';
+      if (isVisible && stageRect.width > 0 && stageRect.height > 0) {
+        const fireLeftPct = ((fireRect.left - stageRect.left) / stageRect.width) * 100;
+        const fireTopPxFromBottom = stageRect.bottom - fireRect.top;
+        const fireTopPctFromBottom = (fireTopPxFromBottom / stageRect.height) * 100;
+        fireButtonZoneRef.current = {
+          active: true,
+          leftPct: fireLeftPct,
+          topPctFromBottom: fireTopPctFromBottom
+        };
+        return fireButtonZoneRef.current;
+      }
+    }
+    return fireButtonZoneRef.current;
+  };
+
   const updatePlaneTargetFromPointer = (e: React.PointerEvent<HTMLDivElement>) => {
     const stage = skyRef.current;
     if (!stage) return;
     const rect = stage.getBoundingClientRect();
-    const x = Math.max(5, Math.min(55, ((e.clientX - rect.left) / rect.width) * 100));
+    const spriteWidthPct = planeSizePctRef.current.spriteWidth || 16;
+    const maxPlaneX = Math.max(60, 99 - spriteWidthPct);
+    let x = Math.max(2, Math.min(maxPlaneX, ((e.clientX - rect.left) / rect.width) * 100));
     const verticalProgress = (e.clientY - rect.top) / rect.height;
     const minPlaneY = -planeSizePctRef.current.bottom;
-    const y = 85 + (minPlaneY - 85) * verticalProgress;
+    let y = 85 + (minPlaneY - 85) * verticalProgress;
+
+    const fireZone = getFireButtonZone();
+    if (fireZone.active) {
+      const boostScale = planeEffectRef.current === 'boost' ? 1.15 : 1;
+      const currentSpriteWidth = spriteWidthPct * ((boostScale + 1) / 2);
+      const buttonBlockLeftX = fireZone.leftPct - currentSpriteWidth - 1.5;
+      const buttonBlockTopY = fireZone.topPctFromBottom + 1.5;
+
+      if (x > buttonBlockLeftX && y < buttonBlockTopY) {
+        if (x - buttonBlockLeftX < buttonBlockTopY - y) {
+          x = buttonBlockLeftX;
+        } else {
+          y = buttonBlockTopY;
+        }
+      }
+    }
+
     mouseTargetRef.current = { x, y };
   };
 
   const handleStagePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.pointerType === 'mouse') return;
     const target = e.target as HTMLElement;
-    if (target.closest('.sky-hud-header, .mobile-controls-overlay, button, a')) return;
+    if (target.closest('.sky-hud-header, button, a')) return;
 
-    const stage = skyRef.current;
-    const usesTouchLayout = window.matchMedia('(pointer: coarse), (hover: none), (max-width: 1366px)').matches;
-    if (stage && usesTouchLayout) {
-      const { left, width } = stage.getBoundingClientRect();
-      // The right half is reserved for answers and fire controls on touch layouts.
-      if (e.clientX > left + width / 2) return;
+    // Exclude the square bounding area of the shoot button so touching it only fires rather than moving the plane
+    const fireBtn = document.querySelector('.action-fire-btn') as HTMLElement | null;
+    if (fireBtn) {
+      const fireRect = fireBtn.getBoundingClientRect();
+      if (
+        e.clientX >= fireRect.left &&
+        e.clientX <= fireRect.right &&
+        e.clientY >= fireRect.top &&
+        e.clientY <= fireRect.bottom
+      ) {
+        return;
+      }
     }
 
     e.preventDefault();
@@ -790,6 +848,7 @@ function App() {
     let answerLanePositions = getAnswerLanePositions();
 
     const updateStageSize = () => {
+      fireButtonZoneRef.current.active = false;
       const width = skyRef.current?.clientWidth || window.innerWidth;
       const height = skyRef.current?.clientHeight || window.innerHeight;
       stageSizeRef.current = {
@@ -920,9 +979,35 @@ function App() {
 
       if (isMobile && dx < 0) dx *= 0.65;
 
-      planeXRef.current = Math.max(5, Math.min(55, planeXRef.current + dx));
+      const spriteWidthPct = planeSizePctRef.current.spriteWidth || 16;
+      const maxPlaneX = Math.max(60, 99 - spriteWidthPct);
+      let proposedPlaneX = Math.max(2, Math.min(maxPlaneX, planeXRef.current + dx));
       const minPlaneY = -planeSizePctRef.current.bottom;
-      planeYRef.current = Math.max(minPlaneY, Math.min(85, planeYRef.current + dy));
+      let proposedPlaneY = Math.max(minPlaneY, Math.min(85, planeYRef.current + dy));
+
+      const fireZone = getFireButtonZone();
+      if (fireZone.active) {
+        const currentSpriteWidth = spriteWidthPct * ((boostScale + 1) / 2);
+        const buttonBlockLeftX = fireZone.leftPct - currentSpriteWidth - 1.5;
+        const buttonBlockTopY = fireZone.topPctFromBottom + 1.5;
+
+        if (proposedPlaneX > buttonBlockLeftX && proposedPlaneY < buttonBlockTopY) {
+          if (planeYRef.current >= buttonBlockTopY - 0.5) {
+            proposedPlaneY = buttonBlockTopY;
+          } else if (planeXRef.current <= buttonBlockLeftX + 0.5) {
+            proposedPlaneX = buttonBlockLeftX;
+          } else {
+            if (proposedPlaneX - buttonBlockLeftX < buttonBlockTopY - proposedPlaneY) {
+              proposedPlaneX = buttonBlockLeftX;
+            } else {
+              proposedPlaneY = buttonBlockTopY;
+            }
+          }
+        }
+      }
+
+      planeXRef.current = proposedPlaneX;
+      planeYRef.current = proposedPlaneY;
 
       const planeSpriteWidthPx = (planeSizePctRef.current.spriteWidth / 100) * stageSizeRef.current.width;
       const planeSpriteHeightPx = (planeSizePctRef.current.spriteHeight / 100) * stageSizeRef.current.height;
