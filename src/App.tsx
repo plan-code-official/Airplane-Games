@@ -578,7 +578,7 @@ function App() {
 
   const skyRef = useRef<HTMLDivElement>(null);
   const stageSizeRef = useRef({ width: 0, height: 0 });
-  const [, setStageLayoutRevision] = useState(0);
+  const [stageLayoutRevision, setStageLayoutRevision] = useState(0);
   const lanePositionsNumRef = useRef<number[]>([56, 40, 24, 8]);
 
   const getStageHeaderBottom = useCallback((): number => {
