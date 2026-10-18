@@ -216,10 +216,39 @@ const alphaMasksOverlap = (
   return false;
 };
 
-const getAnswerLanePositions = () =>
-  typeof window !== 'undefined' && window.matchMedia('(max-width: 768px) and (orientation: portrait)').matches
-    ? [63, 47, 31, 15]
-    : [67, 49, 31, 13];
+const getAnswerLanePositions = (
+  stageHeight?: number,
+  headerBottomPx?: number,
+  isPortrait?: boolean,
+  laneCount: number = 4
+): number[] => {
+  const h = stageHeight || (typeof window !== 'undefined' ? window.innerHeight : 700);
+  const isCompact = h <= 540 || (typeof window !== 'undefined' && window.innerWidth <= 900);
+  const hb = headerBottomPx || (isCompact ? 135 : 185);
+  const portrait = isPortrait ?? (typeof window !== 'undefined' && window.matchMedia('(max-width: 768px) and (orientation: portrait)').matches);
+
+  // Little gap between header bottom and questions (24px desktop, 16px compact)
+  const gapPx = isCompact ? 16 : 24;
+  // Visual cloud height including SVG overhang (-10px top inset)
+  const cloudHeightPx = isCompact ? 58 : 82;
+  // Safe bottom margin
+  const minBottomPct = portrait ? 9 : 8;
+
+  // The top of highest cloud (lane 0) will be at (h - hb - gapPx) from bottom
+  const maxCloudTopFromBottomPx = Math.max(h * 0.35, h - hb - gapPx);
+  const topLaneBottomPx = Math.max(h * (minBottomPct / 100) + 40, maxCloudTopFromBottomPx - cloudHeightPx);
+  const topLaneBottomPct = Math.min(76, (topLaneBottomPx / h) * 100);
+
+  const count = Math.max(1, laneCount);
+  if (count === 1) return [Math.round(topLaneBottomPct)];
+
+  const step = (topLaneBottomPct - minBottomPct) / (count - 1);
+  const lanes: number[] = [];
+  for (let i = 0; i < count; i++) {
+    lanes.push(Math.round(topLaneBottomPct - i * step));
+  }
+  return lanes;
+};
 
 const getMonsterBoxSize = (stageWidth: number, compact: boolean) =>
   compact ? Math.min(144, Math.max(102, stageWidth * 0.16)) : 250;
@@ -550,6 +579,20 @@ function App() {
   const skyRef = useRef<HTMLDivElement>(null);
   const stageSizeRef = useRef({ width: 0, height: 0 });
   const [, setStageLayoutRevision] = useState(0);
+  const lanePositionsNumRef = useRef<number[]>([56, 40, 24, 8]);
+
+  const getStageHeaderBottom = useCallback((): number => {
+    const hud = skyRef.current?.querySelector('#hud-container') || skyRef.current?.querySelector('.sky-hud-header');
+    if (hud && skyRef.current) {
+      const stageRect = skyRef.current.getBoundingClientRect();
+      const hudRect = hud.getBoundingClientRect();
+      const bottomRel = hudRect.bottom - stageRect.top;
+      if (bottomRel > 40) return bottomRel;
+    }
+    const isCompact = (stageSizeRef.current.width || (typeof window !== 'undefined' ? window.innerWidth : 1200)) <= 900
+      || (stageSizeRef.current.height || (typeof window !== 'undefined' ? window.innerHeight : 800)) <= 520;
+    return isCompact ? 135 : 185;
+  }, []);
   const planeSizePctRef = useRef({
     width: 0, height: 0, left: 0, bottom: 0,
     spriteWidth: 0, spriteHeight: 0
@@ -630,12 +673,16 @@ function App() {
 
   const initClouds = (question: Question) => {
     if (!question) return;
-    const lanePositionsNum = getAnswerLanePositions();
+    const height = stageSizeRef.current.height || (typeof window !== 'undefined' ? window.innerHeight : 700);
+    const headerBottom = getStageHeaderBottom();
+    const count = question.options?.length || 4;
+    const lanePositionsNum = getAnswerLanePositions(height, headerBottom, isPhonePortrait, count);
+    lanePositionsNumRef.current = lanePositionsNum;
     cloudsRef.current = question.options.map((option, idx) => ({
       idx,
       text: getQuestionOptionText(option),
       x: 100 + (idx * 6), // Staggered slightly
-      y: lanePositionsNum[idx],
+      y: lanePositionsNum[idx] ?? (56 - idx * 16),
       speed: 0.08 + Math.random() * 0.04, // Smooth slow speed so player has time to read
       isActive: true
     }));
@@ -919,9 +966,15 @@ function App() {
         height
       };
       setStageLayoutRevision(revision => revision + 1);
-      answerLanePositions = getAnswerLanePositions();
+      const headerBottom = getStageHeaderBottom();
+      answerLanePositions = getAnswerLanePositions(height, headerBottom, isPhonePortrait, currentQuestion?.options?.length || 4);
+      lanePositionsNumRef.current = answerLanePositions;
       cloudsRef.current.forEach((cloud) => {
         cloud.y = answerLanePositions[cloud.idx] ?? cloud.y;
+        const cloudEl = document.getElementById(`cloud-option-${cloud.idx}`);
+        if (cloudEl) {
+          cloudEl.style.bottom = `${cloud.y}%`;
+        }
       });
       const spriteWidth = planeRef.current?.offsetWidth || 215;
       const spriteHeight = planeRef.current?.offsetHeight || spriteWidth * 682 / 1024;
@@ -974,20 +1027,27 @@ function App() {
 
     const getSafeObstacleY = (preferredY?: number) => {
       const stageHeight = stageSizeRef.current.height || window.innerHeight;
-      const boxSize = getMonsterBoxSize(stageSizeRef.current.width || window.innerWidth, isCompactScreen);
-      const headerHeight = skyRef.current?.querySelector('.sky-hud-header')?.getBoundingClientRect().height
-        ?? (isCompactScreen ? 56 : 72);
-      const minY = 12;
-      const maxY = Math.max(minY, 100 - ((headerHeight + 16 + boxSize) / stageHeight) * 100);
+      const stageWidth = stageSizeRef.current.width || window.innerWidth;
+      const boxSize = getMonsterBoxSize(stageWidth, isCompactScreen);
+      const headerBottom = getStageHeaderBottom();
+      const gapPx = isCompactScreen ? 18 : 28;
+      const minY = isCompactScreen ? 8 : 6;
+      // The top of the enemy airplane box must remain at least gapPx below headerBottom
+      const maxSafeTopPx = headerBottom + gapPx;
+      const maxY = Math.max(minY + 8, ((stageHeight - maxSafeTopPx - boxSize) / stageHeight) * 100);
       return preferredY === undefined
         ? minY + Math.random() * (maxY - minY)
         : Math.max(minY, Math.min(maxY, preferredY));
     };
 
+    const initialMinY = isCompactScreen ? 8 : 6;
+    const initialMaxY = getSafeObstacleY(100);
+    const safeObstacleRange = Math.max(10, initialMaxY - initialMinY);
+
     obstaclesRef.current = [
-      { id: 1, x: 110, y: getSafeObstacleY(25), speed: 0.35, type: 1, hasShot: false, hp: 2 },
-      { id: 2, x: 150, y: getSafeObstacleY(55), speed: 0.4, type: 2, hasShot: false, hp: 2 },
-      { id: 3, x: 190, y: getSafeObstacleY(60), speed: 0.3, type: 3, hasShot: false, hp: 2 }
+      { id: 1, x: 110, y: Math.round(initialMinY + safeObstacleRange * 0.15), speed: 0.35, type: 1, hasShot: false, hp: 2 },
+      { id: 2, x: 150, y: Math.round(initialMinY + safeObstacleRange * 0.55), speed: 0.4, type: 2, hasShot: false, hp: 2 },
+      { id: 3, x: 190, y: Math.round(initialMinY + safeObstacleRange * 0.88), speed: 0.3, type: 3, hasShot: false, hp: 2 }
     ];
 
     const loop = (time: number) => {
@@ -1046,7 +1106,10 @@ function App() {
       const maxPlaneX = Math.max(60, 99 - spriteWidthPct);
       let proposedPlaneX = Math.max(2, Math.min(maxPlaneX, planeXRef.current + dx));
       const minPlaneY = -planeSizePctRef.current.bottom;
-      let proposedPlaneY = Math.max(minPlaneY, Math.min(85, planeYRef.current + dy));
+      const headerBottom = getStageHeaderBottom();
+      const approxPlaneHeightPx = (planeSizePctRef.current.spriteHeight / 100) * stageSizeRef.current.height;
+      const maxPlaneY = Math.max(30, ((stageSizeRef.current.height - headerBottom - 12 - approxPlaneHeightPx) / stageSizeRef.current.height) * 100);
+      let proposedPlaneY = Math.max(minPlaneY, Math.min(maxPlaneY, planeYRef.current + dy));
 
       const fireZone = getFireButtonZone();
       if (fireZone.active) {
@@ -2075,8 +2138,15 @@ function App() {
   const renderMonsterBoxSize = getMonsterBoxSize(renderStageWidth, isCompactStage);
   const isMobilePortrait = typeof window !== 'undefined' && window.matchMedia("(max-width: 768px) and (orientation: portrait)").matches;
   const lanePositions = useMemo(
-    () => getAnswerLanePositions().map(position => `${position}%`),
-    [isMobilePortrait]
+    () => {
+      const height = stageSizeRef.current.height || (typeof window !== 'undefined' ? window.innerHeight : 700);
+      const headerBottom = getStageHeaderBottom();
+      const count = currentQuestion?.options?.length || 4;
+      const positions = getAnswerLanePositions(height, headerBottom, isMobilePortrait, count);
+      lanePositionsNumRef.current = positions;
+      return positions.map(position => `${position}%`);
+    },
+    [isMobilePortrait, stageLayoutRevision, currentQuestionIndex, getStageHeaderBottom]
   );
 
   const getPlaneClass = () => {
