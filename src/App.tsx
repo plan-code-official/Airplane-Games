@@ -420,6 +420,69 @@ function App() {
     _setCurrentQuestionIndex(idx);
   };
 
+  const [isPlayingQuestionAudio, setIsPlayingQuestionAudio] = useState<boolean>(false);
+  const activeQuestionAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const stopCurrentQuestionAudio = useCallback(() => {
+    if (activeQuestionAudioRef.current) {
+      try {
+        activeQuestionAudioRef.current.pause();
+        activeQuestionAudioRef.current.currentTime = 0;
+      } catch {
+        // ignore
+      }
+      activeQuestionAudioRef.current = null;
+    }
+    audio.stopQuestionAudio();
+    setIsPlayingQuestionAudio(false);
+  }, []);
+
+  const playCurrentQuestionAudio = useCallback((audioUrl?: string | null) => {
+    const url = audioUrl || questionsRef.current[currentQuestionIndexRef.current]?.audioUrl;
+    if (!url) return;
+
+    stopCurrentQuestionAudio();
+
+    try {
+      const audioEl = new Audio(url);
+      activeQuestionAudioRef.current = audioEl;
+      setIsPlayingQuestionAudio(true);
+
+      audioEl.onended = () => {
+        if (activeQuestionAudioRef.current === audioEl) {
+          setIsPlayingQuestionAudio(false);
+          activeQuestionAudioRef.current = null;
+        }
+      };
+
+      audioEl.onerror = () => {
+        if (activeQuestionAudioRef.current === audioEl) {
+          setIsPlayingQuestionAudio(false);
+          activeQuestionAudioRef.current = null;
+        }
+      };
+
+      audioEl.play().catch(err => {
+        console.warn("Audio play prevented / error:", err);
+        if (activeQuestionAudioRef.current === audioEl) {
+          setIsPlayingQuestionAudio(false);
+          activeQuestionAudioRef.current = null;
+        }
+      });
+    } catch (err) {
+      console.error("Audio creation failed:", err);
+      setIsPlayingQuestionAudio(false);
+    }
+  }, [stopCurrentQuestionAudio]);
+
+  const toggleCurrentQuestionAudio = useCallback((audioUrl?: string | null) => {
+    if (isPlayingQuestionAudio) {
+      stopCurrentQuestionAudio();
+    } else {
+      playCurrentQuestionAudio(audioUrl);
+    }
+  }, [isPlayingQuestionAudio, playCurrentQuestionAudio, stopCurrentQuestionAudio]);
+
   const [lives, _setLives] = useState<number>(3);
   const livesRef = useRef<number>(3);
   const setLives = (val: number | ((prev: number) => number)) => {
@@ -1772,7 +1835,7 @@ function App() {
     if (isAnswerCheckedRef.current || isFlyingOver) return;
 
     // A question ends as soon as an answer is selected, so its audio must end too.
-    audio.stopQuestionAudio();
+    stopCurrentQuestionAudio();
 
     setSelectedAnswer(cloud.idx);
     const currentQuestion = questionsRef.current[currentQuestionIndexRef.current];
@@ -1980,6 +2043,7 @@ function App() {
 
 
   const handleBackToMenu = () => {
+    stopCurrentQuestionAudio();
     if (window.history.length > 1) {
       window.history.back();
     } else {
@@ -1993,11 +2057,21 @@ function App() {
   const isCompactStage = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse), (max-width: 950px)').matches;
 
   useEffect(() => {
-    if (gameState !== 'playing' || isFlyingOver || !currentQuestion?.audioUrl) return;
+    if (gameState !== 'playing' || isFlyingOver) {
+      stopCurrentQuestionAudio();
+      return;
+    }
 
-    // speakText is removed, but we retain cleanup just in case
-    return () => audio.stopQuestionAudio();
-  }, [currentQuestion?.audioUrl, currentQuestion?.id, gameState, isFlyingOver]);
+    if (currentQuestion?.audioUrl) {
+      playCurrentQuestionAudio(currentQuestion.audioUrl);
+    } else {
+      stopCurrentQuestionAudio();
+    }
+
+    return () => {
+      stopCurrentQuestionAudio();
+    };
+  }, [currentQuestion?.id, currentQuestion?.audioUrl, gameState, isFlyingOver, playCurrentQuestionAudio, stopCurrentQuestionAudio]);
   const renderMonsterBoxSize = getMonsterBoxSize(renderStageWidth, isCompactStage);
   const isMobilePortrait = typeof window !== 'undefined' && window.matchMedia("(max-width: 768px) and (orientation: portrait)").matches;
   const lanePositions = useMemo(
@@ -2166,7 +2240,7 @@ function App() {
               <div className="hud-question-row" dir="rtl">
                 {currentQuestion.imageUrl && !failedQuestionImages[currentQuestion.imageUrl] && (
                   <div
-                    className="question-image-wrapper"
+                    className={`question-image-wrapper ${isPlayingQuestionAudio ? 'audio-playing' : ''}`}
                     role="button"
                     tabIndex={0}
                     aria-label="تكبير صورة السؤال"
@@ -2185,7 +2259,10 @@ function App() {
                       decoding="async"
                       onError={() => setFailedQuestionImages(prev => ({ ...prev, [currentQuestion.imageUrl!]: true }))}
                     />
-                    <span className="question-zoom-badge">اضغط للتكبير</span>
+                    <span className="question-zoom-badge">
+                      <span>اضغط للتكبير</span>
+                      <span className="zoom-icon-inline" aria-hidden="true">🔍</span>
+                    </span>
                   </div>
                 )}
 
@@ -2195,17 +2272,21 @@ function App() {
                   )}
                   {currentQuestion.audioUrl && (
                     <button
-                      className="question-audio-btn"
+                      className={`question-audio-btn ${isPlayingQuestionAudio ? 'is-playing' : ''}`}
                       type="button"
-                      aria-label="تشغيل صوت السؤال"
-                      onClick={() => {
-                        if (currentQuestion.audioUrl) {
-                          const newAudio = new window.Audio(currentQuestion.audioUrl);
-                          newAudio.play().catch(e => console.error("Audio playback failed:", e));
-                        }
-                      }}
+                      aria-label={isPlayingQuestionAudio ? "إيقاف صوت السؤال" : "تشغيل صوت السؤال"}
+                      title={isPlayingQuestionAudio ? "إيقاف الصوت" : "تشغيل الصوت"}
+                      onClick={() => toggleCurrentQuestionAudio(currentQuestion.audioUrl)}
                     >
-                      <Volume2 aria-hidden="true" size={20} />
+                      {isPlayingQuestionAudio ? (
+                        <span className="audio-wave-bars" aria-hidden="true">
+                          <span className="bar bar-1" />
+                          <span className="bar bar-2" />
+                          <span className="bar bar-3" />
+                        </span>
+                      ) : (
+                        <Volume2 aria-hidden="true" size={22} />
+                      )}
                     </button>
                   )}
                 </div>
@@ -2222,8 +2303,34 @@ function App() {
               onClick={() => setPreviewQuestionImage(null)}
             >
               <div className="question-image-modal__content" onClick={(event) => event.stopPropagation()}>
-                <button className="question-image-modal__close" type="button" onClick={() => setPreviewQuestionImage(null)} aria-label="إغلاق">×</button>
-                <img src={previewQuestionImage} alt="صورة السؤال بحجم كبير" />
+                <button
+                  className="question-image-modal__close"
+                  type="button"
+                  onClick={() => setPreviewQuestionImage(null)}
+                  aria-label="إغلاق"
+                >
+                  ×
+                </button>
+
+                <div
+                  className="modal-image-holder"
+                  title={currentQuestion?.audioUrl ? "اضغط للاستماع للصوت" : undefined}
+                  onClick={() => currentQuestion?.audioUrl && playCurrentQuestionAudio(currentQuestion.audioUrl)}
+                >
+                  <img src={previewQuestionImage} alt="صورة السؤال بحجم كبير" />
+                </div>
+
+                {currentQuestion?.audioUrl && (
+                  <button
+                    className={`modal-audio-btn ${isPlayingQuestionAudio ? 'is-playing' : ''}`}
+                    type="button"
+                    onClick={() => toggleCurrentQuestionAudio(currentQuestion.audioUrl)}
+                    aria-label={isPlayingQuestionAudio ? "إيقاف الصوت" : "استمع للسؤال"}
+                  >
+                    <Volume2 size={20} aria-hidden="true" />
+                    <span>{isPlayingQuestionAudio ? "إيقاف الصوت" : "استمع للسؤال"}</span>
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -2313,7 +2420,9 @@ function App() {
                       <span className="cloud-badge">
                         {idx === 0 ? "أ" : idx === 1 ? "ب" : idx === 2 ? "ج" : "د"}
                       </span>
-                      <span className="cloud-text">{getQuestionOptionText(option)}</span>
+                      {getQuestionOptionText(option) && getQuestionOptionText(option) !== "." && (
+                        <span className="cloud-text">{getQuestionOptionText(option)}</span>
+                      )}
                       {typeof option !== 'string' && option.imageUrl && (
                         <img
                           className="cloud-option-image"
