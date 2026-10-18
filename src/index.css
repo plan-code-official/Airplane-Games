@@ -3913,3 +3913,45 @@ body.game-active #root {
 .cairo {
   font-family: "Cairo", sans-serif;
 }
+
+.submitting-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(5, 11, 25, 0.75);
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: submittingFadeIn 0.3s ease-out;
+}
+
+.submitting-spinner {
+  width: 56px;
+  height: 56px;
+  border: 4px solid rgba(255, 255, 255, 0.15);
+  border-top-color: #00f0ff;
+  border-right-color: #00f0ff;
+  border-radius: 50%;
+  animation: submittingSpin 0.75s linear infinite;
+  filter: drop-shadow(0 0 12px rgba(0, 240, 255, 0.7));
+}
+
+@keyframes submittingSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes submittingFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+

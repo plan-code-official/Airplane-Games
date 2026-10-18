@@ -2399,18 +2399,8 @@ function App() {
       )}
       {/* ================= SUBMITTING STATS SPINNER ================= */}
       {isSubmittingStats && (
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          zIndex: 9999,
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white'
-        }}>
-          <Loader2 className="animate-spin" size={48} />
+        <div className="submitting-overlay" aria-busy="true">
+          <div className="submitting-spinner" />
         </div>
       )}
 

@@ -1390,14 +1390,15 @@
   left: 50%;
   z-index: 29;
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 16px;
   width: max-content;
   min-width: min(50vw, 380px);
-  max-width: min(88vw, 980px);
-  max-height: 28vh;
-  padding: 14px 28px;
+  max-width: min(92vw, 1100px);
+  max-height: 35vh;
+  padding: 12px 28px;
   transform: translateX(-50%);
   border: 1.5px solid rgba(255, 255, 255, 0.36);
   border-radius: 20px;
@@ -1420,14 +1421,14 @@
 }
 
 .question-prompt-copy p {
-  max-width: 74vw;
+  max-width: 76vw;
   color: #fff;
-  font-size: clamp(44px, 4.4vw, 60px);
-  font-weight: 800;
-  line-height: 1.15;
+  font-size: clamp(2.5rem, 12.5vw, 13.2rem);
+  font-weight: 900;
+  line-height: 1.05;
   text-align: center;
   overflow-wrap: anywhere;
-  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.45);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
 }
 
 .question-prompt-image {
@@ -1491,9 +1492,9 @@
     top: 76px;
     gap: 10px;
     min-width: min(60vw, 320px);
-    max-width: 92vw;
-    max-height: 28vh;
-    padding: 10px 22px;
+    max-width: 95vw;
+    max-height: 34vh;
+    padding: 8px 20px;
     border-radius: 16px;
   }
 
@@ -1502,22 +1503,23 @@
   }
 
   .question-prompt-copy p {
-    max-width: 78vw;
-    font-size: clamp(38px, 5.8vw, 48px);
-    font-weight: 800;
-    line-height: 1.15;
+    max-width: 80vw;
+    font-size: clamp(3.4rem, 17vw, 14rem);
+    font-weight: 900;
+    line-height: 1.05;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
   }
 
   .question-prompt-image {
-    width: 86px;
-    height: 60px;
-    border-radius: 8px;
+    width: 105px;
+    height: 75px;
+    border-radius: 10px;
   }
 
   .question-prompt-image-button {
-    width: 86px;
-    height: 60px;
-    border-radius: 8px;
+    width: 105px;
+    height: 75px;
+    border-radius: 10px;
   }
 
   .question-audio-btn {
