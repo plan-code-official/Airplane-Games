@@ -2119,34 +2119,36 @@ function App() {
         >
 
 
-          {/* Top HUD Header */}
+          {/* Top HUD Header - Unified Glass Card */}
           <div className="sky-hud-header">
-            <button className="hud-exit-button" onClick={handleBackToMenu} title="خروج" aria-label="خروج">
-              <img src={exitHudIcon} alt="" />
-            </button>
-
-            <div className="hud-center" aria-live="polite">
-              <span className="hud-question-label">السؤال</span>
-              <span className="hud-question-number">
-                {currentQuestionIndex + 1}/{Math.max(questions.length, 1)}
-              </span>
-            </div>
-
-            <div className="hud-right">
-              <div className="hud-lives" aria-label={`${lives} من 3 قلوب`}>
-                <span className="hud-lives-label">القلوب</span>
-                <div className="hud-heart-row">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <span key={i} className={`heart-icon ${i >= lives ? 'lost' : ''}`}>
-                      <img src={heartHudIcon} alt="" aria-hidden="true" />
-                    </span>
-                  ))}
+            <div className="hud-top-row">
+              <div className="hud-stats-group">
+                <div className="hud-lives" aria-label={`${lives} من 3 قلوب`}>
+                  <span className="hud-lives-label">القلوب</span>
+                  <div className="hud-heart-row">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <span key={i} className={`heart-icon ${i >= lives ? 'lost' : ''}`}>
+                        <img src={heartHudIcon} alt="" aria-hidden="true" />
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="hud-coins" aria-label={`النقاط ${earnedPoints}`}>
+                  <img src={daadCoins} alt="" aria-hidden="true" />
+                  <span>{earnedPoints}</span>
                 </div>
               </div>
-              <div className="hud-coins" aria-label={`النقاط ${earnedPoints}`}>
-                <img src={daadCoins} alt="" aria-hidden="true" />
-                <span>{earnedPoints}</span>
+
+              <div className="hud-center" aria-live="polite">
+                <span className="hud-question-label">السؤال</span>
+                <span className="hud-question-number">
+                  {currentQuestionIndex + 1}/{Math.max(questions.length, 1)}
+                </span>
               </div>
+
+              <button className="hud-exit-button" onClick={handleBackToMenu} title="خروج" aria-label="خروج">
+                <img src={exitHudIcon} alt="" />
+              </button>
             </div>
 
             <div
@@ -2159,46 +2161,57 @@ function App() {
             >
               <span style={{ width: `${Math.min(100, ((currentQuestionIndex + 1) / Math.max(questions.length, 1)) * 100)}%` }} />
             </div>
-          </div>
 
-          {currentQuestion && !isFlyingOver && (
-            <section className="question-prompt-panel" aria-label="السؤال الحالي" dir="auto">
-              <div className="question-prompt-copy">
-                {currentQuestion.question && currentQuestion.question !== "." && <p>{currentQuestion.question}</p>}
-                {currentQuestion.audioUrl && (
-                  <button
-                    className="question-audio-btn"
-                    type="button"
-                    aria-label="تشغيل صوت السؤال"
-                    onClick={() => {
-                      if (currentQuestion.audioUrl) {
-                        const newAudio = new window.Audio(currentQuestion.audioUrl);
-                        newAudio.play().catch(e => console.error("Audio playback failed:", e));
+            {currentQuestion && !isFlyingOver && (
+              <div className="hud-question-row" dir="rtl">
+                {currentQuestion.imageUrl && !failedQuestionImages[currentQuestion.imageUrl] && (
+                  <div
+                    className="question-image-wrapper"
+                    role="button"
+                    tabIndex={0}
+                    aria-label="تكبير صورة السؤال"
+                    onClick={() => setPreviewQuestionImage(currentQuestion.imageUrl!)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setPreviewQuestionImage(currentQuestion.imageUrl!);
                       }
                     }}
                   >
-                    <Volume2 aria-hidden="true" size={22} />
-                  </button>
+                    <img
+                      className="question-image-thumb"
+                      src={currentQuestion.imageUrl}
+                      alt="صورة السؤال"
+                      decoding="async"
+                      onError={() => setFailedQuestionImages(prev => ({ ...prev, [currentQuestion.imageUrl!]: true }))}
+                    />
+                    <span className="question-zoom-badge">اضغط للتكبير</span>
+                  </div>
                 )}
+
+                <div className="question-prompt-group">
+                  {currentQuestion.question && currentQuestion.question !== "." && (
+                    <p className="question-prompt-text">{currentQuestion.question}</p>
+                  )}
+                  {currentQuestion.audioUrl && (
+                    <button
+                      className="question-audio-btn"
+                      type="button"
+                      aria-label="تشغيل صوت السؤال"
+                      onClick={() => {
+                        if (currentQuestion.audioUrl) {
+                          const newAudio = new window.Audio(currentQuestion.audioUrl);
+                          newAudio.play().catch(e => console.error("Audio playback failed:", e));
+                        }
+                      }}
+                    >
+                      <Volume2 aria-hidden="true" size={20} />
+                    </button>
+                  )}
+                </div>
               </div>
-              {currentQuestion.imageUrl && !failedQuestionImages[currentQuestion.imageUrl] && (
-                <button
-                  className="question-prompt-image-button"
-                  type="button"
-                  aria-label="تكبير صورة السؤال"
-                  onClick={() => setPreviewQuestionImage(currentQuestion.imageUrl!)}
-                >
-                  <img
-                    className="question-prompt-image"
-                    src={currentQuestion.imageUrl}
-                    alt="صورة السؤال"
-                    decoding="async"
-                    onError={() => setFailedQuestionImages(prev => ({ ...prev, [currentQuestion.imageUrl!]: true }))}
-                  />
-                </button>
-              )}
-            </section>
-          )}
+            )}
+          </div>
 
           {previewQuestionImage && (
             <div
