@@ -224,7 +224,7 @@ const getAnswerLanePositions = (
 ): number[] => {
   const h = stageHeight || (typeof window !== 'undefined' ? window.innerHeight : 700);
   const isCompact = h <= 540 || (typeof window !== 'undefined' && window.innerWidth <= 900);
-  const hb = headerBottomPx || (isCompact ? 135 : 185);
+  const hb = headerBottomPx || (isCompact ? 155 : 220);
   const portrait = isPortrait ?? (typeof window !== 'undefined' && window.matchMedia('(max-width: 768px) and (orientation: portrait)').matches);
 
   // Little gap between header bottom and questions (24px desktop, 16px compact)
@@ -591,7 +591,7 @@ function App() {
     }
     const isCompact = (stageSizeRef.current.width || (typeof window !== 'undefined' ? window.innerWidth : 1200)) <= 900
       || (stageSizeRef.current.height || (typeof window !== 'undefined' ? window.innerHeight : 800)) <= 520;
-    return isCompact ? 135 : 185;
+    return isCompact ? 155 : 220;
   }, []);
   const planeSizePctRef = useRef({
     width: 0, height: 0, left: 0, bottom: 0,
