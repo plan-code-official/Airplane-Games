@@ -1302,7 +1302,7 @@
   }
 
   .airplane-img {
-    width: var(--user-plane-mobile-width, clamp(112px, 17.6vw, 158px)) !important;
+    width: var(--user-plane-mobile-width, clamp(130px, 20vw, 185px)) !important;
   }
 
   .scrolling-obstacle {

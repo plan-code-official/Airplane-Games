@@ -923,7 +923,7 @@ function App() {
       cloudsRef.current.forEach((cloud) => {
         cloud.y = answerLanePositions[cloud.idx] ?? cloud.y;
       });
-      const spriteWidth = planeRef.current?.offsetWidth || 185;
+      const spriteWidth = planeRef.current?.offsetWidth || 215;
       const spriteHeight = planeRef.current?.offsetHeight || spriteWidth * 682 / 1024;
       const alphaLeft = 103 / 1024;
       const alphaTop = 111 / 682;
@@ -2383,7 +2383,7 @@ function App() {
               transition: isFlyingOver ? 'all 2.5s ease-in-out' : 'none',
               ...(isCompactStage
                 ? ({
-                  '--user-plane-mobile-width': `${Math.round(renderMonsterBoxSize * 1.1)}px`
+                  '--user-plane-mobile-width': `${Math.round(renderMonsterBoxSize * 1.25)}px`
                 } as React.CSSProperties)
                 : {})
             }}
