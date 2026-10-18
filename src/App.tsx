@@ -2193,105 +2193,126 @@ function App() {
         >
 
 
-          {/* Top HUD Header - Unified Glass Card */}
-          <div className="sky-hud-header">
-            <div className="hud-top-row">
-              <div className="hud-stats-group">
-                <div className="hud-lives" aria-label={`${lives} من 3 قلوب`}>
-                  <span className="hud-lives-label">القلوب</span>
-                  <div className="hud-heart-row">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <span key={i} className={`heart-icon ${i >= lives ? 'lost' : ''}`}>
-                        <img src={heartHudIcon} alt="" aria-hidden="true" />
-                      </span>
-                    ))}
+          {/* Top HUD Header - Unified Holographic Game Header (Exact BoyGame Match) */}
+          <div id="hud-container">
+            <div id="game-header-new" className="sky-hud-header">
+              {/* Top Row: Stats, Question pill, Exit */}
+              <div className="game-header-content">
+                {/* Left (Lives & Coins) */}
+                <div className="header-left-group">
+                  <div className="header-lives" aria-label={`${lives} من 3 قلوب`}>
+                    <span className="header-lives-label">القلوب</span>
+                    <div id="lives-container" className="header-hearts">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <img
+                          key={i}
+                          src={heartHudIcon}
+                          alt=""
+                          className={i >= lives ? 'is-inactive' : 'is-active'}
+                          aria-hidden="true"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div id="score-panel" className="header-coin-badge" aria-label={`النقاط ${earnedPoints}`}>
+                    <img src={daadCoins} alt="Coins" className="hud-coin-icon" />
+                    <span id="score-val">{earnedPoints}</span>
                   </div>
                 </div>
-                <div className="hud-coins" aria-label={`النقاط ${earnedPoints}`}>
-                  <img src={daadCoins} alt="" aria-hidden="true" />
-                  <span>{earnedPoints}</span>
+
+                {/* Center: Question Info Pill Badge */}
+                <div className="header-question-info" dir="rtl">
+                  <span className="header-question-label">السؤال</span>
+                  <strong className="header-question-numbers" id="question-counter" dir="ltr">
+                    {currentQuestionIndex + 1}/{Math.max(questions.length, 1)}
+                  </strong>
                 </div>
+
+                {/* Right: Exit Button */}
+                <button
+                  className="header-exit-btn"
+                  type="button"
+                  onClick={handleBackToMenu}
+                  aria-label="خروج إلى الرئيسية"
+                  title="خروج"
+                >
+                  <img src={exitHudIcon} alt="Exit" />
+                </button>
               </div>
 
-              <div className="hud-center" aria-live="polite">
-                <span className="hud-question-label">السؤال</span>
-                <span className="hud-question-number">
-                  {currentQuestionIndex + 1}/{Math.max(questions.length, 1)}
-                </span>
+              {/* Progress Bar */}
+              <div
+                className="header-progress-track"
+                role="progressbar"
+                aria-label="تقدم الأسئلة"
+                aria-valuemin={0}
+                aria-valuemax={Math.max(questions.length, 1)}
+                aria-valuenow={Math.min(currentQuestionIndex + 1, Math.max(questions.length, 1))}
+              >
+                <div
+                  id="header-progress-fill"
+                  className="header-progress-fill"
+                  style={{
+                    width: `${Math.min(100, ((currentQuestionIndex + 1) / Math.max(questions.length, 1)) * 100)}%`
+                  }}
+                />
               </div>
 
-              <button className="hud-exit-button" onClick={handleBackToMenu} title="خروج" aria-label="خروج">
-                <img src={exitHudIcon} alt="" />
-              </button>
-            </div>
-
-            <div
-              className="hud-progress-track"
-              role="progressbar"
-              aria-label="تقدم الأسئلة"
-              aria-valuemin={0}
-              aria-valuemax={Math.max(questions.length, 1)}
-              aria-valuenow={Math.min(currentQuestionIndex + 1, Math.max(questions.length, 1))}
-            >
-              <span style={{ width: `${Math.min(100, ((currentQuestionIndex + 1) / Math.max(questions.length, 1)) * 100)}%` }} />
-            </div>
-
-            {currentQuestion && !isFlyingOver && (
-              <div className="hud-question-row" dir="rtl">
-                {currentQuestion.imageUrl && !failedQuestionImages[currentQuestion.imageUrl] && (
-                  <div
-                    className={`question-image-wrapper ${isPlayingQuestionAudio ? 'audio-playing' : ''}`}
-                    role="button"
-                    tabIndex={0}
-                    aria-label="تكبير صورة السؤال"
-                    onClick={() => setPreviewQuestionImage(currentQuestion.imageUrl!)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        setPreviewQuestionImage(currentQuestion.imageUrl!);
-                      }
-                    }}
-                  >
-                    <img
-                      className="question-image-thumb"
-                      src={currentQuestion.imageUrl}
-                      alt="صورة السؤال"
-                      decoding="async"
-                      onError={() => setFailedQuestionImages(prev => ({ ...prev, [currentQuestion.imageUrl!]: true }))}
-                    />
-                    <span className="question-zoom-badge">
-                      <span>اضغط للتكبير</span>
-                      <span className="zoom-icon-inline" aria-hidden="true">🔍</span>
-                    </span>
-                  </div>
-                )}
-
-                <div className="question-prompt-group">
-                  {currentQuestion.question && currentQuestion.question !== "." && (
-                    <p className="question-prompt-text">{currentQuestion.question}</p>
-                  )}
-                  {currentQuestion.audioUrl && (
-                    <button
-                      className={`question-audio-btn ${isPlayingQuestionAudio ? 'is-playing' : ''}`}
-                      type="button"
-                      aria-label={isPlayingQuestionAudio ? "إيقاف صوت السؤال" : "تشغيل صوت السؤال"}
-                      title={isPlayingQuestionAudio ? "إيقاف الصوت" : "تشغيل الصوت"}
-                      onClick={() => toggleCurrentQuestionAudio(currentQuestion.audioUrl)}
+              {/* Unified Question & Media Row */}
+              {currentQuestion && !isFlyingOver && (
+                <div id="question-media-panel" className="header-question-row" dir="rtl">
+                  {currentQuestion.imageUrl && !failedQuestionImages[currentQuestion.imageUrl] && (
+                    <div
+                      id="question-image-wrapper"
+                      className={`question-image-wrapper ${isPlayingQuestionAudio ? 'audio-playing' : ''}`}
+                      role="button"
+                      tabIndex={0}
+                      aria-label="تكبير صورة السؤال"
+                      onClick={() => setPreviewQuestionImage(currentQuestion.imageUrl!)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setPreviewQuestionImage(currentQuestion.imageUrl!);
+                        }
+                      }}
                     >
-                      {isPlayingQuestionAudio ? (
-                        <span className="audio-wave-bars" aria-hidden="true">
-                          <span className="bar bar-1" />
-                          <span className="bar bar-2" />
-                          <span className="bar bar-3" />
-                        </span>
-                      ) : (
-                        <Volume2 aria-hidden="true" size={22} />
-                      )}
-                    </button>
+                      <img
+                        id="question-media-image"
+                        className="question-media-image"
+                        src={currentQuestion.imageUrl}
+                        alt="صورة السؤال"
+                        decoding="async"
+                        onError={() => setFailedQuestionImages(prev => ({ ...prev, [currentQuestion.imageUrl!]: true }))}
+                      />
+                      <span className="question-zoom-badge">اضغط للتكبير</span>
+                    </div>
                   )}
+
+                  <div className="question-prompt-group">
+                    {currentQuestion.question && currentQuestion.question !== "." && (
+                      <div id="question-media-text" className="question-media-text">
+                        {currentQuestion.question}
+                      </div>
+                    )}
+                    {currentQuestion.audioUrl && (
+                      <button
+                        id="question-media-audio"
+                        className={`question-media-audio ${isPlayingQuestionAudio ? 'is-playing' : ''}`}
+                        type="button"
+                        aria-label={isPlayingQuestionAudio ? "إيقاف صوت السؤال" : "تشغيل صوت السؤال"}
+                        title={isPlayingQuestionAudio ? "إيقاف الصوت" : "تشغيل الصوت"}
+                        onClick={() => toggleCurrentQuestionAudio(currentQuestion.audioUrl)}
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M4 10v4h3l4 3V7l-4 3H4Z" />
+                          <path d="M15 9a4 4 0 0 1 0 6M17.5 6.5a7.5 7.5 0 0 1 0 11" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {previewQuestionImage && (
