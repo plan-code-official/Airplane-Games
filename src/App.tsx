@@ -224,7 +224,7 @@ const getAnswerLanePositions = (
 ): number[] => {
   const h = stageHeight || (typeof window !== 'undefined' ? window.innerHeight : 700);
   const isCompact = h <= 540 || (typeof window !== 'undefined' && window.innerWidth <= 900);
-  const hb = headerBottomPx || (isCompact ? 155 : 220);
+  const hb = headerBottomPx || (isCompact ? 75 : 95);
   const portrait = isPortrait ?? (typeof window !== 'undefined' && window.matchMedia('(max-width: 768px) and (orientation: portrait)').matches);
 
   // Little gap between header bottom and questions (24px desktop, 16px compact)
@@ -591,7 +591,7 @@ function App() {
     }
     const isCompact = (stageSizeRef.current.width || (typeof window !== 'undefined' ? window.innerWidth : 1200)) <= 900
       || (stageSizeRef.current.height || (typeof window !== 'undefined' ? window.innerHeight : 800)) <= 520;
-    return isCompact ? 155 : 220;
+    return isCompact ? 75 : 95;
   }, []);
   const planeSizePctRef = useRef({
     width: 0, height: 0, left: 0, bottom: 0,
@@ -2263,10 +2263,10 @@ function App() {
         >
 
 
-          {/* Top HUD Header - Unified Holographic Game Header (Exact BoyGame Match) */}
+          {/* Top HUD Header - Single Unified Row with Header Stats & Question */}
           <div id="hud-container">
             <div id="game-header-new" className="sky-hud-header">
-              {/* Top Row: Stats, Question pill, Exit */}
+              {/* Single Unified Row: Stats, Question (Badge + Image + Text + Audio), Exit */}
               <div className="game-header-content">
                 {/* Left (Lives & Coins) */}
                 <div className="header-left-group">
@@ -2290,12 +2290,68 @@ function App() {
                   </div>
                 </div>
 
-                {/* Center: Question Info Pill Badge */}
-                <div className="header-question-info" dir="rtl">
-                  <span className="header-question-label">السؤال</span>
-                  <strong className="header-question-numbers" id="question-counter" dir="ltr">
-                    {currentQuestionIndex + 1}/{Math.max(questions.length, 1)}
-                  </strong>
+                {/* Center: Question in same row as top header */}
+                <div id="question-media-panel" className="header-question-center" dir="rtl">
+                  {/* Question Info Pill Badge */}
+                  <div className="header-question-info">
+                    <span className="header-question-label">السؤال</span>
+                    <strong className="header-question-numbers" id="question-counter" dir="ltr">
+                      {currentQuestionIndex + 1}/{Math.max(questions.length, 1)}
+                    </strong>
+                  </div>
+
+                  {currentQuestion && !isFlyingOver && (
+                    <>
+                      {currentQuestion.imageUrl && !failedQuestionImages[currentQuestion.imageUrl] && (
+                        <div
+                          id="question-image-wrapper"
+                          className={`question-image-wrapper ${isPlayingQuestionAudio ? 'audio-playing' : ''}`}
+                          role="button"
+                          tabIndex={0}
+                          aria-label="تكبير صورة السؤال"
+                          onClick={() => setPreviewQuestionImage(currentQuestion.imageUrl!)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              setPreviewQuestionImage(currentQuestion.imageUrl!);
+                            }
+                          }}
+                        >
+                          <img
+                            id="question-media-image"
+                            className="question-media-image"
+                            src={currentQuestion.imageUrl}
+                            alt="صورة السؤال"
+                            decoding="async"
+                            onError={() => setFailedQuestionImages(prev => ({ ...prev, [currentQuestion.imageUrl!]: true }))}
+                          />
+                          <span className="question-zoom-badge">اضغط للتكبير</span>
+                        </div>
+                      )}
+
+                      {currentQuestion.question && currentQuestion.question !== "." && (
+                        <div id="question-media-text" className="question-media-text">
+                          {currentQuestion.question}
+                        </div>
+                      )}
+
+                      {currentQuestion.audioUrl && (
+                        <button
+                          id="question-media-audio"
+                          className={`question-media-audio ${isPlayingQuestionAudio ? 'is-playing' : ''}`}
+                          type="button"
+                          aria-label={isPlayingQuestionAudio ? "إيقاف صوت السؤال" : "تشغيل صوت السؤال"}
+                          title={isPlayingQuestionAudio ? "إيقاف الصوت" : "تشغيل الصوت"}
+                          onClick={() => toggleCurrentQuestionAudio(currentQuestion.audioUrl)}
+                        >
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M4 10v4h3l4 3V7l-4 3H4Z" />
+                            <path d="M15 9a4 4 0 0 1 0 6M17.5 6.5a7.5 7.5 0 0 1 0 11" />
+                          </svg>
+                        </button>
+                      )}
+                    </>
+                  )}
                 </div>
 
                 {/* Right: Exit Button */}
@@ -2310,7 +2366,7 @@ function App() {
                 </button>
               </div>
 
-              {/* Progress Bar */}
+              {/* Progress Bar (Bottom Edge Tracker) */}
               <div
                 className="header-progress-track"
                 role="progressbar"
@@ -2327,61 +2383,6 @@ function App() {
                   }}
                 />
               </div>
-
-              {/* Unified Question & Media Row */}
-              {currentQuestion && !isFlyingOver && (
-                <div id="question-media-panel" className="header-question-row" dir="rtl">
-                  {currentQuestion.imageUrl && !failedQuestionImages[currentQuestion.imageUrl] && (
-                    <div
-                      id="question-image-wrapper"
-                      className={`question-image-wrapper ${isPlayingQuestionAudio ? 'audio-playing' : ''}`}
-                      role="button"
-                      tabIndex={0}
-                      aria-label="تكبير صورة السؤال"
-                      onClick={() => setPreviewQuestionImage(currentQuestion.imageUrl!)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          setPreviewQuestionImage(currentQuestion.imageUrl!);
-                        }
-                      }}
-                    >
-                      <img
-                        id="question-media-image"
-                        className="question-media-image"
-                        src={currentQuestion.imageUrl}
-                        alt="صورة السؤال"
-                        decoding="async"
-                        onError={() => setFailedQuestionImages(prev => ({ ...prev, [currentQuestion.imageUrl!]: true }))}
-                      />
-                      <span className="question-zoom-badge">اضغط للتكبير</span>
-                    </div>
-                  )}
-
-                  <div className="question-prompt-group">
-                    {currentQuestion.question && currentQuestion.question !== "." && (
-                      <div id="question-media-text" className="question-media-text">
-                        {currentQuestion.question}
-                      </div>
-                    )}
-                    {currentQuestion.audioUrl && (
-                      <button
-                        id="question-media-audio"
-                        className={`question-media-audio ${isPlayingQuestionAudio ? 'is-playing' : ''}`}
-                        type="button"
-                        aria-label={isPlayingQuestionAudio ? "إيقاف صوت السؤال" : "تشغيل صوت السؤال"}
-                        title={isPlayingQuestionAudio ? "إيقاف الصوت" : "تشغيل الصوت"}
-                        onClick={() => toggleCurrentQuestionAudio(currentQuestion.audioUrl)}
-                      >
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <path d="M4 10v4h3l4 3V7l-4 3H4Z" />
-                          <path d="M15 9a4 4 0 0 1 0 6M17.5 6.5a7.5 7.5 0 0 1 0 11" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
